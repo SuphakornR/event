@@ -1,3 +1,13 @@
+ปรับดีไซน์ของส่วนซูม, สลับสื่อ/GIF และปุ่มควบคุมเล่นวิดีโอหลังบ้านให้เป็นสไตล์ **Vox Editorial** (พื้นกระดาษ `#F8F6F0`, ขอบหมึกหนา `#111111`, เงาแข็ง Offset, ปุ่ม `.btn-vox` และชุดสี `#F4D03F` / `#E74C3C` / `#2980B9`) ทั้งหมดแล้วครับ โดยยังคงความสะอาดตาบนหน้าจอพรีเซนต์ (ซ่อนปุ่มควบคุมสื่อไว้จนกว่าจะเอาเมาส์ไปวาง)
+
+### สรุปจุดที่ปรับเป็น Vox Style
+- **Floating Media & Zoom Controls (`#media-toolbar-row`)**: เปลี่ยนจากปุ่มกระจกใสโค้งมน มาใช้การ์ดกระดาษ `#F8F6F0` ขอบดำ `2px` เงาแข็ง `3px` และปุ่ม `.btn-vox` สีเหลือง `#F4D03F` โดยยังคงซ่อน `opacity: 0` ในสถานะปกติและเฟดขึ้นเมื่อ Hover
+- **ปุ่มควบคุมบนหัวการ์ด (`#accordion-edit-btn`, `#accordion-close-btn`, `#zoom-close-btn`)**: ใช้ขอบดำ `2px` และเงา/สีชุดเดียวกับระบบหลัก โดยปรับความโปร่งแสงตอนพักให้กลมกลืน (`opacity: 0.16` เหมือนไอคอนประแจและเฟือง)
+- **แผงเล่นวิดีโอหลังบ้าน (`▶ เล่น`, `⏸ พัก`, `↺ เริ่มใหม่`, `🔊 เสียง`)**: ปรับมาใช้ปุ่ม `.btn-vox` และชุดสี Vox เต็มรูปแบบ (`#F4D03F` สำหรับเล่น, `#2980B9` สำหรับเริ่มใหม่, `#E74C3C` เมื่อปิดเสียง)
+
+---
+
+```html
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -144,7 +154,7 @@
     }
 
     /* ==========================================================================
-       SMOOTH SLIDE-DOWN MEDIA ACCORDION & SEAMLESS GHOST CONTROLS
+       SMOOTH SLIDE-DOWN MEDIA ACCORDION & SEAMLESS VOX CUTOUT CONTROLS
        ========================================================================== */
     .media-accordion-wrapper {
       display: grid;
@@ -177,7 +187,7 @@
 
     /* Subtle Accordion Header Actions (faded at rest for clean presentation) */
     .accordion-subtle-actions {
-      opacity: 0.18;
+      opacity: 0.16;
       transition: opacity 0.28s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
@@ -186,13 +196,13 @@
       opacity: 1;
     }
 
-    /* Seamless Floating Ghost Media Controls (Hidden at rest, reveals on hover) */
+    /* Seamless Floating Vox Media Controls (Hidden at rest, reveals on hover) */
     .media-floating-controls {
       opacity: 0;
       pointer-events: none;
-      transform: translateY(-6px) scale(0.96);
-      transition: opacity 0.34s cubic-bezier(0.22, 1, 0.36, 1),
-                  transform 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+      transform: translateY(-6px) scale(0.97);
+      transition: opacity 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+                  transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
     #media-visual-host:hover .media-floating-controls,
@@ -200,14 +210,6 @@
       opacity: 1;
       pointer-events: auto;
       transform: translateY(0) scale(1);
-    }
-
-    .media-ghost-pill {
-      background: rgba(17, 17, 17, 0.64);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.22);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
     }
 
     /* Smooth Video <-> Image/GIF Crossfade & Scale Transition */
@@ -506,9 +508,9 @@
                   type="button"
                   id="accordion-edit-btn"
                   aria-label="แก้ไขรายละเอียดและสื่อของเกมนี้"
-                  class="w-7 h-7 rounded-lg border border-[#111111]/40 bg-[#F8F6F0] hover:bg-[#F4D03F] hover:border-[#111111] flex items-center justify-center text-[#111111] transition-colors cursor-pointer"
+                  class="w-8 h-8 rounded-lg border-2 border-[#111111] bg-[#F8F6F0] hover:bg-[#F4D03F] shadow-[2px_2px_0px_#111111] flex items-center justify-center text-[#111111] transition-colors cursor-pointer"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
                   </svg>
                 </button>
@@ -516,7 +518,7 @@
                   type="button"
                   id="accordion-close-btn"
                   aria-label="ปิดหน้าต่างสื่อ"
-                  class="w-7 h-7 rounded-lg border border-[#111111]/40 bg-[#111111]/80 hover:bg-[#E74C3C] hover:border-[#111111] text-white font-display font-bold text-xs flex items-center justify-center transition-colors cursor-pointer"
+                  class="w-8 h-8 rounded-lg border-2 border-[#111111] bg-[#111111] hover:bg-[#E74C3C] shadow-[2px_2px_0px_#111111] text-white font-display font-bold text-sm flex items-center justify-center transition-colors cursor-pointer"
                 >
                   ✕
                 </button>
@@ -539,25 +541,25 @@
 
   <!-- ========================================================================
        PERSISTENT VISUAL HOST ELEMENT (MOVED SEAMLESSLY BETWEEN ACCORDION & ZOOM)
-       Keeps YouTube iframe alive without reload; controls stay hidden until hover
+       Keeps YouTube iframe alive without reload; Vox controls stay hidden until hover
        ======================================================================== -->
   <div id="media-visual-host" class="hidden relative w-full">
-    <!-- Seamless Floating Ghost Controls (Invisible at rest for clean presentation) -->
-    <div id="media-toolbar-row" class="media-floating-controls absolute top-3 right-3 z-20 flex items-center gap-1.5">
-      <!-- Video <-> Image/GIF Pill Switcher (Shown when both YouTube & Image/GIF exist) -->
-      <div id="media-switcher-bar" class="hidden media-ghost-pill inline-flex items-center gap-0.5 rounded-full p-1">
+    <!-- Seamless Floating Vox Cutout Controls (Invisible at rest for clean presentation) -->
+    <div id="media-toolbar-row" class="media-floating-controls absolute top-3 right-3 z-20 flex items-center gap-2">
+      <!-- Video <-> Image/GIF Vox Switcher (Shown when both YouTube & Image/GIF exist) -->
+      <div id="media-switcher-bar" class="hidden inline-flex items-center gap-1 bg-[#F8F6F0] border-2 border-[#111111] rounded-xl p-1 shadow-[3px_3px_0px_#111111]">
         <button
           type="button"
           id="media-nav-prev"
           aria-label="สื่อก่อนหน้า"
-          class="w-6 h-6 rounded-full hover:bg-white/15 text-white/80 hover:text-white font-display font-bold text-xs flex items-center justify-center cursor-pointer transition-colors"
+          class="w-6 h-6 rounded-lg hover:bg-[#F4D03F]/50 border border-transparent hover:border-[#111111] text-[#111111] font-display font-black text-xs flex items-center justify-center cursor-pointer transition-colors"
         >
           ‹
         </button>
         <button
           type="button"
           id="media-pill-video"
-          class="font-display font-bold text-xs px-2.5 py-1 rounded-full transition-all cursor-pointer flex items-center gap-1"
+          class="font-display font-bold text-xs px-2.5 py-1 rounded-lg border border-transparent transition-all cursor-pointer flex items-center gap-1"
         >
           <span>🎬</span>
           <span>วิดีโอ</span>
@@ -565,7 +567,7 @@
         <button
           type="button"
           id="media-pill-image"
-          class="font-display font-bold text-xs px-2.5 py-1 rounded-full transition-all cursor-pointer flex items-center gap-1"
+          class="font-display font-bold text-xs px-2.5 py-1 rounded-lg border border-transparent transition-all cursor-pointer flex items-center gap-1"
         >
           <span>🖼️</span>
           <span>ภาพ/GIF</span>
@@ -574,18 +576,18 @@
           type="button"
           id="media-nav-next"
           aria-label="สื่อถัดไป"
-          class="w-6 h-6 rounded-full hover:bg-white/15 text-white/80 hover:text-white font-display font-bold text-xs flex items-center justify-center cursor-pointer transition-colors"
+          class="w-6 h-6 rounded-lg hover:bg-[#F4D03F]/50 border border-transparent hover:border-[#111111] text-[#111111] font-display font-black text-xs flex items-center justify-center cursor-pointer transition-colors"
         >
           ›
         </button>
       </div>
 
-      <!-- Subtle Zoom In / Zoom Out Ghost Trigger -->
+      <!-- Vox Zoom In / Zoom Out Trigger -->
       <button
         type="button"
         id="media-zoom-toggle-btn"
         aria-label="ขยายหรือย่อสื่อ"
-        class="media-ghost-pill text-white/90 hover:text-[#F4D03F] hover:bg-black/80 font-display font-bold text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5 cursor-pointer transition-colors"
+        class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-extrabold text-xs px-3 py-1.5 rounded-xl flex items-center gap-1.5 cursor-pointer"
       >
         <span id="media-zoom-btn-icon">🔍</span>
         <span id="media-zoom-btn-label">ขยาย</span>
@@ -601,7 +603,7 @@
        ======================================================================== -->
   <div
     id="theater-zoom-overlay"
-    class="fixed inset-0 z-50 bg-black/82 backdrop-blur-[5px] flex items-center justify-center p-3 sm:p-6"
+    class="fixed inset-0 z-50 bg-black/80 backdrop-blur-[4px] flex items-center justify-center p-3 sm:p-6"
     role="dialog"
     aria-modal="true"
     aria-labelledby="zoom-modal-title"
@@ -619,9 +621,9 @@
         <button
           type="button"
           id="zoom-close-btn"
-          class="opacity-45 hover:opacity-100 bg-[#111111]/85 hover:bg-[#E74C3C] text-white font-display font-bold text-xs px-3 py-1.5 rounded-full flex items-center gap-1 cursor-pointer shrink-0 transition-all"
+          class="opacity-45 hover:opacity-100 btn-vox bg-[#111111] hover:bg-[#E74C3C] text-white font-display font-bold text-xs sm:text-sm px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 cursor-pointer shrink-0 transition-all"
         >
-          <span>✕ ย่อกลับ</span>
+          <span>✕ ย่อกลับ (Esc)</span>
         </button>
       </div>
 
@@ -711,7 +713,7 @@
       </div>
     </div>
 
-    <!-- TAB 2: REMOTE GAME ACCORDION, VIDEO/IMAGE SWITCHER, THEATER ZOOM & MEDIA EDITORS -->
+    <!-- TAB 2: REMOTE GAME ACCORDION, VIDEO PLAYBACK, SWITCHER, THEATER ZOOM & MEDIA EDITORS -->
     <div id="admin-panel-stage-media" class="hidden flex-col gap-4">
       <!-- Live Stage Remote Control Card -->
       <div class="vox-card bg-white p-4 flex flex-col gap-3.5">
@@ -763,6 +765,45 @@
             <span id="admin-zoom-btn-icon">🔍</span>
             <span id="admin-zoom-btn-text">ซูมขยายเต็มจอบนหน้าบ้าน</span>
           </button>
+
+          <!-- 3. Remote YouTube Video Playback Controls (Vox Palette) -->
+          <div class="pt-2.5 border-t-2 border-[#111111]/15 flex flex-col gap-2">
+            <span class="text-xs font-bold text-[#111111]">🎬 ควบคุมวิดีโอบนหน้าจอหลัก:</span>
+            <div class="grid grid-cols-4 gap-1.5">
+              <button
+                type="button"
+                id="admin-video-play-btn"
+                class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-extrabold text-xs py-2.5 px-1 rounded-xl flex items-center justify-center gap-1 cursor-pointer"
+              >
+                <span>▶</span>
+                <span>เล่น</span>
+              </button>
+              <button
+                type="button"
+                id="admin-video-pause-btn"
+                class="btn-vox bg-white hover:bg-[#FFFDF5] text-[#111111] font-display font-extrabold text-xs py-2.5 px-1 rounded-xl flex items-center justify-center gap-1 cursor-pointer"
+              >
+                <span>⏸</span>
+                <span>พัก</span>
+              </button>
+              <button
+                type="button"
+                id="admin-video-restart-btn"
+                class="btn-vox bg-[#2980B9] hover:bg-[#2471a3] text-white font-display font-extrabold text-xs py-2.5 px-1 rounded-xl flex items-center justify-center gap-1 cursor-pointer"
+              >
+                <span>↺</span>
+                <span>เริ่มใหม่</span>
+              </button>
+              <button
+                type="button"
+                id="admin-video-mute-btn"
+                class="btn-vox bg-white hover:bg-gray-50 text-[#111111] font-display font-extrabold text-xs py-2.5 px-1 rounded-xl flex items-center justify-center gap-1 cursor-pointer"
+              >
+                <span id="admin-video-mute-icon">🔊</span>
+                <span id="admin-video-mute-label">เสียง</span>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -992,7 +1033,7 @@
               </span>
             </div>
             <p id="drawer-peer-status" class="text-xs font-bold text-emerald-700 mt-1">พร้อมรับการเชื่อมต่อจากมือถือ</p>
-            <p class="text-xs text-[#111111]/70 mt-0.5">ทีมงานสามารถให้คะแนน สลับคลิป/รูป/GIF และสั่งซูมขยายขึ้นจอได้ทันที</p>
+            <p class="text-xs text-[#111111]/70 mt-0.5">ทีมงานสามารถให้คะแนน เล่น/หยุดคลิป สลับรูป/GIF และสั่งซูมขยายขึ้นจอได้ทันที</p>
           </div>
         </div>
 
@@ -1023,7 +1064,7 @@
   </aside>
 
   <!-- ========================================================================
-       COMPLETE APPLICATION LOGIC (STATE, RENDERING, SYNC, MEDIA SWITCH, ZOOM)
+       COMPLETE APPLICATION LOGIC (STATE, RENDERING, SYNC, VIDEO CONTROL, ZOOM)
        ======================================================================== -->
   <script>
     (() => {
@@ -1098,6 +1139,7 @@
         winnerAnnounced: false,
         activeGameAccordion: null,
         isMediaZoomed: false,
+        isVideoMuted: false,
         updatedAt: Date.now()
       };
 
@@ -1158,6 +1200,7 @@
             ? parsed.activeGameAccordion
             : null;
           base.isMediaZoomed = Boolean(parsed.isMediaZoomed) && base.activeGameAccordion !== null;
+          base.isVideoMuted = Boolean(parsed.isVideoMuted);
           return base;
         } catch (err) {
           console.warn('Recovering default state due to storage read error:', err);
@@ -1192,6 +1235,21 @@
       const stageConnections = new Set();
       let adminConnection = null;
 
+      function broadcastPayload(payload) {
+        if (bc) {
+          try { bc.postMessage(payload); } catch (_) {}
+        }
+        if (currentRole === 'stage') {
+          stageConnections.forEach(conn => {
+            if (conn && conn.open) {
+              try { conn.send(payload); } catch (_) {}
+            }
+          });
+        } else if (currentRole === 'admin' && adminConnection && adminConnection.open) {
+          try { adminConnection.send(payload); } catch (_) {}
+        }
+      }
+
       function saveAndBroadcast(options = { broadcast: true }) {
         state.updatedAt = Date.now();
         try {
@@ -1201,19 +1259,7 @@
         }
 
         if (options.broadcast) {
-          const payload = { type: 'SYNC_STATE', state };
-          if (bc) {
-            try { bc.postMessage(payload); } catch (_) {}
-          }
-          if (currentRole === 'stage') {
-            stageConnections.forEach(conn => {
-              if (conn && conn.open) {
-                try { conn.send(payload); } catch (_) {}
-              }
-            });
-          } else if (currentRole === 'admin' && adminConnection && adminConnection.open) {
-            try { adminConnection.send(payload); } catch (_) {}
-          }
+          broadcastPayload({ type: 'SYNC_STATE', state });
         }
       }
 
@@ -1271,6 +1317,8 @@
         bc.onmessage = (event) => {
           if (event.data?.type === 'SYNC_STATE' && event.data.state) {
             applyIncomingState(event.data.state, true);
+          } else if (event.data?.type === 'VIDEO_COMMAND' && currentRole === 'stage') {
+            handleStageVideoCommand(event.data.action, event.data.gameIdx);
           }
         };
       }
@@ -1341,6 +1389,8 @@
                     try { other.send({ type: 'SYNC_STATE', state }); } catch (_) {}
                   }
                 });
+              } else if (msg?.type === 'VIDEO_COMMAND') {
+                handleStageVideoCommand(msg.action, msg.gameIdx);
               } else if (msg?.type === 'REQUEST_STATE') {
                 if (conn.open) conn.send({ type: 'SYNC_STATE', state });
               }
@@ -1436,7 +1486,7 @@
       }
 
       // ========================================================================
-      // YOUTUBE URL PARSER & IMAGE/GIF PROCESSOR
+      // YOUTUBE URL PARSER, EMBED API & IMAGE/GIF PROCESSOR
       // ========================================================================
       function extractYouTubeId(url) {
         if (!url || typeof url !== 'string') return null;
@@ -1460,7 +1510,59 @@
       }
 
       function buildYouTubeEmbedUrl(videoId) {
-        return `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1`;
+        const originParam = (window.location.origin && window.location.origin !== 'null')
+          ? `&origin=${encodeURIComponent(window.location.origin)}`
+          : '';
+        return `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&enablejsapi=1${originParam}`;
+      }
+
+      let pendingVideoCommand = null;
+      let ytIframeReady = false;
+
+      function postYtCmd(iframe, func, args = []) {
+        if (!iframe || !iframe.contentWindow) return false;
+        iframe.contentWindow.postMessage(
+          JSON.stringify({ event: 'command', func, args }),
+          '*'
+        );
+        return true;
+      }
+
+      function executeYtAction(iframe, action) {
+        if (!iframe) return;
+        if (state.isVideoMuted && action !== 'unmute') {
+          postYtCmd(iframe, 'mute');
+        }
+        switch (action) {
+          case 'play':
+            postYtCmd(iframe, 'playVideo');
+            break;
+          case 'pause':
+            postYtCmd(iframe, 'pauseVideo');
+            break;
+          case 'restart':
+            postYtCmd(iframe, 'seekTo', [0, true]);
+            postYtCmd(iframe, 'playVideo');
+            break;
+          case 'mute':
+            postYtCmd(iframe, 'mute');
+            break;
+          case 'unmute':
+            postYtCmd(iframe, 'unMute');
+            break;
+        }
+      }
+
+      function handleStageVideoCommand(action, gameIdx) {
+        if (typeof gameIdx === 'number' && state.activeGameAccordion !== gameIdx) {
+          return;
+        }
+        const iframe = document.getElementById('stage-youtube-iframe');
+        if (!iframe || !ytIframeReady) {
+          pendingVideoCommand = { action, gameIdx };
+          return;
+        }
+        executeYtAction(iframe, action);
       }
 
       function compressImageFile(file, callback) {
@@ -1591,12 +1693,12 @@
 
         const isVideo = activeType === 'video';
         mediaPillVideoBtn.className = isVideo
-          ? 'font-display font-bold text-xs px-2.5 py-1 rounded-full bg-white/25 text-[#F4D03F] transition-all cursor-pointer flex items-center gap-1'
-          : 'font-display font-semibold text-xs px-2.5 py-1 rounded-full bg-transparent text-white/80 hover:bg-white/15 hover:text-white transition-all cursor-pointer flex items-center gap-1';
+          ? 'font-display font-extrabold text-xs px-2.5 py-1 rounded-lg bg-[#111111] text-[#F4D03F] border border-[#111111] transition-all cursor-pointer flex items-center gap-1'
+          : 'font-display font-bold text-xs px-2.5 py-1 rounded-lg bg-transparent text-[#111111] hover:bg-[#F4D03F]/35 border border-transparent transition-all cursor-pointer flex items-center gap-1';
 
         mediaPillImageBtn.className = !isVideo
-          ? 'font-display font-bold text-xs px-2.5 py-1 rounded-full bg-white/25 text-[#F4D03F] transition-all cursor-pointer flex items-center gap-1'
-          : 'font-display font-semibold text-xs px-2.5 py-1 rounded-full bg-transparent text-white/80 hover:bg-white/15 hover:text-white transition-all cursor-pointer flex items-center gap-1';
+          ? 'font-display font-extrabold text-xs px-2.5 py-1 rounded-lg bg-[#111111] text-[#F4D03F] border border-[#111111] transition-all cursor-pointer flex items-center gap-1'
+          : 'font-display font-bold text-xs px-2.5 py-1 rounded-lg bg-transparent text-[#111111] hover:bg-[#F4D03F]/35 border border-transparent transition-all cursor-pointer flex items-center gap-1';
       }
 
       function renderVisualPaneContent(gameIdx, animateCrossfade = false) {
@@ -1611,6 +1713,7 @@
           mediaVisualHostEl.classList.add('hidden');
           mediaVisualPaneEl.innerHTML = '';
           currentRenderedPaneKey = '';
+          ytIframeReady = false;
           return;
         }
 
@@ -1631,10 +1734,12 @@
         const injectHtml = () => {
           currentRenderedPaneKey = nextKey;
           if (resolvedType === 'video' && hasYt) {
+            ytIframeReady = false;
             const embedSrc = buildYouTubeEmbedUrl(ytId);
             mediaVisualPaneEl.innerHTML = `
               <div class="relative w-full aspect-video bg-[#111111] border-[2.5px] border-[#111111] rounded-xl overflow-hidden shadow-[4px_4px_0px_#111111]">
                 <iframe
+                  id="stage-youtube-iframe"
                   src="${embedSrc}"
                   title="${escapeHtml(state.games[gameIdx])}"
                   class="absolute inset-0 w-full h-full border-0"
@@ -1643,7 +1748,24 @@
                 ></iframe>
               </div>
             `;
+            const ytIframe = document.getElementById('stage-youtube-iframe');
+            if (ytIframe) {
+              ytIframe.addEventListener('load', () => {
+                setTimeout(() => {
+                  ytIframeReady = true;
+                  if (state.isVideoMuted) {
+                    postYtCmd(ytIframe, 'mute');
+                  }
+                  if (pendingVideoCommand && pendingVideoCommand.gameIdx === gameIdx) {
+                    const cmdAction = pendingVideoCommand.action;
+                    pendingVideoCommand = null;
+                    executeYtAction(ytIframe, cmdAction);
+                  }
+                }, 400);
+              });
+            }
           } else if (hasImg) {
+            ytIframeReady = false;
             const maxHeightClass = state.isMediaZoomed ? 'max-h-[74vh]' : 'max-h-[46vh]';
             mediaVisualPaneEl.innerHTML = `
               <div
@@ -1895,6 +2017,7 @@
               document.body.appendChild(mediaVisualHostEl);
               mediaContentStageEl.innerHTML = '';
               currentRenderedPaneKey = '';
+              ytIframeReady = false;
             }
           }, 460);
           return;
@@ -2575,6 +2698,22 @@
         btn.addEventListener('click', () => setAdminTab(btn.dataset.adminTab));
       });
 
+      function sendAdminVideoCommand(action) {
+        const idx = state.activeGameAccordion;
+        if (idx === null) return;
+        const media = state.gameMedia[idx];
+        if (!media || !extractYouTubeId(media.youtubeUrl)) return;
+
+        // If stage is currently displaying Image/GIF, switch to Video first
+        if (resolveActiveMediaType(media) !== 'video') {
+          media.activeMediaType = 'video';
+          saveAndBroadcast();
+          renderAdminUI();
+        }
+
+        broadcastPayload({ type: 'VIDEO_COMMAND', action, gameIdx: idx });
+      }
+
       function renderAdminUI() {
         // Tab 1: Teams Scoring Cards
         const adminTeamsEl = document.getElementById('admin-teams-container');
@@ -2632,7 +2771,7 @@
           });
         }
 
-        // Tab 2: Remote Accordion Open/Close, Video<->Image/GIF Switch, Theater Zoom & Media Editors
+        // Tab 2: Remote Accordion Open/Close, Video<->Image/GIF Switch, Theater Zoom & Video Playback
         const accBtnsEl = document.getElementById('admin-remote-accordion-btns');
         if (accBtnsEl) {
           accBtnsEl.innerHTML = [0, 1, 2].map(idx => {
@@ -2666,7 +2805,7 @@
           });
         }
 
-        // Sync Video <-> Image/GIF & Zoom Control Buttons in Tab 2
+        // Sync Video <-> Image/GIF, Zoom & Playback Buttons in Tab 2
         const activeIdx = state.activeGameAccordion;
         const activeMedia = activeIdx !== null ? (state.gameMedia[activeIdx] || {}) : {};
         const hasYt = Boolean(extractYouTubeId(activeMedia.youtubeUrl));
@@ -2724,6 +2863,27 @@
               zoomBadgeEl.className = 'text-xs font-display font-bold px-2.5 py-0.5 rounded-md border border-[#111111] bg-[#F8F6F0] text-[#111111]';
             }
           }
+        }
+
+        // Sync Video Playback Control Buttons (Vox Palette)
+        const canControlVideo = activeIdx !== null && hasYt;
+        ['admin-video-play-btn', 'admin-video-pause-btn', 'admin-video-restart-btn', 'admin-video-mute-btn'].forEach(id => {
+          const btn = document.getElementById(id);
+          if (btn) {
+            btn.disabled = !canControlVideo;
+            btn.classList.toggle('opacity-40', !canControlVideo);
+          }
+        });
+        const muteIconEl = document.getElementById('admin-video-mute-icon');
+        const muteLabelEl = document.getElementById('admin-video-mute-label');
+        const muteBtnEl = document.getElementById('admin-video-mute-btn');
+        if (muteIconEl && muteLabelEl && muteBtnEl) {
+          muteIconEl.textContent = state.isVideoMuted ? '🔇' : '🔊';
+          muteLabelEl.textContent = state.isVideoMuted ? 'ปิดเสียง' : 'เสียง';
+          muteBtnEl.classList.toggle('bg-[#E74C3C]', state.isVideoMuted);
+          muteBtnEl.classList.toggle('text-white', state.isVideoMuted);
+          muteBtnEl.classList.toggle('bg-white', !state.isVideoMuted);
+          muteBtnEl.classList.toggle('text-[#111111]', !state.isVideoMuted);
         }
 
         const mediaEditorsEl = document.getElementById('admin-media-editors');
@@ -2853,7 +3013,7 @@
         }
       }
 
-      // Admin Static Event Listeners (Video/Image Switch & Zoom Controls)
+      // Admin Static Event Listeners (Video/Image Switch, Zoom & Playback Controls)
       const adminSwitchVideoBtn = document.getElementById('admin-switch-video-btn');
       if (adminSwitchVideoBtn) {
         adminSwitchVideoBtn.addEventListener('click', () => {
@@ -2878,6 +3038,31 @@
           if (state.activeGameAccordion !== null) {
             setTheaterZoom(!state.isMediaZoomed);
           }
+        });
+      }
+
+      const adminVideoPlayBtn = document.getElementById('admin-video-play-btn');
+      if (adminVideoPlayBtn) {
+        adminVideoPlayBtn.addEventListener('click', () => sendAdminVideoCommand('play'));
+      }
+
+      const adminVideoPauseBtn = document.getElementById('admin-video-pause-btn');
+      if (adminVideoPauseBtn) {
+        adminVideoPauseBtn.addEventListener('click', () => sendAdminVideoCommand('pause'));
+      }
+
+      const adminVideoRestartBtn = document.getElementById('admin-video-restart-btn');
+      if (adminVideoRestartBtn) {
+        adminVideoRestartBtn.addEventListener('click', () => sendAdminVideoCommand('restart'));
+      }
+
+      const adminVideoMuteBtn = document.getElementById('admin-video-mute-btn');
+      if (adminVideoMuteBtn) {
+        adminVideoMuteBtn.addEventListener('click', () => {
+          state.isVideoMuted = !state.isVideoMuted;
+          saveAndBroadcast();
+          renderAdminUI();
+          sendAdminVideoCommand(state.isVideoMuted ? 'mute' : 'unmute');
         });
       }
 
@@ -3062,3 +3247,4 @@
   </script>
 </body>
 </html>
+```
