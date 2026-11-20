@@ -280,7 +280,8 @@
     }
 
     .infographic-bar-fill {
-      transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+      will-change: width;
+      transition: width 0.85s cubic-bezier(0.22, 1, 0.36, 1);
       background-image: repeating-linear-gradient(
         -45deg,
         rgba(255, 255, 255, 0.34) 0px,
@@ -2378,7 +2379,12 @@
             });
           }
 
-          leaderboardListEl.appendChild(rowEl);
+          const isNewRow = !rowEl.parentElement;
+          const expectedChild = leaderboardListEl.children[rankIdx] || null;
+          const needsDomMove = isNewRow || expectedChild !== rowEl;
+          if (needsDomMove) {
+            leaderboardListEl.insertBefore(rowEl, expectedChild);
+          }
 
           rowEl.classList.toggle('is-winner', isWinner);
 
@@ -2393,9 +2399,17 @@
           }
 
           const barFill = rowEl.querySelector('.infographic-bar-fill');
-          barFill.style.width = `${barPercent}%`;
+          const targetWidth = `${barPercent}%`;
           barFill.style.backgroundColor = team.color;
           barFill.style.borderRight = barPercent > 0 ? '2px solid #111111' : 'none';
+          if (needsDomMove) {
+            // Defer width change by 1 frame after DOM move/insert so CSS transition runs smoothly
+            requestAnimationFrame(() => {
+              barFill.style.width = targetWidth;
+            });
+          } else {
+            barFill.style.width = targetWidth;
+          }
 
           rowEl.querySelector('.game-chip-label-0').textContent = state.games[0];
           rowEl.querySelector('.game-chip-label-1').textContent = state.games[1];
