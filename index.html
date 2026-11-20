@@ -1,0 +1,3245 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ตารางคะแนน — รับน้องดูงาน • สาขานวัตกรรมการตลาด</title>
+
+  <!-- Google Fonts: Prompt & IBM Plex Sans Thai -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Prompt:wght@600;700;800;900&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- PeerJS for Zero-Server WebRTC Mobile Backstage Sync (GitHub Pages Compatible) -->
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+
+  <style>
+    /* ==========================================================================
+       VOX EDITORIAL MOTION GRAPHICS DESIGN SYSTEM
+       ========================================================================== */
+    :root {
+      --bg-paper: #F8F6F0;
+      --ink-black: #111111;
+      --team-yellow: #F4D03F;
+      --team-coral: #E74C3C;
+      --team-blue: #2980B9;
+      --border-thick: 3px solid #111111;
+      --shadow-hard: 6px 6px 0px #111111;
+      --shadow-hard-sm: 3px 3px 0px #111111;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: var(--bg-paper);
+      color: var(--ink-black);
+      font-family: 'IBM Plex Sans Thai', sans-serif;
+      background-image:
+        linear-gradient(to right, rgba(17, 17, 17, 0.055) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(17, 17, 17, 0.055) 1px, transparent 1px);
+      background-size: 32px 32px;
+      margin: 0;
+      min-height: 100vh;
+    }
+
+    .font-display {
+      font-family: 'Prompt', sans-serif;
+    }
+
+    /* ==========================================================================
+       THAI DIACRITIC CEILING & LINE-HEIGHT PROTECTION
+       Prevents clipping of upper Thai vowels & tone marks (็, ่, ้, ๊, ๋, ิ, ี, ึ, ื)
+       ========================================================================== */
+    .thai-safe {
+      line-height: 1.48 !important;
+      padding-top: 0.2em;
+      padding-bottom: 0.12em;
+      overflow: visible !important;
+    }
+
+    .thai-safe-tight {
+      line-height: 1.44 !important;
+      padding-top: 0.18em;
+      padding-bottom: 0.1em;
+      overflow: visible !important;
+    }
+
+    /* Paper Cutout Card & Hard Offset Shadow */
+    .vox-card {
+      background: #FFFFFF;
+      border: var(--border-thick);
+      box-shadow: var(--shadow-hard);
+      border-radius: 14px;
+    }
+
+    /* Inline Editable Styling */
+    [contenteditable="true"] {
+      outline: none;
+      border-radius: 6px;
+      transition: background-color 0.2s ease, box-shadow 0.2s ease;
+      cursor: text;
+    }
+
+    [contenteditable="true"]:hover {
+      background-color: rgba(244, 208, 63, 0.32);
+    }
+
+    [contenteditable="true"]:focus {
+      background-color: #FFFDF5;
+      box-shadow: 0 0 0 2.5px #111111;
+      padding-left: 6px;
+      padding-right: 6px;
+    }
+
+    /* ==========================================================================
+       INTERACTIVE GAME HEADER CARDS & SUBTLE WRENCH ICON
+       ========================================================================== */
+    .game-pill-card {
+      background: #FFFFFF;
+      border: 2.5px solid #111111;
+      box-shadow: 3px 3px 0px #111111;
+      border-radius: 12px;
+      transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1),
+                  box-shadow 0.18s cubic-bezier(0.22, 1, 0.36, 1),
+                  background-color 0.2s ease;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .game-pill-card:hover {
+      transform: translate(-1px, -1px);
+      box-shadow: 4px 4px 0px #111111;
+      background-color: #FFFDF7;
+    }
+
+    .game-pill-card.is-active {
+      background-color: #FFFBEB;
+      transform: translate(2px, 2px);
+      box-shadow: 1px 1px 0px #111111;
+    }
+
+    /* Subtle wrench icon at rest (opacity: 0.16), solid on hover */
+    .game-wrench-btn {
+      opacity: 0.16;
+      border: 1.5px solid rgba(17, 17, 17, 0.35);
+      background-color: rgba(248, 246, 240, 0.75);
+      transition: opacity 0.2s ease, transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+    }
+
+    .game-pill-card:hover .game-wrench-btn {
+      opacity: 0.42;
+    }
+
+    .game-wrench-btn:hover,
+    .game-wrench-btn:focus-visible {
+      opacity: 1 !important;
+      border-color: #111111;
+      background-color: #F4D03F;
+      transform: rotate(18deg) scale(1.08);
+    }
+
+    /* ==========================================================================
+       SMOOTH SLIDE-DOWN MEDIA ACCORDION & SEAMLESS VOX CUTOUT CONTROLS
+       ========================================================================== */
+    .media-accordion-wrapper {
+      display: grid;
+      grid-template-rows: 0fr;
+      opacity: 0;
+      margin-top: 0px;
+      transition: grid-template-rows 0.46s cubic-bezier(0.22, 1, 0.36, 1),
+                  opacity 0.34s ease,
+                  margin-top 0.46s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .media-accordion-wrapper.is-open {
+      grid-template-rows: 1fr;
+      opacity: 1;
+      margin-top: 16px;
+    }
+
+    .media-accordion-inner {
+      overflow: hidden;
+    }
+
+    .media-content-stage {
+      transition: opacity 0.24s ease, transform 0.24s ease;
+    }
+
+    .media-content-stage.is-swapping {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+
+    /* Subtle Accordion Header Actions (faded at rest for clean presentation) */
+    .accordion-subtle-actions {
+      opacity: 0.16;
+      transition: opacity 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    #media-accordion:hover .accordion-subtle-actions,
+    .accordion-subtle-actions:focus-within {
+      opacity: 1;
+    }
+
+    /* Seamless Floating Vox Media Controls (Hidden at rest, reveals on hover — works over YouTube iframe too) */
+    .media-floating-controls {
+      opacity: 0;
+      pointer-events: auto;
+      transform: translateY(-6px) scale(0.97);
+      transition: opacity 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+                  transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    #media-visual-host:hover .media-floating-controls,
+    .media-floating-controls:hover,
+    #media-visual-host:focus-within .media-floating-controls {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    /* Smooth Video <-> Image/GIF Crossfade & Scale Transition */
+    .media-visual-pane {
+      transition: opacity 0.36s cubic-bezier(0.22, 1, 0.36, 1),
+                  transform 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+      will-change: opacity, transform;
+    }
+
+    .media-visual-pane.is-fading-out {
+      opacity: 0;
+      transform: scale(0.975);
+    }
+
+    /* ==========================================================================
+       THEATER MEDIA ZOOM OVERLAY (SMOOTH SCALE & BACKDROP FADE)
+       ========================================================================== */
+    #theater-zoom-overlay {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.36s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    #theater-zoom-overlay.is-zoomed {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    #theater-zoom-dialog {
+      transform: scale(0.88) translateY(14px);
+      opacity: 0;
+      transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+                  opacity 0.32s ease;
+      will-change: transform, opacity;
+    }
+
+    #theater-zoom-overlay.is-zoomed #theater-zoom-dialog {
+      transform: scale(1) translateY(0);
+      opacity: 1;
+    }
+
+    /* ==========================================================================
+       SMOOTH FLIP MOTION FOR GROUP ROWS & VICTORY BADGE
+       ========================================================================== */
+    .team-row {
+      position: relative;
+      will-change: transform;
+      transition: box-shadow 0.35s ease, border-color 0.35s ease, background-color 0.35s ease;
+    }
+
+    .team-row.is-winner {
+      border-width: 4px;
+      box-shadow: 9px 9px 0px #111111;
+      background: linear-gradient(135deg, #FFFFFF 0%, #FFFBEB 100%);
+    }
+
+    .crown-badge {
+      display: none;
+      animation: popBounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    .team-row.is-winner .crown-badge {
+      display: inline-flex;
+    }
+
+    @keyframes popBounce {
+      0% { transform: scale(0) rotate(-18deg); opacity: 0; }
+      70% { transform: scale(1.18) rotate(4deg); opacity: 1; }
+      100% { transform: scale(1) rotate(-3deg); opacity: 1; }
+    }
+
+    /* ==========================================================================
+       SLOW BARBER-POLE SALON DIAGONAL STRIPE ANIMATION (2.8s LINEAR INFINITE)
+       ========================================================================== */
+    @keyframes barberPoleSlow {
+      0% { background-position: 0 0; }
+      100% { background-position: 56px 0; }
+    }
+
+    .infographic-bar-fill {
+      transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+      background-image: repeating-linear-gradient(
+        -45deg,
+        rgba(255, 255, 255, 0.34) 0px,
+        rgba(255, 255, 255, 0.34) 10px,
+        rgba(255, 255, 255, 0.04) 10px,
+        rgba(255, 255, 255, 0.04) 20px
+      );
+      background-size: 56px 56px;
+      animation: barberPoleSlow 2.8s linear infinite;
+      box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.4), inset 0 -2px 0 rgba(17, 17, 17, 0.12);
+    }
+
+    /* Tactile Brutalist Buttons */
+    .btn-vox {
+      border: 2.5px solid #111111;
+      box-shadow: var(--shadow-hard-sm);
+      transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.15s ease;
+      user-select: none;
+    }
+
+    .btn-vox:active {
+      transform: translate(2px, 2px);
+      box-shadow: 1px 1px 0px #111111;
+    }
+
+    /* Collapsible Control Drawer */
+    #control-drawer {
+      transition: transform 0.38s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.28s ease;
+    }
+
+    #control-drawer.drawer-closed {
+      transform: translateY(105%);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* Subtle Bottom-Right Settings Gear Trigger (opacity: 0.16 at rest, solid on hover) */
+    .control-fab {
+      opacity: 0.16;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+
+    .control-fab:hover,
+    .control-fab:focus-visible,
+    .control-fab.is-active {
+      opacity: 1;
+      transform: scale(1.06);
+    }
+
+    /* Hide number input arrows for cleaner look */
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type="number"] {
+      -moz-appearance: textfield;
+    }
+
+    /* Confetti Canvas Overlay */
+    #confetti-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 80;
+    }
+  </style>
+</head>
+<body class="flex flex-col justify-between selection:bg-yellow-300 selection:text-black">
+
+  <!-- Confetti Canvas -->
+  <canvas id="confetti-canvas"></canvas>
+
+  <!-- ========================================================================
+       VIEW 1: CLEAN REAL-TIME STAGE VIEW (PROJECTOR READY — NO TOP-RIGHT BUTTONS)
+       ======================================================================== -->
+  <main id="stage-container" class="w-full max-w-6xl mx-auto px-4 sm:px-8 py-6 sm:py-8 flex-1 flex flex-col justify-center">
+
+    <!-- Clean Vox Editorial Masthead -->
+    <header class="mb-6 sm:mb-7 border-b-[3px] border-[#111111] pb-5">
+      <div class="inline-flex items-center gap-2 bg-[#111111] text-[#F8F6F0] px-3 py-1 rounded-md font-display font-extrabold text-xs sm:text-sm tracking-wider mb-2.5 shadow-[3px_3px_0px_#F4D03F]">
+        <span class="w-2 h-2 rounded-full bg-[#F4D03F]"></span>
+        <span>LIVE SCOREBOARD</span>
+      </div>
+
+      <h1
+        id="event-title"
+        contenteditable="true"
+        spellcheck="false"
+        class="thai-safe font-display font-black text-3xl sm:text-5xl lg:text-[3.1rem] text-[#111111] tracking-tight break-words"
+      >รับน้องดูงาน • สาขานวัตกรรมการตลาด</h1>
+      <p
+        id="event-subtitle"
+        contenteditable="true"
+        spellcheck="false"
+        class="thai-safe-tight font-semibold text-base sm:text-lg text-[#111111]/75 mt-1 break-words"
+      >ตารางคะแนนรวมการแข่งขันทั้ง 3 ฐานกิจกรรม</p>
+
+      <!-- Interactive & Editable 3 Games Header Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-5" id="game-cards-row">
+        <!-- Game 1 Card -->
+        <div
+          id="game-card-0"
+          data-game-index="0"
+          role="button"
+          tabindex="0"
+          aria-expanded="false"
+          class="game-pill-card px-3.5 py-2.5 flex items-center justify-between gap-2"
+        >
+          <div class="flex items-center gap-2.5 min-w-0 flex-1">
+            <span class="w-3.5 h-3.5 rounded-full bg-[#F4D03F] border-[1.5px] border-[#111111] shrink-0"></span>
+            <span
+              id="game-title-0"
+              contenteditable="true"
+              spellcheck="false"
+              class="game-title-editable thai-safe-tight font-semibold text-sm sm:text-base text-[#111111] break-words"
+            >เกมที่ 1: จัดกลุ่ม &amp; วงตัวเลข</span>
+          </div>
+          <div class="flex items-center gap-1.5 shrink-0">
+            <span id="game-media-dot-0" class="hidden w-2 h-2 rounded-full bg-[#111111]" title="มีรายละเอียดหรือสื่อประกอบ"></span>
+            <button
+              type="button"
+              data-wrench-index="0"
+              aria-label="ตั้งค่ารายละเอียดและสื่อเกมที่ 1"
+              class="game-wrench-btn w-7 h-7 rounded-lg flex items-center justify-center text-[#111111] cursor-pointer"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Game 2 Card -->
+        <div
+          id="game-card-1"
+          data-game-index="1"
+          role="button"
+          tabindex="0"
+          aria-expanded="false"
+          class="game-pill-card px-3.5 py-2.5 flex items-center justify-between gap-2"
+        >
+          <div class="flex items-center gap-2.5 min-w-0 flex-1">
+            <span class="w-3.5 h-3.5 rounded-full bg-[#E74C3C] border-[1.5px] border-[#111111] shrink-0"></span>
+            <span
+              id="game-title-1"
+              contenteditable="true"
+              spellcheck="false"
+              class="game-title-editable thai-safe-tight font-semibold text-sm sm:text-base text-[#111111] break-words"
+            >เกมที่ 2: กระดึ๊บจับคู่คำศัพท์</span>
+          </div>
+          <div class="flex items-center gap-1.5 shrink-0">
+            <span id="game-media-dot-1" class="hidden w-2 h-2 rounded-full bg-[#111111]" title="มีรายละเอียดหรือสื่อประกอบ"></span>
+            <button
+              type="button"
+              data-wrench-index="1"
+              aria-label="ตั้งค่ารายละเอียดและสื่อเกมที่ 2"
+              class="game-wrench-btn w-7 h-7 rounded-lg flex items-center justify-center text-[#111111] cursor-pointer"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Game 3 Card -->
+        <div
+          id="game-card-2"
+          data-game-index="2"
+          role="button"
+          tabindex="0"
+          aria-expanded="false"
+          class="game-pill-card px-3.5 py-2.5 flex items-center justify-between gap-2"
+        >
+          <div class="flex items-center gap-2.5 min-w-0 flex-1">
+            <span class="w-3.5 h-3.5 rounded-full bg-[#2980B9] border-[1.5px] border-[#111111] shrink-0"></span>
+            <span
+              id="game-title-2"
+              contenteditable="true"
+              spellcheck="false"
+              class="game-title-editable thai-safe-tight font-semibold text-sm sm:text-base text-[#111111] break-words"
+            >เกมที่ 3: โหวตซื้อผลิตภัณฑ์ใหม่</span>
+          </div>
+          <div class="flex items-center gap-1.5 shrink-0">
+            <span id="game-media-dot-2" class="hidden w-2 h-2 rounded-full bg-[#111111]" title="มีรายละเอียดหรือสื่อประกอบ"></span>
+            <button
+              type="button"
+              data-wrench-index="2"
+              aria-label="ตั้งค่ารายละเอียดและสื่อเกมที่ 3"
+              class="game-wrench-btn w-7 h-7 rounded-lg flex items-center justify-center text-[#111111] cursor-pointer"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Collapsible Accordion Media & Description Panel Beneath the 3 Game Cards -->
+      <div id="media-accordion" class="media-accordion-wrapper" aria-hidden="true">
+        <div class="media-accordion-inner pb-2 pr-2">
+          <div class="vox-card bg-white p-4 sm:p-5 relative">
+            <div class="flex items-center justify-between gap-3 mb-3">
+              <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                <span id="accordion-game-dot" class="w-3.5 h-3.5 rounded-full border-[1.5px] border-[#111111] shrink-0"></span>
+                <h3 id="accordion-game-title" class="thai-safe-tight font-display font-extrabold text-base sm:text-xl text-[#111111] break-words"></h3>
+              </div>
+
+              <div class="accordion-subtle-actions flex items-center gap-1.5 shrink-0">
+                <button
+                  type="button"
+                  id="accordion-edit-btn"
+                  aria-label="แก้ไขรายละเอียดและสื่อของเกมนี้"
+                  class="w-8 h-8 rounded-lg border-2 border-[#111111] bg-[#F8F6F0] hover:bg-[#F4D03F] shadow-[2px_2px_0px_#111111] flex items-center justify-center text-[#111111] transition-colors cursor-pointer"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  id="accordion-close-btn"
+                  aria-label="ปิดหน้าต่างสื่อ"
+                  class="w-8 h-8 rounded-lg border-2 border-[#111111] bg-[#111111] hover:bg-[#E74C3C] shadow-[2px_2px_0px_#111111] text-white font-display font-bold text-sm flex items-center justify-center transition-colors cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            <!-- Dynamic Description + Media Content Stage -->
+            <div id="media-content-stage" class="media-content-stage"></div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- 3 Group Cards Leaderboard Container -->
+    <section id="leaderboard-list" class="flex flex-col gap-5 sm:gap-6">
+      <!-- All 3 group cards rendered dynamically by JS -->
+    </section>
+
+  </main>
+
+  <!-- ========================================================================
+       PERSISTENT VISUAL HOST ELEMENT (MOVED SEAMLESSLY BETWEEN ACCORDION & ZOOM)
+       Keeps YouTube iframe alive without reload; Vox controls stay hidden until hover
+       ======================================================================== -->
+  <div id="media-visual-host" class="hidden relative isolate w-full">
+    <!-- Animated Visual Pane (YouTube 16:9 or Image/GIF) -->
+    <div id="media-visual-pane" class="media-visual-pane relative z-[1] w-full"></div>
+
+    <!-- Seamless Floating Vox Cutout Controls (Invisible at rest, above iframe in DOM & z-index) -->
+    <div id="media-toolbar-row" class="media-floating-controls absolute top-3 right-3 z-30 flex items-center gap-2">
+      <!-- Video <-> Image/GIF Vox Switcher (Shown when both YouTube & Image/GIF exist) -->
+      <div id="media-switcher-bar" class="hidden inline-flex items-center gap-1 bg-[#F8F6F0] border-2 border-[#111111] rounded-xl p-1 shadow-[3px_3px_0px_#111111]">
+        <button
+          type="button"
+          id="media-nav-prev"
+          aria-label="สื่อก่อนหน้า"
+          class="w-6 h-6 rounded-lg hover:bg-[#F4D03F]/50 border border-transparent hover:border-[#111111] text-[#111111] font-display font-black text-xs flex items-center justify-center cursor-pointer transition-colors"
+        >
+          ‹
+        </button>
+        <button
+          type="button"
+          id="media-pill-video"
+          class="font-display font-bold text-xs px-2.5 py-1 rounded-lg border border-transparent transition-all cursor-pointer flex items-center gap-1"
+        >
+          <span>🎬</span>
+          <span>วิดีโอ</span>
+        </button>
+        <button
+          type="button"
+          id="media-pill-image"
+          class="font-display font-bold text-xs px-2.5 py-1 rounded-lg border border-transparent transition-all cursor-pointer flex items-center gap-1"
+        >
+          <span>🖼️</span>
+          <span>ภาพ/GIF</span>
+        </button>
+        <button
+          type="button"
+          id="media-nav-next"
+          aria-label="สื่อถัดไป"
+          class="w-6 h-6 rounded-lg hover:bg-[#F4D03F]/50 border border-transparent hover:border-[#111111] text-[#111111] font-display font-black text-xs flex items-center justify-center cursor-pointer transition-colors"
+        >
+          ›
+        </button>
+      </div>
+
+      <!-- Vox Zoom In / Zoom Out Trigger -->
+      <button
+        type="button"
+        id="media-zoom-toggle-btn"
+        aria-label="ขยายหรือย่อสื่อ"
+        class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-extrabold text-xs px-3 py-1.5 rounded-xl flex items-center gap-1.5 cursor-pointer"
+      >
+        <span id="media-zoom-btn-icon">🔍</span>
+        <span id="media-zoom-btn-label">ขยาย</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       THEATER MEDIA ZOOM MODAL OVERLAY (SMOOTH SCALE & BACKDROP TRANSITION)
+       ======================================================================== -->
+  <div
+    id="theater-zoom-overlay"
+    class="fixed inset-0 z-50 bg-black/80 backdrop-blur-[4px] flex items-center justify-center p-3 sm:p-6"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="zoom-modal-title"
+  >
+    <div
+      id="theater-zoom-dialog"
+      class="vox-card bg-[#F8F6F0] w-full max-w-5xl max-h-[92vh] p-4 sm:p-6 flex flex-col gap-3.5 overflow-y-auto"
+    >
+      <!-- Zoom Modal Header -->
+      <div class="flex items-center justify-between gap-3 pb-2.5 border-b-[2.5px] border-[#111111]">
+        <div class="flex items-center gap-2.5 min-w-0 flex-1">
+          <span id="zoom-game-dot" class="w-4 h-4 rounded-full border-2 border-[#111111] shrink-0"></span>
+          <h3 id="zoom-modal-title" class="thai-safe-tight font-display font-extrabold text-lg sm:text-2xl text-[#111111] truncate"></h3>
+        </div>
+        <button
+          type="button"
+          id="zoom-close-btn"
+          class="opacity-45 hover:opacity-100 btn-vox bg-[#111111] hover:bg-[#E74C3C] text-white font-display font-bold text-xs sm:text-sm px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 cursor-pointer shrink-0 transition-all"
+        >
+          <span>✕ ย่อกลับ (Esc)</span>
+        </button>
+      </div>
+
+      <!-- Target Slot where #media-visual-host is reparented when zoomed -->
+      <div id="zoom-media-slot" class="w-full"></div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       VIEW 2: MOBILE BACKSTAGE REMOTE CONTROLLER (?role=admin&room=XXXX)
+       ======================================================================== -->
+  <section id="mobile-admin-view" class="hidden w-full max-w-2xl mx-auto px-4 py-5 pb-16 flex-col gap-4">
+    <!-- Top Connection Banner -->
+    <div class="vox-card bg-[#111111] text-[#F8F6F0] p-4 flex flex-col gap-3">
+      <div class="flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2.5">
+          <span id="admin-conn-dot" class="w-3.5 h-3.5 rounded-full bg-amber-400 border border-white shrink-0"></span>
+          <div>
+            <h1 class="thai-safe-tight font-display font-extrabold text-lg text-white">หลังบ้านควบคุมตารางคะแนน</h1>
+            <p id="admin-conn-text" class="text-xs text-[#F8F6F0]/80">กำลังเตรียมการเชื่อมต่อ...</p>
+          </div>
+        </div>
+        <button
+          type="button"
+          id="admin-switch-to-stage-btn"
+          class="bg-[#F8F6F0] text-[#111111] font-display font-bold text-xs px-3 py-1.5 rounded-lg border-2 border-white cursor-pointer shrink-0"
+        >
+          สลับไปหน้าจอหลัก
+        </button>
+      </div>
+
+      <!-- Room Code Connect Bar -->
+      <div class="flex items-center gap-2 bg-white/10 p-2 rounded-xl border border-white/20">
+        <span class="text-xs font-bold text-[#F4D03F] px-1 shrink-0">รหัสห้อง:</span>
+        <input
+          id="admin-room-input"
+          type="text"
+          maxlength="6"
+          placeholder="เช่น A7K9"
+          class="w-24 uppercase font-display font-black text-center text-base tracking-widest bg-white text-[#111111] rounded-lg px-2 py-1 border-2 border-[#111111] focus:outline-none"
+        />
+        <button
+          type="button"
+          id="admin-connect-btn"
+          class="flex-1 bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-extrabold text-sm py-1.5 px-3 rounded-lg border-2 border-[#111111] cursor-pointer"
+        >
+          เชื่อมต่อจอหลัก
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Navigation Tabs -->
+    <div class="grid grid-cols-3 gap-2">
+      <button type="button" data-admin-tab="scores" class="admin-tab-btn btn-vox bg-[#F4D03F] text-[#111111] font-display font-extrabold text-sm py-2.5 rounded-xl cursor-pointer">
+        1. ให้คะแนน
+      </button>
+      <button type="button" data-admin-tab="stage-media" class="admin-tab-btn btn-vox bg-white text-[#111111] font-display font-extrabold text-sm py-2.5 rounded-xl cursor-pointer">
+        2. คุมสื่อ/กติกา
+      </button>
+      <button type="button" data-admin-tab="names" class="admin-tab-btn btn-vox bg-white text-[#111111] font-display font-extrabold text-sm py-2.5 rounded-xl cursor-pointer">
+        3. แก้ชื่อ/หัวข้อ
+      </button>
+    </div>
+
+    <!-- TAB 1: SCORES & VICTORY / RESET -->
+    <div id="admin-panel-scores" class="flex flex-col gap-4">
+      <div class="grid grid-cols-2 gap-2.5">
+        <button
+          type="button"
+          id="admin-btn-victory"
+          class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-extrabold text-sm py-3 px-3 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer"
+        >
+          <span>👑</span>
+          <span>ประกาศ VICTORY</span>
+        </button>
+        <button
+          type="button"
+          id="admin-btn-reset"
+          class="btn-vox bg-white hover:bg-red-50 text-[#E74C3C] font-display font-extrabold text-sm py-3 px-3 rounded-xl cursor-pointer"
+        >
+          รีเซ็ตคะแนน
+        </button>
+      </div>
+
+      <div id="admin-teams-container" class="flex flex-col gap-4">
+        <!-- Populated dynamically -->
+      </div>
+    </div>
+
+    <!-- TAB 2: REMOTE GAME ACCORDION, VIDEO PLAYBACK, SWITCHER, THEATER ZOOM & MEDIA EDITORS -->
+    <div id="admin-panel-stage-media" class="hidden flex-col gap-4">
+      <!-- Live Stage Remote Control Card -->
+      <div class="vox-card bg-white p-4 flex flex-col gap-3.5">
+        <div class="flex items-center justify-between gap-2 pb-2 border-b-2 border-[#111111]">
+          <h2 class="thai-safe-tight font-display font-extrabold text-base text-[#111111]">
+            🎛️ ควบคุมการแสดงสื่อบนหน้าจอหลักสด
+          </h2>
+          <span id="admin-live-zoom-badge" class="text-xs font-display font-bold px-2.5 py-0.5 rounded-md border border-[#111111] bg-[#F8F6F0]">
+            ขนาดปกติ
+          </span>
+        </div>
+
+        <!-- 1. Open/Close Game 1, 2, 3 Accordion on Main Screen -->
+        <div class="flex flex-col gap-2">
+          <span class="text-xs font-bold text-[#111111]/75">เลือกเปิด/ปิดการ์ดเกมบนหน้าบ้าน:</span>
+          <div id="admin-remote-accordion-btns" class="flex flex-col gap-2">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+        <!-- 2. Switch Video <-> Image/GIF & Toggle Theater Zoom on Main Screen -->
+        <div class="bg-[#F8F6F0] border-2 border-[#111111] rounded-xl p-3 flex flex-col gap-2.5">
+          <span class="text-xs font-bold text-[#111111]">สลับคลิปวิดีโอ / รูปภาพ (GIF) และสั่งซูมบนหน้าบ้าน:</span>
+
+          <div class="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              id="admin-switch-video-btn"
+              class="btn-vox bg-white text-[#111111] font-display font-bold text-xs sm:text-sm py-2.5 px-2 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <span>🎬</span>
+              <span>แสดงวิดีโอ (Clip)</span>
+            </button>
+            <button
+              type="button"
+              id="admin-switch-image-btn"
+              class="btn-vox bg-white text-[#111111] font-display font-bold text-xs sm:text-sm py-2.5 px-2 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <span>🖼️</span>
+              <span>แสดงรูป / GIF</span>
+            </button>
+          </div>
+
+          <button
+            type="button"
+            id="admin-toggle-zoom-btn"
+            class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-extrabold text-sm py-3 px-3 rounded-xl flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <span id="admin-zoom-btn-icon">🔍</span>
+            <span id="admin-zoom-btn-text">ซูมขยายเต็มจอบนหน้าบ้าน</span>
+          </button>
+
+          <!-- 3. Remote YouTube Video Playback Controls (Vox Palette) -->
+          <div class="pt-2.5 border-t-2 border-[#111111]/15 flex flex-col gap-2">
+            <span class="text-xs font-bold text-[#111111]">🎬 ควบคุมวิดีโอบนหน้าจอหลัก:</span>
+            <div class="grid grid-cols-4 gap-1.5">
+              <button
+                type="button"
+                id="admin-video-play-btn"
+                class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-extrabold text-xs py-2.5 px-1 rounded-xl flex items-center justify-center gap-1 cursor-pointer"
+              >
+                <span>▶</span>
+                <span>เล่น</span>
+              </button>
+              <button
+                type="button"
+                id="admin-video-pause-btn"
+                class="btn-vox bg-white hover:bg-[#FFFDF5] text-[#111111] font-display font-extrabold text-xs py-2.5 px-1 rounded-xl flex items-center justify-center gap-1 cursor-pointer"
+              >
+                <span>⏸</span>
+                <span>พัก</span>
+              </button>
+              <button
+                type="button"
+                id="admin-video-restart-btn"
+                class="btn-vox bg-[#2980B9] hover:bg-[#2471a3] text-white font-display font-extrabold text-xs py-2.5 px-1 rounded-xl flex items-center justify-center gap-1 cursor-pointer"
+              >
+                <span>↺</span>
+                <span>เริ่มใหม่</span>
+              </button>
+              <button
+                type="button"
+                id="admin-video-mute-btn"
+                class="btn-vox bg-white hover:bg-gray-50 text-[#111111] font-display font-extrabold text-xs py-2.5 px-1 rounded-xl flex items-center justify-center gap-1 cursor-pointer"
+              >
+                <span id="admin-video-mute-icon">🔊</span>
+                <span id="admin-video-mute-label">เสียง</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Per-Game Media & Rules Editors -->
+      <div id="admin-media-editors" class="flex flex-col gap-4">
+        <!-- Populated dynamically -->
+      </div>
+    </div>
+
+    <!-- TAB 3: EDIT EVENT TITLE, SUBTITLE, GROUP NAMES & GAME TITLES -->
+    <div id="admin-panel-names" class="hidden flex-col gap-4">
+      <div class="vox-card bg-white p-4 flex flex-col gap-3">
+        <label class="font-display font-bold text-sm text-[#111111]">ชื่อกิจกรรมหลักบนหัวกระดาษ</label>
+        <input
+          id="admin-input-event-title"
+          type="text"
+          class="thai-safe-tight w-full bg-[#F8F6F0] border-2 border-[#111111] rounded-xl px-3 py-2 text-base font-bold text-[#111111]"
+        />
+        <label class="font-display font-bold text-sm text-[#111111]">คำโปรยรองใต้หัวข้อ</label>
+        <input
+          id="admin-input-event-subtitle"
+          type="text"
+          class="thai-safe-tight w-full bg-[#F8F6F0] border-2 border-[#111111] rounded-xl px-3 py-2 text-sm font-semibold text-[#111111]"
+        />
+      </div>
+
+      <div class="vox-card bg-white p-4 flex flex-col gap-3">
+        <h3 class="font-display font-bold text-sm text-[#111111]">ชื่อทั้ง 3 กลุ่ม</h3>
+        <div id="admin-team-names-inputs" class="flex flex-col gap-2.5"></div>
+      </div>
+
+      <div class="vox-card bg-white p-4 flex flex-col gap-3">
+        <h3 class="font-display font-bold text-sm text-[#111111]">ชื่อทั้ง 3 เกม</h3>
+        <div id="admin-game-titles-inputs" class="flex flex-col gap-2.5"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       GAME MEDIA & RULE DESCRIPTION MODAL (OPENED BY WRENCH ICON)
+       ======================================================================== -->
+  <div
+    id="media-config-modal"
+    class="fixed inset-0 z-50 hidden items-center justify-center bg-black/55 backdrop-blur-[2px] p-4 overflow-y-auto"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="modal-heading"
+  >
+    <div class="vox-card bg-[#F8F6F0] w-full max-w-lg p-5 sm:p-6 relative my-auto">
+      <div class="flex items-center justify-between gap-3 pb-3 mb-4 border-b-[2.5px] border-[#111111]">
+        <div class="flex items-center gap-2.5 min-w-0 flex-1">
+          <span id="modal-game-dot" class="w-4 h-4 rounded-full border-2 border-[#111111] shrink-0"></span>
+          <h2 id="modal-heading" class="thai-safe-tight font-display font-extrabold text-lg sm:text-xl text-[#111111] break-words">
+            ตั้งค่าสื่อ &amp; กติกาเกม
+          </h2>
+        </div>
+        <button
+          type="button"
+          id="modal-close-x"
+          aria-label="ปิดหน้าต่าง"
+          class="w-8 h-8 rounded-lg border-2 border-[#111111] bg-white hover:bg-[#E74C3C] hover:text-white font-display font-bold text-sm flex items-center justify-center transition-colors cursor-pointer shrink-0"
+        >
+          ✕
+        </button>
+      </div>
+
+      <!-- Game Description / Rules Input -->
+      <div class="bg-white border-2 border-[#111111] rounded-xl p-3.5 mb-3.5 shadow-[3px_3px_0px_#111111]">
+        <div class="flex items-center justify-between gap-2 mb-1.5">
+          <label for="input-game-description" class="font-display font-bold text-sm text-[#111111] flex items-center gap-1.5">
+            <span class="inline-block w-2.5 h-2.5 rounded-full bg-[#F4D03F] border border-[#111111]"></span>
+            คำอธิบาย / กติกาของเกม
+          </label>
+          <button type="button" id="btn-clear-description" class="text-xs font-bold text-[#E74C3C] hover:underline cursor-pointer">
+            ล้างข้อความ
+          </button>
+        </div>
+        <textarea
+          id="input-game-description"
+          rows="3"
+          placeholder="พิมพ์คำอธิบาย กติกา หรือเกณฑ์คะแนนของเกมนี้ (แสดงเมื่อคลิกเปิดการ์ดเกม)"
+          class="thai-safe w-full bg-[#F8F6F0] border-2 border-[#111111] rounded-lg px-3 py-2 text-sm font-medium text-[#111111] focus:outline-none focus:bg-white resize-y"
+        ></textarea>
+      </div>
+
+      <!-- YouTube Link Input -->
+      <div class="bg-white border-2 border-[#111111] rounded-xl p-3.5 mb-3.5 shadow-[3px_3px_0px_#111111]">
+        <div class="flex items-center justify-between gap-2 mb-1.5">
+          <label for="input-youtube-url" class="font-display font-bold text-sm text-[#111111] flex items-center gap-1.5">
+            <span class="inline-block w-2.5 h-2.5 rounded-full bg-[#E74C3C] border border-[#111111]"></span>
+            ลิงก์ YouTube (วิดีโอ 16:9)
+          </label>
+          <button type="button" id="btn-clear-youtube" class="text-xs font-bold text-[#E74C3C] hover:underline cursor-pointer">
+            ล้างลิงก์
+          </button>
+        </div>
+        <input
+          id="input-youtube-url"
+          type="url"
+          placeholder="วางลิงก์ YouTube เช่น https://youtu.be/... หรือ watch?v=..."
+          class="w-full bg-[#F8F6F0] border-2 border-[#111111] rounded-lg px-3 py-2 text-sm font-medium text-[#111111] focus:outline-none focus:bg-white"
+        />
+        <p id="youtube-parse-status" class="text-xs font-semibold mt-1.5 text-[#111111]/70 hidden"></p>
+      </div>
+
+      <!-- Image / GIF URL or Local File Upload -->
+      <div class="bg-white border-2 border-[#111111] rounded-xl p-3.5 mb-4 shadow-[3px_3px_0px_#111111]">
+        <div class="flex items-center justify-between gap-2 mb-1.5">
+          <label for="input-image-url" class="font-display font-bold text-sm text-[#111111] flex items-center gap-1.5">
+            <span class="inline-block w-2.5 h-2.5 rounded-full bg-[#2980B9] border border-[#111111]"></span>
+            รูปภาพ / GIF ประกอบ (สลับดูคู่กับวิดีโอได้)
+          </label>
+          <button type="button" id="btn-clear-image" class="text-xs font-bold text-[#E74C3C] hover:underline cursor-pointer">
+            ลบรูป/GIF
+          </button>
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-2">
+          <input
+            id="input-image-url"
+            type="text"
+            placeholder="วางลิงก์รูปภาพ / .gif (URL) หรือเลือกไฟล์จากเครื่อง"
+            class="flex-1 bg-[#F8F6F0] border-2 border-[#111111] rounded-lg px-3 py-2 text-sm font-medium text-[#111111] focus:outline-none focus:bg-white"
+          />
+          <label class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-bold text-xs sm:text-sm px-3.5 py-2 rounded-lg flex items-center justify-center gap-1.5 cursor-pointer shrink-0">
+            <span>📁 เลือกรูป/GIF</span>
+            <input id="input-image-file" type="file" accept="image/*,.gif" class="hidden" />
+          </label>
+        </div>
+
+        <div id="modal-image-preview-wrap" class="hidden mt-3 bg-[#F8F6F0] border-2 border-[#111111] rounded-lg p-2 flex items-center justify-center">
+          <img id="modal-image-preview" src="" alt="ตัวอย่างรูปภาพหรือ GIF" class="max-h-32 w-auto rounded object-contain" />
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2.5">
+        <button type="button" id="modal-cancel-btn" class="btn-vox bg-white hover:bg-gray-100 text-[#111111] font-display font-bold text-sm px-4 py-2 rounded-xl cursor-pointer">
+          ยกเลิก
+        </button>
+        <button type="button" id="modal-save-btn" class="btn-vox bg-[#111111] hover:bg-[#262626] text-white font-display font-bold text-sm px-5 py-2 rounded-xl cursor-pointer">
+          บันทึกข้อมูลเกม
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       SUBTLE BOTTOM-RIGHT SETTINGS GEAR TRIGGER (ONLY CONTROL TRIGGER ON STAGE)
+       ======================================================================== -->
+  <button
+    id="drawer-toggle-btn"
+    type="button"
+    aria-label="เปิด/ปิดแผงควบคุมคะแนนและ QR หลังบ้าน (กด H หรือ Spacebar)"
+    class="control-fab fixed bottom-5 right-5 z-40 w-11 h-11 rounded-full bg-[#111111] text-[#F8F6F0] border-2 border-[#F8F6F0] shadow-lg flex items-center justify-center cursor-pointer"
+  >
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+      <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
+  </button>
+
+  <!-- ========================================================================
+       COLLAPSIBLE OPERATOR CONTROL DRAWER (INCLUDES EMBEDDED MOBILE QR CARD)
+       ======================================================================== -->
+  <aside
+    id="control-drawer"
+    class="drawer-closed fixed inset-x-0 bottom-0 z-40 bg-[#F8F6F0] border-t-[4px] border-[#111111] shadow-[0_-12px_32px_rgba(0,0,0,0.22)] max-h-[88vh] overflow-y-auto"
+  >
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-5">
+
+      <!-- Drawer Top Bar -->
+      <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-4 border-b-2 border-[#111111]">
+        <div class="flex items-center gap-2.5">
+          <span class="inline-block w-3 h-3 rounded-full bg-[#E74C3C] border border-[#111111]"></span>
+          <h2 class="thai-safe-tight font-display font-bold text-lg sm:text-xl text-[#111111]">แผงควบคุมคะแนน &amp; หลังบ้านมือถือ</h2>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2.5">
+          <!-- Announce Victory Button -->
+          <button
+            id="btn-winner"
+            type="button"
+            class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-bold text-sm sm:text-base px-4 py-2 rounded-xl flex items-center gap-1.5 cursor-pointer"
+          >
+            <span>👑</span>
+            <span>ประกาศ VICTORY</span>
+          </button>
+
+          <!-- 2-Step Reset Button -->
+          <button
+            id="btn-reset"
+            type="button"
+            class="btn-vox bg-white hover:bg-red-50 text-[#E74C3C] font-display font-bold text-sm sm:text-base px-4 py-2 rounded-xl cursor-pointer"
+          >
+            รีเซ็ตคะแนน
+          </button>
+
+          <!-- Close Drawer / Switch to Clean Stage View -->
+          <button
+            id="btn-close-drawer"
+            type="button"
+            class="btn-vox bg-[#111111] text-white font-display font-bold text-sm sm:text-base px-4 py-2 rounded-xl cursor-pointer"
+          >
+            ขึ้นจอเต็มตา
+          </button>
+        </div>
+      </div>
+
+      <!-- Embedded Live PeerJS Mobile Backstage QR Code Card -->
+      <div class="vox-card bg-white p-3.5 sm:p-4 mb-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-3.5 w-full sm:w-auto">
+          <div class="w-24 h-24 sm:w-28 sm:h-28 bg-[#F8F6F0] border-2 border-[#111111] rounded-xl p-1.5 flex items-center justify-center shrink-0">
+            <img
+              id="drawer-qr-img"
+              src=""
+              alt="QR หลังบ้านมือถือ"
+              onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');"
+              class="w-full h-full object-contain"
+            />
+            <span class="hidden text-[11px] font-bold text-center text-[#111111]">สแกนหรือคัดลอกลิงก์</span>
+          </div>
+          <div class="min-w-0 flex-1">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="font-display font-extrabold text-sm sm:text-base text-[#111111]">📱 สแกนควบคุมผ่านมือถือ</span>
+              <span id="drawer-room-code-badge" class="bg-[#F4D03F] border-2 border-[#111111] px-2.5 py-0.5 rounded-lg font-display font-black text-sm tracking-widest text-[#111111]">
+                ----
+              </span>
+            </div>
+            <p id="drawer-peer-status" class="text-xs font-bold text-emerald-700 mt-1">พร้อมรับการเชื่อมต่อจากมือถือ</p>
+            <p class="text-xs text-[#111111]/70 mt-0.5">ทีมงานสามารถให้คะแนน เล่น/หยุดคลิป สลับรูป/GIF และสั่งซูมขยายขึ้นจอได้ทันที</p>
+          </div>
+        </div>
+
+        <div class="flex sm:flex-col gap-2 w-full sm:w-auto shrink-0">
+          <button
+            type="button"
+            id="drawer-copy-admin-btn"
+            class="btn-vox flex-1 bg-[#F8F6F0] hover:bg-yellow-100 text-[#111111] font-display font-bold text-xs sm:text-sm py-2 px-3.5 rounded-xl cursor-pointer whitespace-nowrap"
+          >
+            📋 คัดลอกลิงก์หลังบ้าน
+          </button>
+          <button
+            type="button"
+            id="drawer-open-admin-btn"
+            class="btn-vox flex-1 bg-[#2980B9] hover:bg-[#2471a3] text-white font-display font-bold text-xs sm:text-sm py-2 px-3.5 rounded-xl cursor-pointer whitespace-nowrap"
+          >
+            📱 เปิดหน้าหลังบ้าน
+          </button>
+        </div>
+      </div>
+
+      <!-- Team Scoring Control Grid -->
+      <div id="drawer-teams-grid" class="grid grid-cols-1 lg:grid-cols-3 gap-4 pb-6">
+        <!-- Rendered dynamically by JS -->
+      </div>
+
+    </div>
+  </aside>
+
+  <!-- ========================================================================
+       COMPLETE APPLICATION LOGIC (STATE, RENDERING, SYNC, VIDEO CONTROL, ZOOM)
+       ======================================================================== -->
+  <script>
+    (() => {
+      const STORAGE_KEY = 'vox_freshy_marketing_scoreboard_clean_v2';
+      const ROOM_STORAGE_KEY = 'vox_freshy_marketing_room_code_v1';
+      const CHANNEL_NAME = 'vox_freshy_marketing_sync_channel';
+      const GAME_COLORS = ['#F4D03F', '#E74C3C', '#2980B9'];
+
+      // Parse URL Query Parameters (?role=admin|stage & ?room=XXXX)
+      const urlParams = new URLSearchParams(window.location.search);
+      const initialRole = urlParams.get('role') === 'admin' ? 'admin' : 'stage';
+      const urlRoomParam = (urlParams.get('room') || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+
+      // Persistent 4-character Room Code
+      function getOrCreateRoomCode() {
+        if (urlRoomParam && urlRoomParam.length >= 4) {
+          try { localStorage.setItem(ROOM_STORAGE_KEY, urlRoomParam.slice(0, 6)); } catch (_) {}
+          return urlRoomParam.slice(0, 6);
+        }
+        try {
+          const saved = localStorage.getItem(ROOM_STORAGE_KEY);
+          if (saved && saved.length >= 4) return saved;
+        } catch (_) {}
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        let code = '';
+        for (let i = 0; i < 4; i++) {
+          code += chars[Math.floor(Math.random() * chars.length)];
+        }
+        try { localStorage.setItem(ROOM_STORAGE_KEY, code); } catch (_) {}
+        return code;
+      }
+
+      let roomCode = getOrCreateRoomCode();
+
+      // Default Initial State
+      const defaultState = {
+        eventTitle: 'รับน้องดูงาน • สาขานวัตกรรมการตลาด',
+        eventSubtitle: 'ตารางคะแนนรวมการแข่งขันทั้ง 3 ฐานกิจกรรม',
+        games: [
+          'เกมที่ 1: จัดกลุ่ม & วงตัวเลข',
+          'เกมที่ 2: กระดึ๊บจับคู่คำศัพท์',
+          'เกมที่ 3: โหวตซื้อผลิตภัณฑ์ใหม่'
+        ],
+        gameMedia: [
+          { description: '', youtubeUrl: '', imageData: '', activeMediaType: 'video' },
+          { description: '', youtubeUrl: '', imageData: '', activeMediaType: 'video' },
+          { description: '', youtubeUrl: '', imageData: '', activeMediaType: 'video' }
+        ],
+        teams: [
+          {
+            id: 'team-1',
+            name: 'กลุ่มที่ 1',
+            color: '#F4D03F',
+            textColor: '#111111',
+            scores: [0, 0, 0]
+          },
+          {
+            id: 'team-2',
+            name: 'กลุ่มที่ 2',
+            color: '#E74C3C',
+            textColor: '#FFFFFF',
+            scores: [0, 0, 0]
+          },
+          {
+            id: 'team-3',
+            name: 'กลุ่มที่ 3',
+            color: '#2980B9',
+            textColor: '#FFFFFF',
+            scores: [0, 0, 0]
+          }
+        ],
+        winnerAnnounced: false,
+        activeGameAccordion: null,
+        isMediaZoomed: false,
+        isVideoMuted: false,
+        updatedAt: Date.now()
+      };
+
+      function cloneDefaultState() {
+        return JSON.parse(JSON.stringify(defaultState));
+      }
+
+      // Normalize activeMediaType based on available YouTube & Image/GIF for a game
+      function resolveActiveMediaType(mediaObj) {
+        const hasYt = Boolean(extractYouTubeId(mediaObj?.youtubeUrl));
+        const hasImg = Boolean((mediaObj?.imageData || '').trim());
+        if (hasYt && hasImg) {
+          return mediaObj.activeMediaType === 'image' ? 'image' : 'video';
+        }
+        if (hasYt) return 'video';
+        if (hasImg) return 'image';
+        return 'video';
+      }
+
+      // Load State safely from LocalStorage (migrates from older keys if available)
+      function loadState() {
+        try {
+          const raw =
+            localStorage.getItem(STORAGE_KEY) ||
+            localStorage.getItem('vox_freshy_marketing_scoreboard_clean_v1') ||
+            localStorage.getItem('vox_freshy_marketing_scoreboard_v5') ||
+            localStorage.getItem('vox_freshy_marketing_scoreboard_v4');
+          if (!raw) return cloneDefaultState();
+          const parsed = JSON.parse(raw);
+          if (!parsed || !Array.isArray(parsed.teams) || parsed.teams.length !== 3) {
+            return cloneDefaultState();
+          }
+          const base = cloneDefaultState();
+          base.eventTitle = parsed.eventTitle || base.eventTitle;
+          base.eventSubtitle = parsed.eventSubtitle || base.eventSubtitle;
+          if (Array.isArray(parsed.games) && parsed.games.length === 3) {
+            base.games = parsed.games.map((g, i) => g || base.games[i]);
+          }
+          if (Array.isArray(parsed.gameMedia) && parsed.gameMedia.length === 3) {
+            base.gameMedia = parsed.gameMedia.map(m => ({
+              description: m?.description || '',
+              youtubeUrl: m?.youtubeUrl || '',
+              imageData: m?.imageData || '',
+              activeMediaType: m?.activeMediaType === 'image' ? 'image' : 'video'
+            }));
+          }
+          base.teams = parsed.teams.map((t, i) => ({
+            id: t.id || base.teams[i].id,
+            name: t.name || base.teams[i].name,
+            color: t.color || base.teams[i].color,
+            textColor: t.textColor || base.teams[i].textColor,
+            scores: Array.isArray(t.scores) && t.scores.length === 3
+              ? t.scores.map(s => Number(s) || 0)
+              : [0, 0, 0]
+          }));
+          base.winnerAnnounced = Boolean(parsed.winnerAnnounced);
+          base.activeGameAccordion = (typeof parsed.activeGameAccordion === 'number' && parsed.activeGameAccordion >= 0 && parsed.activeGameAccordion <= 2)
+            ? parsed.activeGameAccordion
+            : null;
+          base.isMediaZoomed = Boolean(parsed.isMediaZoomed) && base.activeGameAccordion !== null;
+          base.isVideoMuted = Boolean(parsed.isVideoMuted);
+          return base;
+        } catch (err) {
+          console.warn('Recovering default state due to storage read error:', err);
+          return cloneDefaultState();
+        }
+      }
+
+      let state = loadState();
+      const displayedTotals = {};
+      state.teams.forEach(t => {
+        displayedTotals[t.id] = getTeamTotal(t);
+      });
+
+      function getTeamTotal(team) {
+        return team.scores.reduce((sum, val) => sum + (Number(val) || 0), 0);
+      }
+
+      function escapeHtml(str) {
+        return String(str || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+
+      // ========================================================================
+      // REAL-TIME SYNC ENGINE (LOCALSTORAGE + BROADCASTCHANNEL + PEERJS WEBRTC)
+      // ========================================================================
+      const bc = ('BroadcastChannel' in window) ? new BroadcastChannel(CHANNEL_NAME) : null;
+      let currentRole = initialRole;
+      let peerInstance = null;
+      const stageConnections = new Set();
+      let adminConnection = null;
+
+      function broadcastPayload(payload) {
+        if (bc) {
+          try { bc.postMessage(payload); } catch (_) {}
+        }
+        if (currentRole === 'stage') {
+          stageConnections.forEach(conn => {
+            if (conn && conn.open) {
+              try { conn.send(payload); } catch (_) {}
+            }
+          });
+        } else if (currentRole === 'admin' && adminConnection && adminConnection.open) {
+          try { adminConnection.send(payload); } catch (_) {}
+        }
+      }
+
+      function saveAndBroadcast(options = { broadcast: true }) {
+        state.updatedAt = Date.now();
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        } catch (err) {
+          console.warn('LocalStorage write warning:', err);
+        }
+
+        if (options.broadcast) {
+          broadcastPayload({ type: 'SYNC_STATE', state });
+        }
+      }
+
+      function applyIncomingState(incomingState, triggerConfettiIfNewWinner = true) {
+        if (!incomingState || !Array.isArray(incomingState.teams)) return;
+        const wasWinner = state.winnerAnnounced;
+        const prevAccordion = state.activeGameAccordion;
+        const prevZoom = state.isMediaZoomed;
+        const prevMediaJson = JSON.stringify(state.gameMedia);
+
+        state = {
+          ...cloneDefaultState(),
+          ...incomingState,
+          gameMedia: (incomingState.gameMedia || defaultState.gameMedia).map(m => ({
+            description: m?.description || '',
+            youtubeUrl: m?.youtubeUrl || '',
+            imageData: m?.imageData || '',
+            activeMediaType: m?.activeMediaType === 'image' ? 'image' : 'video'
+          }))
+        };
+
+        if (state.activeGameAccordion === null) {
+          state.isMediaZoomed = false;
+        }
+
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        } catch (_) {}
+
+        if (currentRole === 'stage') {
+          syncHeaderTexts();
+          renderLeaderboard(true);
+          renderDrawerControls();
+
+          const nextMediaJson = JSON.stringify(state.gameMedia);
+          if (state.activeGameAccordion !== prevAccordion) {
+            syncAccordionFromState();
+          } else if (state.activeGameAccordion !== null && nextMediaJson !== prevMediaJson) {
+            renderMediaStageContent(state.activeGameAccordion, true);
+          }
+
+          if (state.isMediaZoomed !== prevZoom) {
+            syncTheaterZoomState();
+          }
+
+          if (triggerConfettiIfNewWinner && !wasWinner && state.winnerAnnounced) {
+            launchConfetti();
+          }
+        } else {
+          renderAdminUI();
+        }
+      }
+
+      if (bc) {
+        bc.onmessage = (event) => {
+          if (event.data?.type === 'SYNC_STATE' && event.data.state) {
+            applyIncomingState(event.data.state, true);
+          } else if (event.data?.type === 'VIDEO_COMMAND' && currentRole === 'stage') {
+            handleStageVideoCommand(event.data.action, event.data.gameIdx);
+          }
+        };
+      }
+
+      window.addEventListener('storage', (e) => {
+        if (e.key === STORAGE_KEY && e.newValue) {
+          try {
+            const parsed = JSON.parse(e.newValue);
+            applyIncomingState(parsed, true);
+          } catch (_) {}
+        }
+      });
+
+      function buildAdminUrl(code) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('role', 'admin');
+        url.searchParams.set('room', code);
+        return url.toString();
+      }
+
+      function updateDrawerPairingUI() {
+        const badgeEl = document.getElementById('drawer-room-code-badge');
+        const qrImgEl = document.getElementById('drawer-qr-img');
+        if (badgeEl) badgeEl.textContent = `ห้อง: ${roomCode}`;
+        if (qrImgEl) {
+          qrImgEl.style.display = '';
+          if (qrImgEl.nextElementSibling) qrImgEl.nextElementSibling.classList.add('hidden');
+          const adminUrl = buildAdminUrl(roomCode);
+          qrImgEl.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=6&data=${encodeURIComponent(adminUrl)}`;
+        }
+      }
+
+      function initStagePeerHost() {
+        if (typeof Peer === 'undefined') return;
+        if (peerInstance) {
+          try { peerInstance.destroy(); } catch (_) {}
+        }
+
+        const hostPeerId = `vox-sb-${roomCode.toLowerCase()}`;
+        const statusEl = document.getElementById('drawer-peer-status');
+
+        try {
+          peerInstance = new Peer(hostPeerId);
+
+          peerInstance.on('open', () => {
+            if (statusEl) {
+              statusEl.textContent = stageConnections.size > 0
+                ? `เชื่อมต่อมือถือแล้ว (${stageConnections.size} เครื่อง)`
+                : 'พร้อมรับการเชื่อมต่อจากมือถือ';
+              statusEl.className = 'text-xs font-bold text-emerald-700 mt-1';
+            }
+          });
+
+          peerInstance.on('connection', (conn) => {
+            stageConnections.add(conn);
+            if (statusEl) {
+              statusEl.textContent = `เชื่อมต่อมือถือแล้ว (${stageConnections.size} เครื่อง)`;
+              statusEl.className = 'text-xs font-bold text-emerald-700 mt-1';
+            }
+
+            conn.on('open', () => {
+              conn.send({ type: 'SYNC_STATE', state });
+            });
+
+            conn.on('data', (msg) => {
+              if (msg?.type === 'SYNC_STATE' && msg.state) {
+                applyIncomingState(msg.state, true);
+                stageConnections.forEach(other => {
+                  if (other !== conn && other.open) {
+                    try { other.send({ type: 'SYNC_STATE', state }); } catch (_) {}
+                  }
+                });
+              } else if (msg?.type === 'VIDEO_COMMAND') {
+                handleStageVideoCommand(msg.action, msg.gameIdx);
+              } else if (msg?.type === 'REQUEST_STATE') {
+                if (conn.open) conn.send({ type: 'SYNC_STATE', state });
+              }
+            });
+
+            conn.on('close', () => {
+              stageConnections.delete(conn);
+              if (statusEl) {
+                statusEl.textContent = stageConnections.size > 0
+                  ? `เชื่อมต่อมือถือแล้ว (${stageConnections.size} เครื่อง)`
+                  : 'พร้อมรับการเชื่อมต่อจากมือถือ';
+              }
+            });
+          });
+
+          peerInstance.on('error', () => {
+            if (statusEl) {
+              statusEl.textContent = 'พร้อมใช้งานบนเครื่อง (โหมดออฟไลน์)';
+              statusEl.className = 'text-xs font-bold text-amber-700 mt-1';
+            }
+          });
+        } catch (err) {
+          console.warn('PeerJS host init skipped:', err);
+        }
+      }
+
+      function connectAdminToRoom(targetCode) {
+        const cleanCode = (targetCode || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+        if (!cleanCode) return;
+        roomCode = cleanCode;
+        try { localStorage.setItem(ROOM_STORAGE_KEY, roomCode); } catch (_) {}
+
+        const dotEl = document.getElementById('admin-conn-dot');
+        const textEl = document.getElementById('admin-conn-text');
+        if (dotEl) dotEl.className = 'w-3.5 h-3.5 rounded-full bg-amber-400 border border-white shrink-0 animate-pulse';
+        if (textEl) textEl.textContent = `กำลังเชื่อมต่อห้อง ${roomCode}...`;
+
+        if (typeof Peer === 'undefined') {
+          if (textEl) textEl.textContent = 'เชื่อมต่อผ่านเบราว์เซอร์เดียวกัน (Offline)';
+          return;
+        }
+
+        if (adminConnection) {
+          try { adminConnection.close(); } catch (_) {}
+          adminConnection = null;
+        }
+
+        try {
+          if (peerInstance && !peerInstance.destroyed && peerInstance.id && peerInstance.id.startsWith('vox-sb-')) {
+            try { peerInstance.destroy(); } catch (_) {}
+            peerInstance = null;
+          }
+          if (!peerInstance || peerInstance.destroyed) {
+            peerInstance = new Peer();
+          }
+
+          const startConnect = () => {
+            const hostPeerId = `vox-sb-${roomCode.toLowerCase()}`;
+            const conn = peerInstance.connect(hostPeerId, { reliable: true });
+            adminConnection = conn;
+
+            conn.on('open', () => {
+              if (dotEl) dotEl.className = 'w-3.5 h-3.5 rounded-full bg-emerald-400 border border-white shrink-0';
+              if (textEl) textEl.textContent = `เชื่อมต่อจอหลักสำเร็จ (ห้อง ${roomCode})`;
+              conn.send({ type: 'REQUEST_STATE' });
+            });
+
+            conn.on('data', (msg) => {
+              if (msg?.type === 'SYNC_STATE' && msg.state) {
+                applyIncomingState(msg.state, false);
+              }
+            });
+
+            conn.on('close', () => {
+              if (dotEl) dotEl.className = 'w-3.5 h-3.5 rounded-full bg-red-500 border border-white shrink-0';
+              if (textEl) textEl.textContent = `หลุดการเชื่อมต่อจากห้อง ${roomCode} — กดเชื่อมต่อใหม่`;
+            });
+
+            conn.on('error', () => {
+              if (dotEl) dotEl.className = 'w-3.5 h-3.5 rounded-full bg-red-500 border border-white shrink-0';
+              if (textEl) textEl.textContent = `ไม่พบจอหลักรหัส ${roomCode} (ตรวจสอบรหัสบนหน้าจอหลัก)`;
+            });
+          };
+
+          if (peerInstance.open) {
+            startConnect();
+          } else {
+            peerInstance.once('open', startConnect);
+            peerInstance.on('error', () => {
+              if (dotEl) dotEl.className = 'w-3.5 h-3.5 rounded-full bg-red-500 border border-white shrink-0';
+              if (textEl) textEl.textContent = `ไม่พบห้อง ${roomCode} กรุณาตรวจสอบรหัสบนจอหลัก`;
+            });
+          }
+        } catch (err) {
+          if (textEl) textEl.textContent = 'เชื่อมต่อผ่านเบราว์เซอร์เดียวกัน (Offline)';
+        }
+      }
+
+      // ========================================================================
+      // YOUTUBE URL PARSER, EMBED API & IMAGE/GIF PROCESSOR
+      // ========================================================================
+      function extractYouTubeId(url) {
+        if (!url || typeof url !== 'string') return null;
+        const trimmed = url.trim();
+        if (!trimmed) return null;
+        if (/^[a-zA-Z0-9_-]{11}$/.test(trimmed)) return trimmed;
+
+        const patterns = [
+          /(?:youtube\.com\/watch\?v=|youtube\.com\/watch\?.+&v=)([a-zA-Z0-9_-]{11})/,
+          /youtu\.be\/([a-zA-Z0-9_-]{11})/,
+          /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/,
+          /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/,
+          /youtube\.com\/live\/([a-zA-Z0-9_-]{11})/
+        ];
+
+        for (const regex of patterns) {
+          const match = trimmed.match(regex);
+          if (match && match[1]) return match[1];
+        }
+        return null;
+      }
+
+      function buildYouTubeEmbedUrl(videoId) {
+        const originParam = (window.location.origin && window.location.origin !== 'null')
+          ? `&origin=${encodeURIComponent(window.location.origin)}`
+          : '';
+        return `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&enablejsapi=1${originParam}`;
+      }
+
+      let pendingVideoCommand = null;
+      let ytIframeReady = false;
+
+      function postYtCmd(iframe, func, args = []) {
+        if (!iframe || !iframe.contentWindow) return false;
+        iframe.contentWindow.postMessage(
+          JSON.stringify({ event: 'command', func, args }),
+          '*'
+        );
+        return true;
+      }
+
+      function executeYtAction(iframe, action) {
+        if (!iframe) return;
+        if (state.isVideoMuted && action !== 'unmute') {
+          postYtCmd(iframe, 'mute');
+        }
+        switch (action) {
+          case 'play':
+            postYtCmd(iframe, 'playVideo');
+            break;
+          case 'pause':
+            postYtCmd(iframe, 'pauseVideo');
+            break;
+          case 'restart':
+            postYtCmd(iframe, 'seekTo', [0, true]);
+            postYtCmd(iframe, 'playVideo');
+            break;
+          case 'mute':
+            postYtCmd(iframe, 'mute');
+            break;
+          case 'unmute':
+            postYtCmd(iframe, 'unMute');
+            break;
+        }
+      }
+
+      function handleStageVideoCommand(action, gameIdx) {
+        if (typeof gameIdx === 'number' && state.activeGameAccordion !== gameIdx) {
+          return;
+        }
+        const iframe = document.getElementById('stage-youtube-iframe');
+        if (!iframe || !ytIframeReady) {
+          pendingVideoCommand = { action, gameIdx };
+          return;
+        }
+        executeYtAction(iframe, action);
+      }
+
+      function compressImageFile(file, callback) {
+        const isGif = file.type === 'image/gif' || /\.gif$/i.test(file.name || '');
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          // Preserve animated GIFs directly as Data URLs without flattening to JPEG
+          if (isGif) {
+            callback(event.target.result);
+            return;
+          }
+
+          const img = new Image();
+          img.onload = () => {
+            const maxDim = 960;
+            let width = img.width;
+            let height = img.height;
+            if (width > maxDim || height > maxDim) {
+              if (width > height) {
+                height = Math.round((height * maxDim) / width);
+                width = maxDim;
+              } else {
+                width = Math.round((width * maxDim) / height);
+                height = maxDim;
+              }
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx2d = canvas.getContext('2d');
+            ctx2d.drawImage(img, 0, 0, width, height);
+            callback(canvas.toDataURL('image/jpeg', 0.78));
+          };
+          img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+
+      // ========================================================================
+      // DOM REFERENCES
+      // ========================================================================
+      const stageContainerEl = document.getElementById('stage-container');
+      const mobileAdminViewEl = document.getElementById('mobile-admin-view');
+
+      const eventTitleEl = document.getElementById('event-title');
+      const eventSubtitleEl = document.getElementById('event-subtitle');
+      const gameTitleEls = [
+        document.getElementById('game-title-0'),
+        document.getElementById('game-title-1'),
+        document.getElementById('game-title-2')
+      ];
+      const gameCardEls = [
+        document.getElementById('game-card-0'),
+        document.getElementById('game-card-1'),
+        document.getElementById('game-card-2')
+      ];
+      const gameMediaDotEls = [
+        document.getElementById('game-media-dot-0'),
+        document.getElementById('game-media-dot-1'),
+        document.getElementById('game-media-dot-2')
+      ];
+
+      // Media Accordion & Persistent Visual Host Elements
+      const mediaAccordionEl = document.getElementById('media-accordion');
+      const accordionGameDotEl = document.getElementById('accordion-game-dot');
+      const accordionGameTitleEl = document.getElementById('accordion-game-title');
+      const accordionEditBtn = document.getElementById('accordion-edit-btn');
+      const accordionCloseBtn = document.getElementById('accordion-close-btn');
+      const mediaContentStageEl = document.getElementById('media-content-stage');
+
+      const mediaVisualHostEl = document.getElementById('media-visual-host');
+      const mediaSwitcherBarEl = document.getElementById('media-switcher-bar');
+      const mediaNavPrevBtn = document.getElementById('media-nav-prev');
+      const mediaPillVideoBtn = document.getElementById('media-pill-video');
+      const mediaPillImageBtn = document.getElementById('media-pill-image');
+      const mediaNavNextBtn = document.getElementById('media-nav-next');
+      const mediaZoomToggleBtn = document.getElementById('media-zoom-toggle-btn');
+      const mediaZoomBtnIcon = document.getElementById('media-zoom-btn-icon');
+      const mediaZoomBtnLabel = document.getElementById('media-zoom-btn-label');
+      const mediaVisualPaneEl = document.getElementById('media-visual-pane');
+
+      // Theater Zoom Overlay Elements
+      const theaterZoomOverlayEl = document.getElementById('theater-zoom-overlay');
+      const zoomGameDotEl = document.getElementById('zoom-game-dot');
+      const zoomModalTitleEl = document.getElementById('zoom-modal-title');
+      const zoomCloseBtn = document.getElementById('zoom-close-btn');
+      const zoomMediaSlotEl = document.getElementById('zoom-media-slot');
+
+      // Wrench Modal Elements
+      const mediaConfigModalEl = document.getElementById('media-config-modal');
+      const modalGameDotEl = document.getElementById('modal-game-dot');
+      const modalHeadingEl = document.getElementById('modal-heading');
+      const modalCloseXBtn = document.getElementById('modal-close-x');
+      const modalCancelBtn = document.getElementById('modal-cancel-btn');
+      const modalSaveBtn = document.getElementById('modal-save-btn');
+      const inputGameDescriptionEl = document.getElementById('input-game-description');
+      const btnClearDescription = document.getElementById('btn-clear-description');
+      const inputYoutubeUrlEl = document.getElementById('input-youtube-url');
+      const youtubeParseStatusEl = document.getElementById('youtube-parse-status');
+      const btnClearYoutube = document.getElementById('btn-clear-youtube');
+      const inputImageUrlEl = document.getElementById('input-image-url');
+      const inputImageFileEl = document.getElementById('input-image-file');
+      const btnClearImage = document.getElementById('btn-clear-image');
+      const modalImagePreviewWrapEl = document.getElementById('modal-image-preview-wrap');
+      const modalImagePreviewEl = document.getElementById('modal-image-preview');
+
+      // Leaderboard & Drawer Elements
+      const leaderboardListEl = document.getElementById('leaderboard-list');
+      const drawerEl = document.getElementById('control-drawer');
+      const drawerToggleBtn = document.getElementById('drawer-toggle-btn');
+      const btnCloseDrawer = document.getElementById('btn-close-drawer');
+      const drawerTeamsGrid = document.getElementById('drawer-teams-grid');
+      const btnWinner = document.getElementById('btn-winner');
+      const btnReset = document.getElementById('btn-reset');
+      const drawerCopyAdminBtn = document.getElementById('drawer-copy-admin-btn');
+      const drawerOpenAdminBtn = document.getElementById('drawer-open-admin-btn');
+
+      // ========================================================================
+      // VIDEO <-> IMAGE/GIF SWITCHING & THEATER ZOOM CONTROLLER
+      // ========================================================================
+      let swapTimeoutId = null;
+      let mediaFadeTimeoutId = null;
+      let currentRenderedPaneKey = '';
+
+      function updateMediaSwitcherPills(gameIdx, activeType, hasBoth) {
+        mediaSwitcherBarEl.classList.toggle('hidden', !hasBoth);
+        if (!hasBoth) return;
+
+        const isVideo = activeType === 'video';
+        mediaPillVideoBtn.className = isVideo
+          ? 'font-display font-extrabold text-xs px-2.5 py-1 rounded-lg bg-[#111111] text-[#F4D03F] border border-[#111111] transition-all cursor-pointer flex items-center gap-1'
+          : 'font-display font-bold text-xs px-2.5 py-1 rounded-lg bg-transparent text-[#111111] hover:bg-[#F4D03F]/35 border border-transparent transition-all cursor-pointer flex items-center gap-1';
+
+        mediaPillImageBtn.className = !isVideo
+          ? 'font-display font-extrabold text-xs px-2.5 py-1 rounded-lg bg-[#111111] text-[#F4D03F] border border-[#111111] transition-all cursor-pointer flex items-center gap-1'
+          : 'font-display font-bold text-xs px-2.5 py-1 rounded-lg bg-transparent text-[#111111] hover:bg-[#F4D03F]/35 border border-transparent transition-all cursor-pointer flex items-center gap-1';
+      }
+
+      function renderVisualPaneContent(gameIdx, animateCrossfade = false) {
+        const media = state.gameMedia[gameIdx] || { description: '', youtubeUrl: '', imageData: '', activeMediaType: 'video' };
+        const ytId = extractYouTubeId(media.youtubeUrl);
+        const imgSrc = (media.imageData || '').trim();
+        const hasYt = Boolean(ytId);
+        const hasImg = Boolean(imgSrc);
+        const hasBoth = hasYt && hasImg;
+
+        if (!hasYt && !hasImg) {
+          mediaVisualHostEl.classList.add('hidden');
+          mediaVisualPaneEl.innerHTML = '';
+          currentRenderedPaneKey = '';
+          ytIframeReady = false;
+          return;
+        }
+
+        const resolvedType = resolveActiveMediaType(media);
+        media.activeMediaType = resolvedType;
+
+        mediaVisualHostEl.classList.remove('hidden');
+        updateMediaSwitcherPills(gameIdx, resolvedType, hasBoth);
+
+        const mediaSignature = resolvedType === 'video'
+          ? ytId
+          : `${imgSrc.length}:${imgSrc.slice(0, 48)}:${imgSrc.slice(-24)}`;
+        const nextKey = `${gameIdx}:${resolvedType}:${mediaSignature}:${state.isMediaZoomed}`;
+        if (nextKey === currentRenderedPaneKey && mediaVisualPaneEl.innerHTML !== '') {
+          return;
+        }
+
+        const injectHtml = () => {
+          currentRenderedPaneKey = nextKey;
+          if (resolvedType === 'video' && hasYt) {
+            ytIframeReady = false;
+            const embedSrc = buildYouTubeEmbedUrl(ytId);
+            mediaVisualPaneEl.innerHTML = `
+              <div class="relative w-full aspect-video bg-[#111111] border-[2.5px] border-[#111111] rounded-xl overflow-hidden shadow-[4px_4px_0px_#111111]">
+                <iframe
+                  id="stage-youtube-iframe"
+                  src="${embedSrc}"
+                  title="${escapeHtml(state.games[gameIdx])}"
+                  class="absolute inset-0 w-full h-full border-0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowfullscreen
+                ></iframe>
+              </div>
+            `;
+            const ytIframe = document.getElementById('stage-youtube-iframe');
+            if (ytIframe) {
+              ytIframe.addEventListener('load', () => {
+                setTimeout(() => {
+                  ytIframeReady = true;
+                  if (state.isVideoMuted) {
+                    postYtCmd(ytIframe, 'mute');
+                  }
+                  if (pendingVideoCommand && pendingVideoCommand.gameIdx === gameIdx) {
+                    const cmdAction = pendingVideoCommand.action;
+                    pendingVideoCommand = null;
+                    executeYtAction(ytIframe, cmdAction);
+                  }
+                }, 400);
+              });
+            }
+          } else if (hasImg) {
+            ytIframeReady = false;
+            const maxHeightClass = state.isMediaZoomed ? 'max-h-[74vh]' : 'max-h-[46vh]';
+            mediaVisualPaneEl.innerHTML = `
+              <div
+                id="stage-zoomable-image-box"
+                class="w-full bg-[#F8F6F0] border-[2.5px] border-[#111111] rounded-xl p-2.5 sm:p-3.5 shadow-[4px_4px_0px_#111111] flex items-center justify-center cursor-pointer"
+              >
+                <img
+                  src="${imgSrc}"
+                  alt="${escapeHtml(state.games[gameIdx])}"
+                  onerror="this.onerror=null; this.src='https://placehold.co/960x540/F8F6F0/111111?text=ไม่สามารถโหลดรูปภาพหรือ GIF ได้';"
+                  class="${maxHeightClass} w-auto max-w-full rounded-lg object-contain transition-all duration-300"
+                />
+              </div>
+            `;
+            const imgBox = document.getElementById('stage-zoomable-image-box');
+            if (imgBox) {
+              imgBox.addEventListener('click', () => {
+                setTheaterZoom(!state.isMediaZoomed);
+              });
+            }
+          }
+        };
+
+        if (animateCrossfade && mediaVisualPaneEl.innerHTML !== '') {
+          if (mediaFadeTimeoutId) clearTimeout(mediaFadeTimeoutId);
+          mediaVisualPaneEl.classList.add('is-fading-out');
+          mediaFadeTimeoutId = setTimeout(() => {
+            injectHtml();
+            requestAnimationFrame(() => {
+              mediaVisualPaneEl.classList.remove('is-fading-out');
+            });
+            mediaFadeTimeoutId = null;
+          }, 200);
+        } else {
+          mediaVisualPaneEl.classList.remove('is-fading-out');
+          injectHtml();
+        }
+      }
+
+      function setActiveMediaType(gameIdx, nextType) {
+        const media = state.gameMedia[gameIdx];
+        if (!media) return;
+        const hasYt = Boolean(extractYouTubeId(media.youtubeUrl));
+        const hasImg = Boolean((media.imageData || '').trim());
+        if (nextType === 'video' && !hasYt) return;
+        if (nextType === 'image' && !hasImg) return;
+        if (media.activeMediaType === nextType) return;
+
+        media.activeMediaType = nextType;
+        saveAndBroadcast();
+        if (currentRole === 'stage') {
+          renderVisualPaneContent(gameIdx, true);
+        } else {
+          renderAdminUI();
+        }
+      }
+
+      mediaPillVideoBtn.addEventListener('click', () => {
+        if (state.activeGameAccordion !== null) {
+          setActiveMediaType(state.activeGameAccordion, 'video');
+        }
+      });
+
+      mediaPillImageBtn.addEventListener('click', () => {
+        if (state.activeGameAccordion !== null) {
+          setActiveMediaType(state.activeGameAccordion, 'image');
+        }
+      });
+
+      function cycleActiveMediaType() {
+        const idx = state.activeGameAccordion;
+        if (idx === null) return;
+        const currentType = resolveActiveMediaType(state.gameMedia[idx]);
+        setActiveMediaType(idx, currentType === 'video' ? 'image' : 'video');
+      }
+
+      mediaNavPrevBtn.addEventListener('click', cycleActiveMediaType);
+      mediaNavNextBtn.addEventListener('click', cycleActiveMediaType);
+
+      // Theater Zoom Reparenting & Smooth Transition
+      function syncTheaterZoomState() {
+        const idx = state.activeGameAccordion;
+        const shouldZoom = Boolean(state.isMediaZoomed && idx !== null);
+
+        if (shouldZoom) {
+          const media = state.gameMedia[idx] || {};
+          const hasMedia = Boolean(extractYouTubeId(media.youtubeUrl) || (media.imageData || '').trim());
+          if (!hasMedia) {
+            state.isMediaZoomed = false;
+            return;
+          }
+
+          zoomGameDotEl.style.backgroundColor = GAME_COLORS[idx] || '#F4D03F';
+          zoomModalTitleEl.textContent = state.games[idx];
+          mediaZoomBtnIcon.textContent = '🗕';
+          mediaZoomBtnLabel.textContent = 'ย่อกลับ';
+
+          // Reparent persistent visual host into zoom slot so iframe doesn't reload
+          if (mediaVisualHostEl.parentElement !== zoomMediaSlotEl) {
+            zoomMediaSlotEl.appendChild(mediaVisualHostEl);
+          }
+          renderVisualPaneContent(idx, false);
+          theaterZoomOverlayEl.classList.add('is-zoomed');
+        } else {
+          theaterZoomOverlayEl.classList.remove('is-zoomed');
+          mediaZoomBtnIcon.textContent = '🔍';
+          mediaZoomBtnLabel.textContent = 'ขยาย';
+
+          const accordionSlot = document.getElementById('accordion-media-slot');
+          if (accordionSlot && mediaVisualHostEl.parentElement !== accordionSlot) {
+            accordionSlot.appendChild(mediaVisualHostEl);
+          }
+          if (idx !== null) {
+            renderVisualPaneContent(idx, false);
+          }
+        }
+      }
+
+      function setTheaterZoom(zoomed) {
+        state.isMediaZoomed = Boolean(zoomed) && state.activeGameAccordion !== null;
+        saveAndBroadcast();
+        if (currentRole === 'stage') {
+          syncTheaterZoomState();
+        } else {
+          renderAdminUI();
+        }
+      }
+
+      mediaZoomToggleBtn.addEventListener('click', () => {
+        setTheaterZoom(!state.isMediaZoomed);
+      });
+
+      zoomCloseBtn.addEventListener('click', () => {
+        setTheaterZoom(false);
+      });
+
+      theaterZoomOverlayEl.addEventListener('click', (e) => {
+        if (e.target === theaterZoomOverlayEl) {
+          setTheaterZoom(false);
+        }
+      });
+
+      // ========================================================================
+      // INTERACTIVE GAME DESCRIPTION + MEDIA ACCORDION
+      // ========================================================================
+      function renderMediaStageContent(gameIdx, animateMediaCrossfade = false) {
+        const media = state.gameMedia[gameIdx] || { description: '', youtubeUrl: '', imageData: '', activeMediaType: 'video' };
+        const descText = (media.description || '').trim();
+        const ytId = extractYouTubeId(media.youtubeUrl);
+        const imgSrc = (media.imageData || '').trim();
+
+        accordionGameDotEl.style.backgroundColor = GAME_COLORS[gameIdx] || '#F4D03F';
+        accordionGameTitleEl.textContent = state.games[gameIdx];
+
+        const hasMedia = Boolean(ytId || imgSrc);
+        const hasDesc = Boolean(descText);
+
+        // Temporarily park persistent visual host safely in document.body before rebuilding innerHTML
+        if (mediaVisualHostEl.parentElement && mediaVisualHostEl.parentElement !== zoomMediaSlotEl) {
+          mediaVisualHostEl.classList.add('hidden');
+          document.body.appendChild(mediaVisualHostEl);
+        }
+
+        if (!hasDesc && !hasMedia) {
+          mediaContentStageEl.innerHTML = `
+            <div class="w-full bg-[#F8F6F0] border-2 border-dashed border-[#111111]/45 rounded-xl py-7 px-4 flex flex-col items-center justify-center text-center gap-3">
+              <p class="thai-safe font-display font-bold text-base sm:text-lg text-[#111111]/75">
+                ยังไม่ได้ตั้งค่าคำอธิบาย ลิงก์ YouTube หรือรูปภาพ/GIF สำหรับเกมนี้
+              </p>
+              <button
+                type="button"
+                data-open-wrench="${gameIdx}"
+                class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-bold text-sm px-4 py-2 rounded-xl flex items-center gap-2 cursor-pointer"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+                </svg>
+                <span>เพิ่มรายละเอียด / สื่อประกอบ</span>
+              </button>
+            </div>
+          `;
+          const quickBtn = mediaContentStageEl.querySelector('[data-open-wrench]');
+          if (quickBtn) quickBtn.addEventListener('click', () => openMediaConfigModal(gameIdx));
+          return;
+        }
+
+        const descriptionHtml = hasDesc
+          ? `
+            <div class="bg-[#F8F6F0] border-[2.5px] border-[#111111] rounded-xl p-4 sm:p-5 shadow-[4px_4px_0px_#111111] flex flex-col justify-center">
+              <div class="inline-flex items-center gap-1.5 mb-2">
+                <span class="px-2 py-0.5 rounded bg-[#111111] text-[#F4D03F] font-display font-extrabold text-xs tracking-wide">กติกา / รายละเอียด</span>
+              </div>
+              <p class="thai-safe text-base sm:text-lg lg:text-xl font-medium text-[#111111] whitespace-pre-line break-words">${escapeHtml(descText)}</p>
+            </div>
+          `
+          : '';
+
+        if (hasDesc && !hasMedia) {
+          mediaContentStageEl.innerHTML = `<div class="w-full">${descriptionHtml}</div>`;
+          return;
+        }
+
+        if (hasDesc && hasMedia) {
+          mediaContentStageEl.innerHTML = `
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+              <div class="lg:col-span-5 flex flex-col">${descriptionHtml}</div>
+              <div id="accordion-media-slot" class="lg:col-span-7 flex flex-col justify-center"></div>
+            </div>
+          `;
+        } else {
+          mediaContentStageEl.innerHTML = `
+            <div id="accordion-media-slot" class="w-full max-w-4xl mx-auto"></div>
+          `;
+        }
+
+        const targetSlot = state.isMediaZoomed ? zoomMediaSlotEl : document.getElementById('accordion-media-slot');
+        if (targetSlot) {
+          targetSlot.appendChild(mediaVisualHostEl);
+        }
+        renderVisualPaneContent(gameIdx, animateMediaCrossfade);
+      }
+
+      function updateGameCardActiveStyles() {
+        gameCardEls.forEach((card, idx) => {
+          const isOpen = state.activeGameAccordion === idx;
+          card.classList.toggle('is-active', isOpen);
+          card.setAttribute('aria-expanded', String(isOpen));
+        });
+      }
+
+      function syncAccordionFromState() {
+        const targetIdx = state.activeGameAccordion;
+        updateGameCardActiveStyles();
+
+        if (targetIdx === null || typeof targetIdx !== 'number') {
+          if (swapTimeoutId) {
+            clearTimeout(swapTimeoutId);
+            swapTimeoutId = null;
+          }
+          if (state.isMediaZoomed) {
+            state.isMediaZoomed = false;
+            theaterZoomOverlayEl.classList.remove('is-zoomed');
+          }
+          mediaAccordionEl.classList.remove('is-open');
+          mediaAccordionEl.setAttribute('aria-hidden', 'true');
+          setTimeout(() => {
+            if (state.activeGameAccordion === null) {
+              mediaVisualHostEl.classList.add('hidden');
+              document.body.appendChild(mediaVisualHostEl);
+              mediaContentStageEl.innerHTML = '';
+              currentRenderedPaneKey = '';
+              ytIframeReady = false;
+            }
+          }, 460);
+          return;
+        }
+
+        const wasClosed = !mediaAccordionEl.classList.contains('is-open');
+        if (wasClosed) {
+          renderMediaStageContent(targetIdx, false);
+          mediaAccordionEl.classList.add('is-open');
+          mediaAccordionEl.setAttribute('aria-hidden', 'false');
+          if (state.isMediaZoomed) syncTheaterZoomState();
+        } else {
+          if (swapTimeoutId) clearTimeout(swapTimeoutId);
+          mediaContentStageEl.classList.add('is-swapping');
+          swapTimeoutId = setTimeout(() => {
+            renderMediaStageContent(targetIdx, false);
+            mediaContentStageEl.classList.remove('is-swapping');
+            if (state.isMediaZoomed) syncTheaterZoomState();
+            swapTimeoutId = null;
+          }, 190);
+        }
+      }
+
+      function toggleGameAccordion(gameIdx) {
+        if (state.activeGameAccordion === gameIdx) {
+          state.activeGameAccordion = null;
+          state.isMediaZoomed = false;
+        } else {
+          state.activeGameAccordion = gameIdx;
+        }
+        saveAndBroadcast();
+        syncAccordionFromState();
+      }
+
+      gameCardEls.forEach((card, idx) => {
+        card.addEventListener('click', () => toggleGameAccordion(idx));
+        card.addEventListener('keydown', (e) => {
+          if (e.target.isContentEditable) return;
+          if (e.key === 'Enter' || e.code === 'Space') {
+            e.preventDefault();
+            toggleGameAccordion(idx);
+          }
+        });
+      });
+
+      document.querySelectorAll('[data-wrench-index]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          openMediaConfigModal(Number(btn.dataset.wrenchIndex));
+        });
+      });
+
+      accordionEditBtn.addEventListener('click', () => {
+        if (state.activeGameAccordion !== null) {
+          openMediaConfigModal(state.activeGameAccordion);
+        }
+      });
+
+      accordionCloseBtn.addEventListener('click', () => {
+        state.activeGameAccordion = null;
+        state.isMediaZoomed = false;
+        saveAndBroadcast();
+        syncAccordionFromState();
+      });
+
+      // ========================================================================
+      // WRENCH MEDIA & RULE DESCRIPTION MODAL LOGIC
+      // ========================================================================
+      let editingModalGameIdx = 0;
+
+      function updateYouTubeStatusFeedback(rawUrl) {
+        const trimmed = (rawUrl || '').trim();
+        if (!trimmed) {
+          youtubeParseStatusEl.classList.add('hidden');
+          youtubeParseStatusEl.textContent = '';
+          return;
+        }
+        const ytId = extractYouTubeId(trimmed);
+        youtubeParseStatusEl.classList.remove('hidden');
+        if (ytId) {
+          youtubeParseStatusEl.textContent = `✓ พบวิดีโอ YouTube (ID: ${ytId}) พร้อมแสดงผล`;
+          youtubeParseStatusEl.className = 'text-xs font-bold mt-1.5 text-emerald-700';
+        } else {
+          youtubeParseStatusEl.textContent = '⚠ รูปแบบลิงก์ YouTube ไม่ถูกต้อง (ระบบจะสลับไปแสดงรูปภาพ/GIF แทนหากมี)';
+          youtubeParseStatusEl.className = 'text-xs font-bold mt-1.5 text-[#E74C3C]';
+        }
+      }
+
+      function updateModalImagePreview(src) {
+        const trimmed = (src || '').trim();
+        if (trimmed) {
+          modalImagePreviewEl.src = trimmed;
+          modalImagePreviewWrapEl.classList.remove('hidden');
+        } else {
+          modalImagePreviewEl.src = '';
+          modalImagePreviewWrapEl.classList.add('hidden');
+        }
+      }
+
+      function openMediaConfigModal(gameIdx) {
+        editingModalGameIdx = gameIdx;
+        const currentMedia = state.gameMedia[gameIdx] || { description: '', youtubeUrl: '', imageData: '', activeMediaType: 'video' };
+
+        modalGameDotEl.style.backgroundColor = GAME_COLORS[gameIdx] || '#F4D03F';
+        modalHeadingEl.textContent = `ตั้งค่าสื่อ & กติกา: ${state.games[gameIdx]}`;
+
+        inputGameDescriptionEl.value = currentMedia.description || '';
+        inputYoutubeUrlEl.value = currentMedia.youtubeUrl || '';
+        inputImageUrlEl.value = currentMedia.imageData || '';
+        inputImageFileEl.value = '';
+
+        updateYouTubeStatusFeedback(inputYoutubeUrlEl.value);
+        updateModalImagePreview(inputImageUrlEl.value);
+
+        mediaConfigModalEl.classList.remove('hidden');
+        mediaConfigModalEl.classList.add('flex');
+      }
+
+      function closeMediaConfigModal() {
+        mediaConfigModalEl.classList.add('hidden');
+        mediaConfigModalEl.classList.remove('flex');
+      }
+
+      btnClearDescription.addEventListener('click', () => {
+        inputGameDescriptionEl.value = '';
+      });
+
+      inputYoutubeUrlEl.addEventListener('input', () => {
+        updateYouTubeStatusFeedback(inputYoutubeUrlEl.value);
+      });
+
+      btnClearYoutube.addEventListener('click', () => {
+        inputYoutubeUrlEl.value = '';
+        updateYouTubeStatusFeedback('');
+      });
+
+      inputImageUrlEl.addEventListener('input', () => {
+        updateModalImagePreview(inputImageUrlEl.value);
+      });
+
+      btnClearImage.addEventListener('click', () => {
+        inputImageUrlEl.value = '';
+        inputImageFileEl.value = '';
+        updateModalImagePreview('');
+      });
+
+      inputImageFileEl.addEventListener('change', (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        compressImageFile(file, (processedDataUrl) => {
+          inputImageUrlEl.value = processedDataUrl;
+          updateModalImagePreview(processedDataUrl);
+        });
+      });
+
+      modalSaveBtn.addEventListener('click', () => {
+        const prevType = state.gameMedia[editingModalGameIdx]?.activeMediaType || 'video';
+        const nextObj = {
+          description: inputGameDescriptionEl.value.trim(),
+          youtubeUrl: inputYoutubeUrlEl.value.trim(),
+          imageData: inputImageUrlEl.value.trim(),
+          activeMediaType: prevType
+        };
+        nextObj.activeMediaType = resolveActiveMediaType(nextObj);
+        state.gameMedia[editingModalGameIdx] = nextObj;
+
+        saveAndBroadcast();
+        syncMediaDots();
+
+        if (state.activeGameAccordion === editingModalGameIdx) {
+          currentRenderedPaneKey = '';
+          renderMediaStageContent(editingModalGameIdx, false);
+        }
+
+        closeMediaConfigModal();
+      });
+
+      modalCloseXBtn.addEventListener('click', closeMediaConfigModal);
+      modalCancelBtn.addEventListener('click', closeMediaConfigModal);
+      mediaConfigModalEl.addEventListener('click', (e) => {
+        if (e.target === mediaConfigModalEl) closeMediaConfigModal();
+      });
+
+      // ========================================================================
+      // DRAWER EMBEDDED QR CLIPBOARD COPY & ROLE SWITCH
+      // ========================================================================
+      function copyAdminUrlToClipboard(buttonEl) {
+        const url = buildAdminUrl(roomCode);
+        const tempInput = document.createElement('textarea');
+        tempInput.value = url;
+        tempInput.style.position = 'fixed';
+        tempInput.style.opacity = '0';
+        document.body.appendChild(tempInput);
+        tempInput.select();
+        try {
+          document.execCommand('copy');
+          const origText = buttonEl.textContent;
+          buttonEl.textContent = '✓ คัดลอกลิงก์แล้ว!';
+          setTimeout(() => { buttonEl.textContent = origText; }, 2200);
+        } catch (_) {}
+        document.body.removeChild(tempInput);
+      }
+
+      if (drawerCopyAdminBtn) {
+        drawerCopyAdminBtn.addEventListener('click', () => copyAdminUrlToClipboard(drawerCopyAdminBtn));
+      }
+      if (drawerOpenAdminBtn) {
+        drawerOpenAdminBtn.addEventListener('click', () => {
+          setDrawerOpen(false);
+          switchRoleView('admin');
+        });
+      }
+
+      // ========================================================================
+      // SMOOTH COUNT-UP NUMBER ANIMATION
+      // ========================================================================
+      const activeAnimations = {};
+
+      function animateNumber(teamId, targetValue, element) {
+        if (!element) return;
+        const startValue = displayedTotals[teamId] ?? targetValue;
+        if (startValue === targetValue) {
+          element.textContent = targetValue;
+          return;
+        }
+
+        if (activeAnimations[teamId]) {
+          cancelAnimationFrame(activeAnimations[teamId]);
+        }
+
+        const duration = 550;
+        const startTime = performance.now();
+
+        function step(now) {
+          const elapsed = now - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+          const eased = 1 - Math.pow(1 - progress, 3);
+          const current = Math.round(startValue + (targetValue - startValue) * eased);
+          displayedTotals[teamId] = current;
+          element.textContent = current;
+
+          if (progress < 1) {
+            activeAnimations[teamId] = requestAnimationFrame(step);
+          } else {
+            displayedTotals[teamId] = targetValue;
+            element.textContent = targetValue;
+            delete activeAnimations[teamId];
+          }
+        }
+
+        activeAnimations[teamId] = requestAnimationFrame(step);
+      }
+
+      // ========================================================================
+      // RENDER STAGE LEADERBOARD (3 GROUP CARDS + PER-GAME SCORE BOXES)
+      // ========================================================================
+      function renderLeaderboard(useFlip = true) {
+        const firstRects = {};
+        if (useFlip) {
+          leaderboardListEl.querySelectorAll('.team-row').forEach(row => {
+            firstRects[row.dataset.teamId] = row.getBoundingClientRect();
+          });
+        }
+
+        const rankedTeams = state.teams
+          .map((team, originalIndex) => ({
+            ...team,
+            originalIndex,
+            total: getTeamTotal(team)
+          }))
+          .sort((a, b) => {
+            if (b.total !== a.total) return b.total - a.total;
+            return a.originalIndex - b.originalIndex;
+          });
+
+        // Calibrated 75-point baseline, auto-expanding above 75
+        const scaleMax = Math.max(...rankedTeams.map(t => t.total), 75);
+        const activeTeamEditId = document.activeElement?.dataset?.editTeamId || null;
+
+        rankedTeams.forEach((team, rankIdx) => {
+          const rankNumber = rankIdx + 1;
+          const isWinner = state.winnerAnnounced && rankIdx === 0 && team.total > 0;
+          const barPercent = team.total <= 0 ? 0 : Math.min(100, (team.total / scaleMax) * 100);
+
+          let rowEl = leaderboardListEl.querySelector(`[data-team-id="${team.id}"]`);
+
+          if (!rowEl) {
+            rowEl = document.createElement('article');
+            rowEl.dataset.teamId = team.id;
+            rowEl.className = 'team-row vox-card p-4 sm:p-6 flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6';
+
+            rowEl.innerHTML = `
+              <!-- Rank Badge & Group Name -->
+              <div class="flex items-center gap-4 lg:w-[30%] shrink-0">
+                <div
+                  class="rank-badge w-14 h-14 sm:w-16 sm:h-16 rounded-xl border-[3px] border-[#111111] shadow-[4px_4px_0px_#111111] flex items-center justify-center font-display font-black text-2xl sm:text-3xl shrink-0"
+                ></div>
+
+                <div class="min-w-0 flex-1">
+                  <div class="flex items-center gap-2">
+                    <span class="crown-badge items-center gap-1.5 bg-[#F4D03F] border-2 border-[#111111] px-2.5 py-0.5 rounded-md font-display font-black text-xs sm:text-sm text-[#111111] tracking-wider shadow-[2px_2px_0px_#111111]">
+                      👑 VICTORY
+                    </span>
+                  </div>
+                  <h2
+                    contenteditable="true"
+                    spellcheck="false"
+                    data-edit-team-id="${team.id}"
+                    class="team-name-el thai-safe font-display font-extrabold text-2xl sm:text-3xl lg:text-[2.05rem] text-[#111111] break-words"
+                  ></h2>
+                </div>
+              </div>
+
+              <!-- Barber-Pole Progress Bar & 3 Per-Game Score Breakdown Boxes -->
+              <div class="flex-1 min-w-0 flex flex-col gap-3">
+                <!-- Progress Track -->
+                <div class="w-full h-7 sm:h-9 bg-[#F0EDE4] border-[2.5px] border-[#111111] rounded-lg overflow-hidden p-0.5">
+                  <div class="infographic-bar-fill h-full rounded-[5px]"></div>
+                </div>
+
+                <!-- 3 Per-Game Score Breakdown Boxes -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-2.5">
+                  <div class="bg-[#F8F6F0] border-2 border-[#111111] rounded-lg px-2.5 py-1.5 flex items-center justify-between gap-2 shadow-[2px_2px_0px_#111111]">
+                    <div class="flex items-center gap-1.5 min-w-0 flex-1">
+                      <span class="w-2.5 h-2.5 rounded-full bg-[#F4D03F] border border-[#111111] shrink-0"></span>
+                      <span class="game-chip-label-0 thai-safe text-xs sm:text-sm font-semibold text-[#111111]/85 break-words"></span>
+                    </div>
+                    <span class="game-score-0 font-display font-extrabold text-base sm:text-xl text-[#111111] shrink-0">0</span>
+                  </div>
+                  <div class="bg-[#F8F6F0] border-2 border-[#111111] rounded-lg px-2.5 py-1.5 flex items-center justify-between gap-2 shadow-[2px_2px_0px_#111111]">
+                    <div class="flex items-center gap-1.5 min-w-0 flex-1">
+                      <span class="w-2.5 h-2.5 rounded-full bg-[#E74C3C] border border-[#111111] shrink-0"></span>
+                      <span class="game-chip-label-1 thai-safe text-xs sm:text-sm font-semibold text-[#111111]/85 break-words"></span>
+                    </div>
+                    <span class="game-score-1 font-display font-extrabold text-base sm:text-xl text-[#111111] shrink-0">0</span>
+                  </div>
+                  <div class="bg-[#F8F6F0] border-2 border-[#111111] rounded-lg px-2.5 py-1.5 flex items-center justify-between gap-2 shadow-[2px_2px_0px_#111111]">
+                    <div class="flex items-center gap-1.5 min-w-0 flex-1">
+                      <span class="w-2.5 h-2.5 rounded-full bg-[#2980B9] border border-[#111111] shrink-0"></span>
+                      <span class="game-chip-label-2 thai-safe text-xs sm:text-sm font-semibold text-[#111111]/85 break-words"></span>
+                    </div>
+                    <span class="game-score-2 font-display font-extrabold text-base sm:text-xl text-[#111111] shrink-0">0</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Huge Total Score Box -->
+              <div class="lg:w-44 shrink-0 flex lg:flex-col items-center justify-between lg:justify-center bg-[#F8F6F0] border-[3px] border-[#111111] rounded-xl px-5 py-3 shadow-[4px_4px_0px_#111111]">
+                <span class="thai-safe-tight font-display font-bold text-sm text-[#111111]/75">คะแนนรวม</span>
+                <div class="total-score-el font-display font-black text-4xl sm:text-5xl lg:text-[3.5rem] text-[#111111] leading-none tracking-tight mt-0.5">0</div>
+              </div>
+            `;
+
+            const nameEl = rowEl.querySelector('.team-name-el');
+            nameEl.addEventListener('input', () => {
+              const targetTeam = state.teams.find(t => t.id === team.id);
+              if (targetTeam) {
+                targetTeam.name = nameEl.textContent.trim() || 'กลุ่มแข่งขัน';
+                saveAndBroadcast();
+                renderDrawerControls();
+              }
+            });
+          }
+
+          leaderboardListEl.appendChild(rowEl);
+
+          rowEl.classList.toggle('is-winner', isWinner);
+
+          const rankBadge = rowEl.querySelector('.rank-badge');
+          rankBadge.textContent = `#${rankNumber}`;
+          rankBadge.style.backgroundColor = team.color;
+          rankBadge.style.color = team.textColor;
+
+          const nameEl = rowEl.querySelector('.team-name-el');
+          if (activeTeamEditId !== team.id) {
+            nameEl.textContent = team.name;
+          }
+
+          const barFill = rowEl.querySelector('.infographic-bar-fill');
+          barFill.style.width = `${barPercent}%`;
+          barFill.style.backgroundColor = team.color;
+          barFill.style.borderRight = barPercent > 0 ? '2px solid #111111' : 'none';
+
+          rowEl.querySelector('.game-chip-label-0').textContent = state.games[0];
+          rowEl.querySelector('.game-chip-label-1').textContent = state.games[1];
+          rowEl.querySelector('.game-chip-label-2').textContent = state.games[2];
+
+          rowEl.querySelector('.game-score-0').textContent = team.scores[0];
+          rowEl.querySelector('.game-score-1').textContent = team.scores[1];
+          rowEl.querySelector('.game-score-2').textContent = team.scores[2];
+
+          const totalEl = rowEl.querySelector('.total-score-el');
+          animateNumber(team.id, team.total, totalEl);
+        });
+
+        if (useFlip && Object.keys(firstRects).length > 0) {
+          leaderboardListEl.querySelectorAll('.team-row').forEach(row => {
+            const first = firstRects[row.dataset.teamId];
+            if (!first) return;
+            const last = row.getBoundingClientRect();
+            const deltaY = first.top - last.top;
+
+            if (Math.abs(deltaY) > 1) {
+              row.style.transition = 'none';
+              row.style.transform = `translateY(${deltaY}px)`;
+              row.getBoundingClientRect();
+              row.style.transition = 'transform 0.65s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s ease';
+              row.style.transform = 'translateY(0)';
+            }
+          });
+        }
+      }
+
+      // ========================================================================
+      // INLINE HEADER & GAME TITLE SYNCHRONIZATION
+      // ========================================================================
+      function syncMediaDots() {
+        [0, 1, 2].forEach(idx => {
+          const media = state.gameMedia[idx] || {};
+          const hasAny = Boolean(
+            (media.description && media.description.trim()) ||
+            extractYouTubeId(media.youtubeUrl) ||
+            (media.imageData && media.imageData.trim())
+          );
+          if (gameMediaDotEls[idx]) {
+            gameMediaDotEls[idx].classList.toggle('hidden', !hasAny);
+          }
+        });
+      }
+
+      function syncHeaderTexts() {
+        if (eventTitleEl && document.activeElement !== eventTitleEl) {
+          eventTitleEl.textContent = state.eventTitle;
+        }
+        if (eventSubtitleEl && document.activeElement !== eventSubtitleEl) {
+          eventSubtitleEl.textContent = state.eventSubtitle;
+        }
+        gameTitleEls.forEach((el, idx) => {
+          if (el && document.activeElement !== el) {
+            el.textContent = state.games[idx];
+          }
+        });
+        if (state.activeGameAccordion !== null) {
+          if (accordionGameTitleEl) accordionGameTitleEl.textContent = state.games[state.activeGameAccordion];
+          if (zoomModalTitleEl) zoomModalTitleEl.textContent = state.games[state.activeGameAccordion];
+        }
+        syncMediaDots();
+      }
+
+      if (eventTitleEl) {
+        eventTitleEl.addEventListener('input', () => {
+          state.eventTitle = eventTitleEl.textContent.trim() || defaultState.eventTitle;
+          saveAndBroadcast();
+        });
+      }
+
+      if (eventSubtitleEl) {
+        eventSubtitleEl.addEventListener('input', () => {
+          state.eventSubtitle = eventSubtitleEl.textContent.trim() || defaultState.eventSubtitle;
+          saveAndBroadcast();
+        });
+      }
+
+      gameTitleEls.forEach((el, idx) => {
+        if (!el) return;
+        el.addEventListener('click', (e) => {
+          e.stopPropagation();
+        });
+        el.addEventListener('input', () => {
+          state.games[idx] = el.textContent.trim() || defaultState.games[idx];
+          if (state.activeGameAccordion === idx) {
+            if (accordionGameTitleEl) accordionGameTitleEl.textContent = state.games[idx];
+            if (zoomModalTitleEl) zoomModalTitleEl.textContent = state.games[idx];
+          }
+          saveAndBroadcast();
+          renderLeaderboard(false);
+          renderDrawerControls();
+        });
+      });
+
+      // ========================================================================
+      // SCORE MUTATION HELPERS
+      // ========================================================================
+      function adjustTeamGameScore(teamId, gameIdx, delta) {
+        const team = state.teams.find(t => t.id === teamId);
+        if (!team) return;
+        team.scores[gameIdx] = Math.max(0, (Number(team.scores[gameIdx]) || 0) + delta);
+        saveAndBroadcast();
+        if (currentRole === 'stage') {
+          renderLeaderboard(true);
+          renderDrawerControls();
+        } else {
+          renderAdminUI();
+        }
+      }
+
+      function setTeamGameScore(teamId, gameIdx, exactVal) {
+        const team = state.teams.find(t => t.id === teamId);
+        if (!team) return;
+        team.scores[gameIdx] = Math.max(0, Number(exactVal) || 0);
+        saveAndBroadcast();
+        if (currentRole === 'stage') {
+          renderLeaderboard(true);
+          renderDrawerControls();
+        } else {
+          renderAdminUI();
+        }
+      }
+
+      // ========================================================================
+      // LOCAL OPERATOR CONTROL DRAWER (STAGE BOTTOM DRAWER)
+      // ========================================================================
+      function renderDrawerControls() {
+        if (!drawerTeamsGrid) return;
+        drawerTeamsGrid.innerHTML = state.teams.map(team => {
+          const total = getTeamTotal(team);
+          return `
+            <div class="vox-card bg-white p-4 flex flex-col gap-3">
+              <div class="flex items-center justify-between gap-2 pb-2 border-b-2 border-[#111111]">
+                <div class="flex items-center gap-2 min-w-0">
+                  <span class="w-4 h-4 rounded-full border-2 border-[#111111] shrink-0" style="background:${team.color}"></span>
+                  <h3 class="thai-safe-tight font-display font-extrabold text-base sm:text-lg text-[#111111] truncate">${escapeHtml(team.name)}</h3>
+                </div>
+                <span class="font-display font-black text-lg bg-[#F8F6F0] border-2 border-[#111111] px-2.5 py-0.5 rounded-lg shrink-0">
+                  ${total} คะแนน
+                </span>
+              </div>
+
+              ${[0, 1, 2].map(gIdx => `
+                <div class="bg-[#F8F6F0] border-2 border-[#111111] rounded-xl p-2.5 flex flex-col gap-2">
+                  <div class="flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-1.5 min-w-0 flex-1">
+                      <span class="w-2.5 h-2.5 rounded-full border border-[#111111] shrink-0" style="background:${GAME_COLORS[gIdx]}"></span>
+                      <span class="thai-safe-tight text-xs font-bold text-[#111111] truncate">${escapeHtml(state.games[gIdx])}</span>
+                    </div>
+                    <input
+                      type="number"
+                      min="0"
+                      value="${team.scores[gIdx]}"
+                      data-drawer-input="${team.id}:${gIdx}"
+                      aria-label="คะแนน ${escapeHtml(team.name)} ${escapeHtml(state.games[gIdx])}"
+                      class="w-16 text-center font-display font-extrabold text-base bg-white border-2 border-[#111111] rounded-lg py-0.5 text-[#111111]"
+                    />
+                  </div>
+                  <div class="grid grid-cols-4 gap-1.5">
+                    <button type="button" data-drawer-delta="${team.id}:${gIdx}:-5" class="btn-vox bg-white hover:bg-red-50 text-[#E74C3C] font-display font-extrabold text-xs py-1.5 rounded-lg cursor-pointer">-5</button>
+                    <button type="button" data-drawer-delta="${team.id}:${gIdx}:5" class="btn-vox bg-white hover:bg-yellow-100 text-[#111111] font-display font-extrabold text-xs py-1.5 rounded-lg cursor-pointer">+5</button>
+                    <button type="button" data-drawer-delta="${team.id}:${gIdx}:10" class="btn-vox bg-white hover:bg-yellow-100 text-[#111111] font-display font-extrabold text-xs py-1.5 rounded-lg cursor-pointer">+10</button>
+                    <button type="button" data-drawer-delta="${team.id}:${gIdx}:15" class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-extrabold text-xs py-1.5 rounded-lg cursor-pointer">+15</button>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          `;
+        }).join('');
+
+        drawerTeamsGrid.querySelectorAll('[data-drawer-delta]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const [teamId, gIdx, delta] = btn.dataset.drawerDelta.split(':');
+            adjustTeamGameScore(teamId, Number(gIdx), Number(delta));
+          });
+        });
+
+        drawerTeamsGrid.querySelectorAll('[data-drawer-input]').forEach(inp => {
+          inp.addEventListener('change', () => {
+            const [teamId, gIdx] = inp.dataset.drawerInput.split(':');
+            setTeamGameScore(teamId, Number(gIdx), inp.value);
+          });
+        });
+      }
+
+      let isDrawerOpen = false;
+      function setDrawerOpen(open) {
+        isDrawerOpen = Boolean(open);
+        drawerEl.classList.toggle('drawer-closed', !isDrawerOpen);
+        drawerToggleBtn.classList.toggle('is-active', isDrawerOpen);
+        if (isDrawerOpen) updateDrawerPairingUI();
+      }
+
+      drawerToggleBtn.addEventListener('click', () => setDrawerOpen(!isDrawerOpen));
+      btnCloseDrawer.addEventListener('click', () => setDrawerOpen(false));
+
+      // Winner / Victory Toggle + Confetti
+      btnWinner.addEventListener('click', () => {
+        state.winnerAnnounced = !state.winnerAnnounced;
+        saveAndBroadcast();
+        renderLeaderboard(true);
+        if (state.winnerAnnounced) {
+          launchConfetti();
+        }
+      });
+
+      // Two-step Safe Reset
+      let resetConfirmArmed = false;
+      let resetConfirmTimer = null;
+      btnReset.addEventListener('click', () => {
+        if (!resetConfirmArmed) {
+          resetConfirmArmed = true;
+          btnReset.textContent = 'กดอีกครั้งเพื่อยืนยันรีเซ็ต';
+          btnReset.classList.add('bg-[#E74C3C]', 'text-white');
+          btnReset.classList.remove('bg-white', 'text-[#E74C3C]');
+          resetConfirmTimer = setTimeout(() => {
+            resetConfirmArmed = false;
+            btnReset.textContent = 'รีเซ็ตคะแนน';
+            btnReset.classList.remove('bg-[#E74C3C]', 'text-white');
+            btnReset.classList.add('bg-white', 'text-[#E74C3C]');
+          }, 3200);
+          return;
+        }
+        clearTimeout(resetConfirmTimer);
+        resetConfirmArmed = false;
+        btnReset.textContent = 'รีเซ็ตคะแนน';
+        btnReset.classList.remove('bg-[#E74C3C]', 'text-white');
+        btnReset.classList.add('bg-white', 'text-[#E74C3C]');
+
+        state.teams.forEach(t => { t.scores = [0, 0, 0]; });
+        state.winnerAnnounced = false;
+        saveAndBroadcast();
+        renderLeaderboard(true);
+        renderDrawerControls();
+      });
+
+      // Keyboard Shortcuts (H / Spacebar toggles drawer, Esc closes Zoom -> Modal -> Accordion -> Drawer)
+      window.addEventListener('keydown', (e) => {
+        const tag = document.activeElement?.tagName;
+        const isTyping = document.activeElement?.isContentEditable || tag === 'INPUT' || tag === 'TEXTAREA';
+
+        if (e.key === 'Escape') {
+          if (state.isMediaZoomed) {
+            setTheaterZoom(false);
+            return;
+          }
+          if (!mediaConfigModalEl.classList.contains('hidden')) {
+            closeMediaConfigModal();
+            return;
+          }
+          if (state.activeGameAccordion !== null) {
+            state.activeGameAccordion = null;
+            saveAndBroadcast();
+            syncAccordionFromState();
+            return;
+          }
+          if (isDrawerOpen) {
+            setDrawerOpen(false);
+          }
+          return;
+        }
+
+        if (isTyping || currentRole !== 'stage') return;
+
+        if (e.key.toLowerCase() === 'h' || e.code === 'Space') {
+          e.preventDefault();
+          setDrawerOpen(!isDrawerOpen);
+        }
+      });
+
+      // ========================================================================
+      // MOBILE BACKSTAGE ADMIN VIEW (?role=admin&room=XXXX)
+      // ========================================================================
+      let activeAdminTab = 'scores';
+
+      function setAdminTab(tabName) {
+        activeAdminTab = tabName;
+        document.querySelectorAll('.admin-tab-btn').forEach(btn => {
+          const active = btn.dataset.adminTab === tabName;
+          btn.classList.toggle('bg-[#F4D03F]', active);
+          btn.classList.toggle('bg-white', !active);
+        });
+        document.getElementById('admin-panel-scores').classList.toggle('hidden', tabName !== 'scores');
+        document.getElementById('admin-panel-scores').classList.toggle('flex', tabName === 'scores');
+        document.getElementById('admin-panel-stage-media').classList.toggle('hidden', tabName !== 'stage-media');
+        document.getElementById('admin-panel-stage-media').classList.toggle('flex', tabName === 'stage-media');
+        document.getElementById('admin-panel-names').classList.toggle('hidden', tabName !== 'names');
+        document.getElementById('admin-panel-names').classList.toggle('flex', tabName === 'names');
+      }
+
+      document.querySelectorAll('.admin-tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => setAdminTab(btn.dataset.adminTab));
+      });
+
+      function sendAdminVideoCommand(action) {
+        const idx = state.activeGameAccordion;
+        if (idx === null) return;
+        const media = state.gameMedia[idx];
+        if (!media || !extractYouTubeId(media.youtubeUrl)) return;
+
+        // If stage is currently displaying Image/GIF, switch to Video first
+        if (resolveActiveMediaType(media) !== 'video') {
+          media.activeMediaType = 'video';
+          saveAndBroadcast();
+          renderAdminUI();
+        }
+
+        broadcastPayload({ type: 'VIDEO_COMMAND', action, gameIdx: idx });
+      }
+
+      function renderAdminUI() {
+        // Tab 1: Teams Scoring Cards
+        const adminTeamsEl = document.getElementById('admin-teams-container');
+        if (adminTeamsEl) {
+          adminTeamsEl.innerHTML = state.teams.map(team => {
+            const total = getTeamTotal(team);
+            return `
+              <div class="vox-card bg-white p-4 flex flex-col gap-3">
+                <div class="flex items-center justify-between gap-2 pb-2 border-b-2 border-[#111111]">
+                  <div class="flex items-center gap-2 min-w-0">
+                    <span class="w-4 h-4 rounded-full border-2 border-[#111111] shrink-0" style="background:${team.color}"></span>
+                    <h3 class="thai-safe-tight font-display font-extrabold text-lg text-[#111111] truncate">${escapeHtml(team.name)}</h3>
+                  </div>
+                  <span class="font-display font-black text-xl bg-[#F8F6F0] border-2 border-[#111111] px-3 py-0.5 rounded-xl shrink-0">
+                    ${total}
+                  </span>
+                </div>
+
+                ${[0, 1, 2].map(gIdx => `
+                  <div class="bg-[#F8F6F0] border-2 border-[#111111] rounded-xl p-2.5 flex flex-col gap-2">
+                    <div class="flex items-center justify-between gap-2">
+                      <span class="thai-safe-tight text-xs font-bold text-[#111111] truncate">${escapeHtml(state.games[gIdx])}</span>
+                      <input
+                        type="number"
+                        min="0"
+                        value="${team.scores[gIdx]}"
+                        data-admin-input="${team.id}:${gIdx}"
+                        class="w-16 text-center font-display font-extrabold text-base bg-white border-2 border-[#111111] rounded-lg py-0.5 text-[#111111]"
+                      />
+                    </div>
+                    <div class="grid grid-cols-4 gap-1.5">
+                      <button type="button" data-admin-delta="${team.id}:${gIdx}:-5" class="btn-vox bg-white text-[#E74C3C] font-display font-extrabold text-sm py-2 rounded-lg cursor-pointer">-5</button>
+                      <button type="button" data-admin-delta="${team.id}:${gIdx}:5" class="btn-vox bg-white text-[#111111] font-display font-extrabold text-sm py-2 rounded-lg cursor-pointer">+5</button>
+                      <button type="button" data-admin-delta="${team.id}:${gIdx}:10" class="btn-vox bg-white text-[#111111] font-display font-extrabold text-sm py-2 rounded-lg cursor-pointer">+10</button>
+                      <button type="button" data-admin-delta="${team.id}:${gIdx}:15" class="btn-vox bg-[#F4D03F] text-[#111111] font-display font-extrabold text-sm py-2 rounded-lg cursor-pointer">+15</button>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            `;
+          }).join('');
+
+          adminTeamsEl.querySelectorAll('[data-admin-delta]').forEach(btn => {
+            btn.addEventListener('click', () => {
+              const [teamId, gIdx, delta] = btn.dataset.adminDelta.split(':');
+              adjustTeamGameScore(teamId, Number(gIdx), Number(delta));
+            });
+          });
+
+          adminTeamsEl.querySelectorAll('[data-admin-input]').forEach(inp => {
+            inp.addEventListener('change', () => {
+              const [teamId, gIdx] = inp.dataset.adminInput.split(':');
+              setTeamGameScore(teamId, Number(gIdx), inp.value);
+            });
+          });
+        }
+
+        // Tab 2: Remote Accordion Open/Close, Video<->Image/GIF Switch, Theater Zoom & Video Playback
+        const accBtnsEl = document.getElementById('admin-remote-accordion-btns');
+        if (accBtnsEl) {
+          accBtnsEl.innerHTML = [0, 1, 2].map(idx => {
+            const isOpen = state.activeGameAccordion === idx;
+            return `
+              <button
+                type="button"
+                data-admin-toggle-acc="${idx}"
+                class="btn-vox ${isOpen ? 'bg-[#111111] text-[#F4D03F]' : 'bg-[#F8F6F0] text-[#111111]'} font-display font-bold text-sm py-2.5 px-3.5 rounded-xl flex items-center justify-between gap-2 cursor-pointer"
+              >
+                <span class="truncate">${escapeHtml(state.games[idx])}</span>
+                <span class="text-xs px-2 py-0.5 rounded ${isOpen ? 'bg-[#F4D03F] text-[#111111]' : 'bg-white border border-[#111111]'} shrink-0">
+                  ${isOpen ? 'กำลังเปิดแสดง (กดเพื่อปิด)' : 'กดเปิดขึ้นจอ'}
+                </span>
+              </button>
+            `;
+          }).join('');
+
+          accBtnsEl.querySelectorAll('[data-admin-toggle-acc]').forEach(btn => {
+            btn.addEventListener('click', () => {
+              const idx = Number(btn.dataset.adminToggleAcc);
+              if (state.activeGameAccordion === idx) {
+                state.activeGameAccordion = null;
+                state.isMediaZoomed = false;
+              } else {
+                state.activeGameAccordion = idx;
+              }
+              saveAndBroadcast();
+              renderAdminUI();
+            });
+          });
+        }
+
+        // Sync Video <-> Image/GIF, Zoom & Playback Buttons in Tab 2
+        const activeIdx = state.activeGameAccordion;
+        const activeMedia = activeIdx !== null ? (state.gameMedia[activeIdx] || {}) : {};
+        const hasYt = Boolean(extractYouTubeId(activeMedia.youtubeUrl));
+        const hasImg = Boolean((activeMedia.imageData || '').trim());
+        const hasAnyMedia = hasYt || hasImg;
+        const resolvedType = resolveActiveMediaType(activeMedia);
+
+        const switchVideoBtn = document.getElementById('admin-switch-video-btn');
+        const switchImageBtn = document.getElementById('admin-switch-image-btn');
+        const toggleZoomBtn = document.getElementById('admin-toggle-zoom-btn');
+        const zoomBadgeEl = document.getElementById('admin-live-zoom-badge');
+        const zoomBtnIconEl = document.getElementById('admin-zoom-btn-icon');
+        const zoomBtnTextEl = document.getElementById('admin-zoom-btn-text');
+
+        if (switchVideoBtn) {
+          const isVideoActive = activeIdx !== null && hasYt && resolvedType === 'video';
+          switchVideoBtn.disabled = activeIdx === null || !hasYt;
+          switchVideoBtn.classList.toggle('opacity-40', switchVideoBtn.disabled);
+          switchVideoBtn.classList.toggle('bg-[#111111]', isVideoActive);
+          switchVideoBtn.classList.toggle('text-[#F4D03F]', isVideoActive);
+          switchVideoBtn.classList.toggle('bg-white', !isVideoActive);
+          switchVideoBtn.classList.toggle('text-[#111111]', !isVideoActive);
+        }
+
+        if (switchImageBtn) {
+          const isImageActive = activeIdx !== null && hasImg && resolvedType === 'image';
+          switchImageBtn.disabled = activeIdx === null || !hasImg;
+          switchImageBtn.classList.toggle('opacity-40', switchImageBtn.disabled);
+          switchImageBtn.classList.toggle('bg-[#111111]', isImageActive);
+          switchImageBtn.classList.toggle('text-[#F4D03F]', isImageActive);
+          switchImageBtn.classList.toggle('bg-white', !isImageActive);
+          switchImageBtn.classList.toggle('text-[#111111]', !isImageActive);
+        }
+
+        if (toggleZoomBtn) {
+          const canZoom = activeIdx !== null && hasAnyMedia;
+          toggleZoomBtn.disabled = !canZoom;
+          toggleZoomBtn.classList.toggle('opacity-45', !canZoom);
+          if (state.isMediaZoomed && canZoom) {
+            toggleZoomBtn.classList.remove('bg-[#F4D03F]', 'text-[#111111]');
+            toggleZoomBtn.classList.add('bg-[#E74C3C]', 'text-white');
+            if (zoomBtnIconEl) zoomBtnIconEl.textContent = '🗕';
+            if (zoomBtnTextEl) zoomBtnTextEl.textContent = 'ย่อสื่อกลับปกติบนหน้าบ้าน';
+            if (zoomBadgeEl) {
+              zoomBadgeEl.textContent = '🔍 กำลังซูมขยายเต็มจอ';
+              zoomBadgeEl.className = 'text-xs font-display font-bold px-2.5 py-0.5 rounded-md border border-[#111111] bg-[#F4D03F] text-[#111111]';
+            }
+          } else {
+            toggleZoomBtn.classList.add('bg-[#F4D03F]', 'text-[#111111]');
+            toggleZoomBtn.classList.remove('bg-[#E74C3C]', 'text-white');
+            if (zoomBtnIconEl) zoomBtnIconEl.textContent = '🔍';
+            if (zoomBtnTextEl) zoomBtnTextEl.textContent = 'ซูมขยายเต็มจอบนหน้าบ้าน';
+            if (zoomBadgeEl) {
+              zoomBadgeEl.textContent = activeIdx !== null ? 'เปิดแสดงขนาดปกติ' : 'ปิดบล็อกสื่ออยู่';
+              zoomBadgeEl.className = 'text-xs font-display font-bold px-2.5 py-0.5 rounded-md border border-[#111111] bg-[#F8F6F0] text-[#111111]';
+            }
+          }
+        }
+
+        // Sync Video Playback Control Buttons (Vox Palette)
+        const canControlVideo = activeIdx !== null && hasYt;
+        ['admin-video-play-btn', 'admin-video-pause-btn', 'admin-video-restart-btn', 'admin-video-mute-btn'].forEach(id => {
+          const btn = document.getElementById(id);
+          if (btn) {
+            btn.disabled = !canControlVideo;
+            btn.classList.toggle('opacity-40', !canControlVideo);
+          }
+        });
+        const muteIconEl = document.getElementById('admin-video-mute-icon');
+        const muteLabelEl = document.getElementById('admin-video-mute-label');
+        const muteBtnEl = document.getElementById('admin-video-mute-btn');
+        if (muteIconEl && muteLabelEl && muteBtnEl) {
+          muteIconEl.textContent = state.isVideoMuted ? '🔇' : '🔊';
+          muteLabelEl.textContent = state.isVideoMuted ? 'ปิดเสียง' : 'เสียง';
+          muteBtnEl.classList.toggle('bg-[#E74C3C]', state.isVideoMuted);
+          muteBtnEl.classList.toggle('text-white', state.isVideoMuted);
+          muteBtnEl.classList.toggle('bg-white', !state.isVideoMuted);
+          muteBtnEl.classList.toggle('text-[#111111]', !state.isVideoMuted);
+        }
+
+        const mediaEditorsEl = document.getElementById('admin-media-editors');
+        if (mediaEditorsEl) {
+          mediaEditorsEl.innerHTML = [0, 1, 2].map(idx => {
+            const m = state.gameMedia[idx] || { description: '', youtubeUrl: '', imageData: '', activeMediaType: 'video' };
+            return `
+              <div class="vox-card bg-white p-4 flex flex-col gap-2.5">
+                <div class="flex items-center gap-2">
+                  <span class="w-3.5 h-3.5 rounded-full border border-[#111111]" style="background:${GAME_COLORS[idx]}"></span>
+                  <h3 class="thai-safe-tight font-display font-extrabold text-sm text-[#111111]">${escapeHtml(state.games[idx])}</h3>
+                </div>
+                <textarea
+                  rows="2"
+                  data-admin-desc="${idx}"
+                  placeholder="คำอธิบาย / กติกาเกม..."
+                  class="thai-safe w-full bg-[#F8F6F0] border-2 border-[#111111] rounded-lg px-2.5 py-1.5 text-sm"
+                >${escapeHtml(m.description)}</textarea>
+                <input
+                  type="url"
+                  data-admin-yt="${idx}"
+                  value="${escapeHtml(m.youtubeUrl)}"
+                  placeholder="ลิงก์ YouTube (ถ้ามี)"
+                  class="w-full bg-[#F8F6F0] border-2 border-[#111111] rounded-lg px-2.5 py-1.5 text-sm"
+                />
+                <div class="flex items-center gap-2">
+                  <input
+                    type="text"
+                    data-admin-img="${idx}"
+                    value="${escapeHtml(m.imageData)}"
+                    placeholder="ลิงก์รูปภาพ / GIF (URL)"
+                    class="flex-1 bg-[#F8F6F0] border-2 border-[#111111] rounded-lg px-2.5 py-1.5 text-sm"
+                  />
+                  <label class="btn-vox bg-[#F4D03F] text-[#111111] font-display font-bold text-xs px-3 py-1.5 rounded-lg cursor-pointer shrink-0">
+                    📁 รูป/GIF
+                    <input type="file" accept="image/*,.gif" data-admin-file="${idx}" class="hidden" />
+                  </label>
+                </div>
+              </div>
+            `;
+          }).join('');
+
+          mediaEditorsEl.querySelectorAll('[data-admin-desc]').forEach(el => {
+            el.addEventListener('change', () => {
+              const idx = Number(el.dataset.adminDesc);
+              state.gameMedia[idx].description = el.value.trim();
+              saveAndBroadcast();
+            });
+          });
+          mediaEditorsEl.querySelectorAll('[data-admin-yt]').forEach(el => {
+            el.addEventListener('change', () => {
+              const idx = Number(el.dataset.adminYt);
+              state.gameMedia[idx].youtubeUrl = el.value.trim();
+              state.gameMedia[idx].activeMediaType = resolveActiveMediaType(state.gameMedia[idx]);
+              saveAndBroadcast();
+              renderAdminUI();
+            });
+          });
+          mediaEditorsEl.querySelectorAll('[data-admin-img]').forEach(el => {
+            el.addEventListener('change', () => {
+              const idx = Number(el.dataset.adminImg);
+              state.gameMedia[idx].imageData = el.value.trim();
+              state.gameMedia[idx].activeMediaType = resolveActiveMediaType(state.gameMedia[idx]);
+              saveAndBroadcast();
+              renderAdminUI();
+            });
+          });
+          mediaEditorsEl.querySelectorAll('[data-admin-file]').forEach(el => {
+            el.addEventListener('change', (e) => {
+              const file = e.target.files?.[0];
+              const idx = Number(el.dataset.adminFile);
+              if (!file) return;
+              compressImageFile(file, (dataUrl) => {
+                state.gameMedia[idx].imageData = dataUrl;
+                state.gameMedia[idx].activeMediaType = resolveActiveMediaType(state.gameMedia[idx]);
+                saveAndBroadcast();
+                renderAdminUI();
+              });
+            });
+          });
+        }
+
+        // Tab 3: Event Title, Subtitle, Team Names & Game Titles
+        const adminEventInput = document.getElementById('admin-input-event-title');
+        if (adminEventInput && document.activeElement !== adminEventInput) {
+          adminEventInput.value = state.eventTitle;
+        }
+        const adminSubInput = document.getElementById('admin-input-event-subtitle');
+        if (adminSubInput && document.activeElement !== adminSubInput) {
+          adminSubInput.value = state.eventSubtitle;
+        }
+
+        const teamInputsWrap = document.getElementById('admin-team-names-inputs');
+        if (teamInputsWrap) {
+          teamInputsWrap.innerHTML = state.teams.map((t, idx) => `
+            <div class="flex items-center gap-2">
+              <span class="w-4 h-4 rounded-full border-2 border-[#111111] shrink-0" style="background:${t.color}"></span>
+              <input type="text" data-admin-team-name="${idx}" value="${escapeHtml(t.name)}" class="thai-safe-tight flex-1 bg-[#F8F6F0] border-2 border-[#111111] rounded-xl px-3 py-1.5 font-bold text-sm" />
+            </div>
+          `).join('');
+          teamInputsWrap.querySelectorAll('[data-admin-team-name]').forEach(inp => {
+            inp.addEventListener('change', () => {
+              const idx = Number(inp.dataset.adminTeamName);
+              state.teams[idx].name = inp.value.trim() || `กลุ่มที่ ${idx + 1}`;
+              saveAndBroadcast();
+              renderAdminUI();
+            });
+          });
+        }
+
+        const gameInputsWrap = document.getElementById('admin-game-titles-inputs');
+        if (gameInputsWrap) {
+          gameInputsWrap.innerHTML = state.games.map((g, idx) => `
+            <div class="flex items-center gap-2">
+              <span class="w-4 h-4 rounded-full border-2 border-[#111111] shrink-0" style="background:${GAME_COLORS[idx]}"></span>
+              <input type="text" data-admin-game-title="${idx}" value="${escapeHtml(g)}" class="thai-safe-tight flex-1 bg-[#F8F6F0] border-2 border-[#111111] rounded-xl px-3 py-1.5 font-bold text-sm" />
+            </div>
+          `).join('');
+          gameInputsWrap.querySelectorAll('[data-admin-game-title]').forEach(inp => {
+            inp.addEventListener('change', () => {
+              const idx = Number(inp.dataset.adminGameTitle);
+              state.games[idx] = inp.value.trim() || defaultState.games[idx];
+              saveAndBroadcast();
+              renderAdminUI();
+            });
+          });
+        }
+      }
+
+      // Admin Static Event Listeners (Video/Image Switch, Zoom & Playback Controls)
+      const adminSwitchVideoBtn = document.getElementById('admin-switch-video-btn');
+      if (adminSwitchVideoBtn) {
+        adminSwitchVideoBtn.addEventListener('click', () => {
+          if (state.activeGameAccordion !== null) {
+            setActiveMediaType(state.activeGameAccordion, 'video');
+          }
+        });
+      }
+
+      const adminSwitchImageBtn = document.getElementById('admin-switch-image-btn');
+      if (adminSwitchImageBtn) {
+        adminSwitchImageBtn.addEventListener('click', () => {
+          if (state.activeGameAccordion !== null) {
+            setActiveMediaType(state.activeGameAccordion, 'image');
+          }
+        });
+      }
+
+      const adminToggleZoomBtn = document.getElementById('admin-toggle-zoom-btn');
+      if (adminToggleZoomBtn) {
+        adminToggleZoomBtn.addEventListener('click', () => {
+          if (state.activeGameAccordion !== null) {
+            setTheaterZoom(!state.isMediaZoomed);
+          }
+        });
+      }
+
+      const adminVideoPlayBtn = document.getElementById('admin-video-play-btn');
+      if (adminVideoPlayBtn) {
+        adminVideoPlayBtn.addEventListener('click', () => sendAdminVideoCommand('play'));
+      }
+
+      const adminVideoPauseBtn = document.getElementById('admin-video-pause-btn');
+      if (adminVideoPauseBtn) {
+        adminVideoPauseBtn.addEventListener('click', () => sendAdminVideoCommand('pause'));
+      }
+
+      const adminVideoRestartBtn = document.getElementById('admin-video-restart-btn');
+      if (adminVideoRestartBtn) {
+        adminVideoRestartBtn.addEventListener('click', () => sendAdminVideoCommand('restart'));
+      }
+
+      const adminVideoMuteBtn = document.getElementById('admin-video-mute-btn');
+      if (adminVideoMuteBtn) {
+        adminVideoMuteBtn.addEventListener('click', () => {
+          state.isVideoMuted = !state.isVideoMuted;
+          saveAndBroadcast();
+          renderAdminUI();
+          sendAdminVideoCommand(state.isVideoMuted ? 'mute' : 'unmute');
+        });
+      }
+
+      const adminEventTitleInp = document.getElementById('admin-input-event-title');
+      if (adminEventTitleInp) {
+        adminEventTitleInp.addEventListener('change', () => {
+          state.eventTitle = adminEventTitleInp.value.trim() || defaultState.eventTitle;
+          saveAndBroadcast();
+        });
+      }
+
+      const adminEventSubInp = document.getElementById('admin-input-event-subtitle');
+      if (adminEventSubInp) {
+        adminEventSubInp.addEventListener('change', () => {
+          state.eventSubtitle = adminEventSubInp.value.trim() || defaultState.eventSubtitle;
+          saveAndBroadcast();
+        });
+      }
+
+      const adminVictoryBtn = document.getElementById('admin-btn-victory');
+      if (adminVictoryBtn) {
+        adminVictoryBtn.addEventListener('click', () => {
+          state.winnerAnnounced = !state.winnerAnnounced;
+          saveAndBroadcast();
+          renderAdminUI();
+        });
+      }
+
+      const adminResetBtn = document.getElementById('admin-btn-reset');
+      let adminResetArmed = false;
+      let adminResetTimer = null;
+      if (adminResetBtn) {
+        adminResetBtn.addEventListener('click', () => {
+          if (!adminResetArmed) {
+            adminResetArmed = true;
+            adminResetBtn.textContent = 'กดอีกครั้งเพื่อยืนยัน';
+            adminResetBtn.classList.add('bg-[#E74C3C]', 'text-white');
+            adminResetBtn.classList.remove('bg-white', 'text-[#E74C3C]');
+            adminResetTimer = setTimeout(() => {
+              adminResetArmed = false;
+              adminResetBtn.textContent = 'รีเซ็ตคะแนน';
+              adminResetBtn.classList.remove('bg-[#E74C3C]', 'text-white');
+              adminResetBtn.classList.add('bg-white', 'text-[#E74C3C]');
+            }, 3000);
+            return;
+          }
+          clearTimeout(adminResetTimer);
+          adminResetArmed = false;
+          adminResetBtn.textContent = 'รีเซ็ตคะแนน';
+          adminResetBtn.classList.remove('bg-[#E74C3C]', 'text-white');
+          adminResetBtn.classList.add('bg-white', 'text-[#E74C3C]');
+
+          state.teams.forEach(t => { t.scores = [0, 0, 0]; });
+          state.winnerAnnounced = false;
+          saveAndBroadcast();
+          renderAdminUI();
+        });
+      }
+
+      const adminRoomInput = document.getElementById('admin-room-input');
+      const adminConnectBtn = document.getElementById('admin-connect-btn');
+      const adminSwitchToStageBtn = document.getElementById('admin-switch-to-stage-btn');
+
+      if (adminRoomInput) adminRoomInput.value = roomCode;
+      if (adminConnectBtn) {
+        adminConnectBtn.addEventListener('click', () => {
+          connectAdminToRoom(adminRoomInput.value);
+        });
+      }
+      if (adminSwitchToStageBtn) {
+        adminSwitchToStageBtn.addEventListener('click', () => switchRoleView('stage'));
+      }
+
+      // ========================================================================
+      // ROLE SWITCHER ('stage' vs 'admin')
+      // ========================================================================
+      function switchRoleView(role) {
+        currentRole = role === 'admin' ? 'admin' : 'stage';
+
+        if (currentRole === 'admin') {
+          stageContainerEl.classList.add('hidden');
+          drawerToggleBtn.classList.add('hidden');
+          drawerEl.classList.add('hidden');
+          theaterZoomOverlayEl.classList.remove('is-zoomed');
+          mobileAdminViewEl.classList.remove('hidden');
+          mobileAdminViewEl.classList.add('flex');
+          renderAdminUI();
+          connectAdminToRoom(roomCode);
+        } else {
+          mobileAdminViewEl.classList.add('hidden');
+          mobileAdminViewEl.classList.remove('flex');
+          stageContainerEl.classList.remove('hidden');
+          drawerToggleBtn.classList.remove('hidden');
+          drawerEl.classList.remove('hidden');
+          syncHeaderTexts();
+          renderLeaderboard(false);
+          renderDrawerControls();
+          syncAccordionFromState();
+          updateDrawerPairingUI();
+          initStagePeerHost();
+        }
+      }
+
+      // ========================================================================
+      // EDITORIAL CONFETTI ENGINE
+      // ========================================================================
+      const confettiCanvas = document.getElementById('confetti-canvas');
+      const ctx = confettiCanvas.getContext('2d');
+      let confettiPieces = [];
+      let confettiAnimId = null;
+
+      function resizeConfettiCanvas() {
+        confettiCanvas.width = window.innerWidth;
+        confettiCanvas.height = window.innerHeight;
+      }
+      window.addEventListener('resize', resizeConfettiCanvas);
+      resizeConfettiCanvas();
+
+      function launchConfetti() {
+        const colors = ['#F4D03F', '#E74C3C', '#2980B9', '#111111', '#FFFFFF'];
+        confettiPieces = [];
+        for (let i = 0; i < 140; i++) {
+          confettiPieces.push({
+            x: Math.random() * confettiCanvas.width,
+            y: -20 - Math.random() * confettiCanvas.height * 0.45,
+            w: 9 + Math.random() * 9,
+            h: 6 + Math.random() * 8,
+            color: colors[Math.floor(Math.random() * colors.length)],
+            vx: (Math.random() - 0.5) * 4.5,
+            vy: 2.8 + Math.random() * 4.2,
+            rotation: Math.random() * 360,
+            vRot: (Math.random() - 0.5) * 10
+          });
+        }
+
+        if (confettiAnimId) cancelAnimationFrame(confettiAnimId);
+
+        function animateConfetti() {
+          ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+          let alive = 0;
+          for (const p of confettiPieces) {
+            p.x += p.vx;
+            p.y += p.vy;
+            p.vy += 0.05;
+            p.rotation += p.vRot;
+
+            if (p.y < confettiCanvas.height + 30) {
+              alive++;
+              ctx.save();
+              ctx.translate(p.x, p.y);
+              ctx.rotate((p.rotation * Math.PI) / 180);
+              ctx.fillStyle = p.color;
+              ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+              ctx.strokeStyle = '#111111';
+              ctx.lineWidth = 1.2;
+              ctx.strokeRect(-p.w / 2, -p.h / 2, p.w, p.h);
+              ctx.restore();
+            }
+          }
+
+          if (alive > 0) {
+            confettiAnimId = requestAnimationFrame(animateConfetti);
+          } else {
+            ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+            confettiAnimId = null;
+          }
+        }
+
+        confettiAnimId = requestAnimationFrame(animateConfetti);
+      }
+
+      // ========================================================================
+      // INITIALIZE IMMEDIATELY + ON WINDOW LOAD
+      // ========================================================================
+      switchRoleView(initialRole);
+      window.addEventListener('load', () => {
+        if (currentRole === 'stage') {
+          renderLeaderboard(false);
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
