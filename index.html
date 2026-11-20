@@ -1,13 +1,3 @@
-Conversation Log
-The previous fix and fuction you added including those zooming, gif, and now play auto video etc, you need to customize to be vox style like the rest of the code.
-
-ปรับดีไซน์ของส่วนซูม, สลับสื่อ/GIF และปุ่มควบคุมเล่นวิดีโอหลังบ้านให้เป็นสไตล์ Vox Editorial (พื้นกระดาษ #F8F6F0, ขอบหมึกหนา #111111, เงาแข็ง Offset, ปุ่ม .btn-vox และชุดสี #F4D03F / #E74C3C / #2980B9) ทั้งหมดแล้วครับ โดยยังคงความสะอาดตาบนหน้าจอพรีเซนต์ (ซ่อนปุ่มควบคุมสื่อไว้จนกว่าจะเอาเมาส์ไปวาง)
-
-สรุปจุดที่ปรับเป็น Vox Style
-Floating Media & Zoom Controls (#media-toolbar-row): เปลี่ยนจากปุ่มกระจกใสโค้งมน มาใช้การ์ดกระดาษ #F8F6F0 ขอบดำ 2px เงาแข็ง 3px และปุ่ม .btn-vox สีเหลือง #F4D03F โดยยังคงซ่อน opacity: 0 ในสถานะปกติและเฟดขึ้นเมื่อ Hover
-ปุ่มควบคุมบนหัวการ์ด (#accordion-edit-btn, #accordion-close-btn, #zoom-close-btn): ใช้ขอบดำ 2px และเงา/สีชุดเดียวกับระบบหลัก โดยปรับความโปร่งแสงตอนพักให้กลมกลืน (opacity: 0.16 เหมือนไอคอนประแจและเฟือง)
-แผงเล่นวิดีโอหลังบ้าน (▶ เล่น, ⏸ พัก, ↺ เริ่มใหม่, 🔊 เสียง): ปรับมาใช้ปุ่ม .btn-vox และชุดสี Vox เต็มรูปแบบ (#F4D03F สำหรับเล่น, #2980B9 สำหรับเริ่มใหม่, #E74C3C เมื่อปิดเสียง)
-html
 <!DOCTYPE html>
 <html lang="th">
 <head>
