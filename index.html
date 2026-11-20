@@ -144,16 +144,16 @@
     }
 
     /* ==========================================================================
-       SMOOTH SLIDE-DOWN MEDIA ACCORDION & MEDIA CROSSFADE TRANSITIONS
+       SMOOTH SLIDE-DOWN MEDIA ACCORDION & SEAMLESS GHOST CONTROLS
        ========================================================================== */
     .media-accordion-wrapper {
       display: grid;
       grid-template-rows: 0fr;
       opacity: 0;
       margin-top: 0px;
-      transition: grid-template-rows 0.44s cubic-bezier(0.22, 1, 0.36, 1),
-                  opacity 0.32s ease,
-                  margin-top 0.44s cubic-bezier(0.22, 1, 0.36, 1);
+      transition: grid-template-rows 0.46s cubic-bezier(0.22, 1, 0.36, 1),
+                  opacity 0.34s ease,
+                  margin-top 0.46s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
     .media-accordion-wrapper.is-open {
@@ -167,7 +167,7 @@
     }
 
     .media-content-stage {
-      transition: opacity 0.22s ease, transform 0.22s ease;
+      transition: opacity 0.24s ease, transform 0.24s ease;
     }
 
     .media-content-stage.is-swapping {
@@ -175,16 +175,51 @@
       transform: translateY(-6px);
     }
 
-    /* Smooth Video <-> Image Crossfade & Slide Transition */
+    /* Subtle Accordion Header Actions (faded at rest for clean presentation) */
+    .accordion-subtle-actions {
+      opacity: 0.18;
+      transition: opacity 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    #media-accordion:hover .accordion-subtle-actions,
+    .accordion-subtle-actions:focus-within {
+      opacity: 1;
+    }
+
+    /* Seamless Floating Ghost Media Controls (Hidden at rest, reveals on hover) */
+    .media-floating-controls {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(-6px) scale(0.96);
+      transition: opacity 0.34s cubic-bezier(0.22, 1, 0.36, 1),
+                  transform 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    #media-visual-host:hover .media-floating-controls,
+    #media-visual-host:focus-within .media-floating-controls {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0) scale(1);
+    }
+
+    .media-ghost-pill {
+      background: rgba(17, 17, 17, 0.64);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+    }
+
+    /* Smooth Video <-> Image/GIF Crossfade & Scale Transition */
     .media-visual-pane {
-      transition: opacity 0.3s cubic-bezier(0.22, 1, 0.36, 1),
-                  transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+      transition: opacity 0.36s cubic-bezier(0.22, 1, 0.36, 1),
+                  transform 0.38s cubic-bezier(0.22, 1, 0.36, 1);
       will-change: opacity, transform;
     }
 
     .media-visual-pane.is-fading-out {
       opacity: 0;
-      transform: translateX(14px) scale(0.985);
+      transform: scale(0.975);
     }
 
     /* ==========================================================================
@@ -193,7 +228,7 @@
     #theater-zoom-overlay {
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+      transition: opacity 0.36s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
     #theater-zoom-overlay.is-zoomed {
@@ -204,7 +239,7 @@
     #theater-zoom-dialog {
       transform: scale(0.88) translateY(14px);
       opacity: 0;
-      transition: transform 0.38s cubic-bezier(0.22, 1, 0.36, 1),
+      transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
                   opacity 0.32s ease;
       will-change: transform, opacity;
     }
@@ -466,14 +501,14 @@
                 <h3 id="accordion-game-title" class="thai-safe-tight font-display font-extrabold text-base sm:text-xl text-[#111111] break-words"></h3>
               </div>
 
-              <div class="flex items-center gap-2 shrink-0">
+              <div class="accordion-subtle-actions flex items-center gap-1.5 shrink-0">
                 <button
                   type="button"
                   id="accordion-edit-btn"
                   aria-label="แก้ไขรายละเอียดและสื่อของเกมนี้"
-                  class="w-8 h-8 rounded-lg border-2 border-[#111111] bg-[#F8F6F0] hover:bg-[#F4D03F] flex items-center justify-center text-[#111111] transition-colors cursor-pointer"
+                  class="w-7 h-7 rounded-lg border border-[#111111]/40 bg-[#F8F6F0] hover:bg-[#F4D03F] hover:border-[#111111] flex items-center justify-center text-[#111111] transition-colors cursor-pointer"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
                   </svg>
                 </button>
@@ -481,7 +516,7 @@
                   type="button"
                   id="accordion-close-btn"
                   aria-label="ปิดหน้าต่างสื่อ"
-                  class="w-8 h-8 rounded-lg border-2 border-[#111111] bg-[#111111] hover:bg-[#E74C3C] text-white font-display font-bold text-sm flex items-center justify-center transition-colors cursor-pointer"
+                  class="w-7 h-7 rounded-lg border border-[#111111]/40 bg-[#111111]/80 hover:bg-[#E74C3C] hover:border-[#111111] text-white font-display font-bold text-xs flex items-center justify-center transition-colors cursor-pointer"
                 >
                   ✕
                 </button>
@@ -504,25 +539,25 @@
 
   <!-- ========================================================================
        PERSISTENT VISUAL HOST ELEMENT (MOVED SEAMLESSLY BETWEEN ACCORDION & ZOOM)
-       Keeps YouTube iframe alive without reload when zooming in/out
+       Keeps YouTube iframe alive without reload; controls stay hidden until hover
        ======================================================================== -->
-  <div id="media-visual-host" class="hidden w-full flex-col gap-2.5">
-    <!-- Top Media Bar: Video <-> Image Switcher Pills + Zoom Button -->
-    <div id="media-toolbar-row" class="flex flex-wrap items-center justify-between gap-2">
-      <!-- Video <-> Image Navigation Bar (Shown when both YouTube & Image exist) -->
-      <div id="media-switcher-bar" class="hidden inline-flex items-center gap-1 bg-[#F8F6F0] border-2 border-[#111111] rounded-xl p-1 shadow-[2px_2px_0px_#111111]">
+  <div id="media-visual-host" class="hidden relative w-full">
+    <!-- Seamless Floating Ghost Controls (Invisible at rest for clean presentation) -->
+    <div id="media-toolbar-row" class="media-floating-controls absolute top-3 right-3 z-20 flex items-center gap-1.5">
+      <!-- Video <-> Image/GIF Pill Switcher (Shown when both YouTube & Image/GIF exist) -->
+      <div id="media-switcher-bar" class="hidden media-ghost-pill inline-flex items-center gap-0.5 rounded-full p-1">
         <button
           type="button"
           id="media-nav-prev"
           aria-label="สื่อก่อนหน้า"
-          class="w-7 h-7 rounded-lg hover:bg-white border border-transparent hover:border-[#111111] font-display font-black text-sm flex items-center justify-center cursor-pointer transition-colors"
+          class="w-6 h-6 rounded-full hover:bg-white/15 text-white/80 hover:text-white font-display font-bold text-xs flex items-center justify-center cursor-pointer transition-colors"
         >
           ‹
         </button>
         <button
           type="button"
           id="media-pill-video"
-          class="font-display font-bold text-xs sm:text-sm px-3 py-1 rounded-lg border border-transparent transition-all cursor-pointer flex items-center gap-1"
+          class="font-display font-bold text-xs px-2.5 py-1 rounded-full transition-all cursor-pointer flex items-center gap-1"
         >
           <span>🎬</span>
           <span>วิดีโอ</span>
@@ -530,33 +565,34 @@
         <button
           type="button"
           id="media-pill-image"
-          class="font-display font-bold text-xs sm:text-sm px-3 py-1 rounded-lg border border-transparent transition-all cursor-pointer flex items-center gap-1"
+          class="font-display font-bold text-xs px-2.5 py-1 rounded-full transition-all cursor-pointer flex items-center gap-1"
         >
           <span>🖼️</span>
-          <span>รูปภาพ</span>
+          <span>ภาพ/GIF</span>
         </button>
         <button
           type="button"
           id="media-nav-next"
           aria-label="สื่อถัดไป"
-          class="w-7 h-7 rounded-lg hover:bg-white border border-transparent hover:border-[#111111] font-display font-black text-sm flex items-center justify-center cursor-pointer transition-colors"
+          class="w-6 h-6 rounded-full hover:bg-white/15 text-white/80 hover:text-white font-display font-bold text-xs flex items-center justify-center cursor-pointer transition-colors"
         >
           ›
         </button>
       </div>
 
-      <!-- Zoom In / Zoom Out Trigger Button -->
+      <!-- Subtle Zoom In / Zoom Out Ghost Trigger -->
       <button
         type="button"
         id="media-zoom-toggle-btn"
-        class="ml-auto btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-extrabold text-xs sm:text-sm px-3 py-1.5 rounded-xl flex items-center gap-1.5 cursor-pointer"
+        aria-label="ขยายหรือย่อสื่อ"
+        class="media-ghost-pill text-white/90 hover:text-[#F4D03F] hover:bg-black/80 font-display font-bold text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5 cursor-pointer transition-colors"
       >
         <span id="media-zoom-btn-icon">🔍</span>
-        <span id="media-zoom-btn-label">ขยายใหญ่</span>
+        <span id="media-zoom-btn-label">ขยาย</span>
       </button>
     </div>
 
-    <!-- Animated Visual Pane (YouTube 16:9 or Image) -->
+    <!-- Animated Visual Pane (YouTube 16:9 or Image/GIF) -->
     <div id="media-visual-pane" class="media-visual-pane w-full"></div>
   </div>
 
@@ -565,7 +601,7 @@
        ======================================================================== -->
   <div
     id="theater-zoom-overlay"
-    class="fixed inset-0 z-50 bg-black/80 backdrop-blur-[4px] flex items-center justify-center p-3 sm:p-6"
+    class="fixed inset-0 z-50 bg-black/82 backdrop-blur-[5px] flex items-center justify-center p-3 sm:p-6"
     role="dialog"
     aria-modal="true"
     aria-labelledby="zoom-modal-title"
@@ -583,9 +619,9 @@
         <button
           type="button"
           id="zoom-close-btn"
-          class="btn-vox bg-[#111111] hover:bg-[#E74C3C] text-white font-display font-bold text-xs sm:text-sm px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 cursor-pointer shrink-0"
+          class="opacity-45 hover:opacity-100 bg-[#111111]/85 hover:bg-[#E74C3C] text-white font-display font-bold text-xs px-3 py-1.5 rounded-full flex items-center gap-1 cursor-pointer shrink-0 transition-all"
         >
-          <span>✕ ย่อกลับ (Esc)</span>
+          <span>✕ ย่อกลับ</span>
         </button>
       </div>
 
@@ -696,9 +732,9 @@
           </div>
         </div>
 
-        <!-- 2. Switch Video <-> Image & Toggle Theater Zoom on Main Screen -->
+        <!-- 2. Switch Video <-> Image/GIF & Toggle Theater Zoom on Main Screen -->
         <div class="bg-[#F8F6F0] border-2 border-[#111111] rounded-xl p-3 flex flex-col gap-2.5">
-          <span class="text-xs font-bold text-[#111111]">สลับคลิปวิดีโอ / รูปภาพ และสั่งซูมบนหน้าบ้าน:</span>
+          <span class="text-xs font-bold text-[#111111]">สลับคลิปวิดีโอ / รูปภาพ (GIF) และสั่งซูมบนหน้าบ้าน:</span>
 
           <div class="grid grid-cols-2 gap-2">
             <button
@@ -715,7 +751,7 @@
               class="btn-vox bg-white text-[#111111] font-display font-bold text-xs sm:text-sm py-2.5 px-2 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <span>🖼️</span>
-              <span>แสดงรูปภาพ (Image)</span>
+              <span>แสดงรูป / GIF</span>
             </button>
           </div>
 
@@ -832,15 +868,15 @@
         <p id="youtube-parse-status" class="text-xs font-semibold mt-1.5 text-[#111111]/70 hidden"></p>
       </div>
 
-      <!-- Image URL / Local File Upload -->
+      <!-- Image / GIF URL or Local File Upload -->
       <div class="bg-white border-2 border-[#111111] rounded-xl p-3.5 mb-4 shadow-[3px_3px_0px_#111111]">
         <div class="flex items-center justify-between gap-2 mb-1.5">
           <label for="input-image-url" class="font-display font-bold text-sm text-[#111111] flex items-center gap-1.5">
             <span class="inline-block w-2.5 h-2.5 rounded-full bg-[#2980B9] border border-[#111111]"></span>
-            รูปภาพประกอบ (สลับดูคู่กับวิดีโอได้)
+            รูปภาพ / GIF ประกอบ (สลับดูคู่กับวิดีโอได้)
           </label>
           <button type="button" id="btn-clear-image" class="text-xs font-bold text-[#E74C3C] hover:underline cursor-pointer">
-            ลบรูปภาพ
+            ลบรูป/GIF
           </button>
         </div>
 
@@ -848,17 +884,17 @@
           <input
             id="input-image-url"
             type="text"
-            placeholder="วางลิงก์รูปภาพ (URL) หรือเลือกไฟล์จากเครื่อง"
+            placeholder="วางลิงก์รูปภาพ / .gif (URL) หรือเลือกไฟล์จากเครื่อง"
             class="flex-1 bg-[#F8F6F0] border-2 border-[#111111] rounded-lg px-3 py-2 text-sm font-medium text-[#111111] focus:outline-none focus:bg-white"
           />
           <label class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-bold text-xs sm:text-sm px-3.5 py-2 rounded-lg flex items-center justify-center gap-1.5 cursor-pointer shrink-0">
-            <span>📁 เลือกรูป</span>
-            <input id="input-image-file" type="file" accept="image/*" class="hidden" />
+            <span>📁 เลือกรูป/GIF</span>
+            <input id="input-image-file" type="file" accept="image/*,.gif" class="hidden" />
           </label>
         </div>
 
         <div id="modal-image-preview-wrap" class="hidden mt-3 bg-[#F8F6F0] border-2 border-[#111111] rounded-lg p-2 flex items-center justify-center">
-          <img id="modal-image-preview" src="" alt="ตัวอย่างรูปภาพ" class="max-h-32 w-auto rounded object-contain" />
+          <img id="modal-image-preview" src="" alt="ตัวอย่างรูปภาพหรือ GIF" class="max-h-32 w-auto rounded object-contain" />
         </div>
       </div>
 
@@ -956,7 +992,7 @@
               </span>
             </div>
             <p id="drawer-peer-status" class="text-xs font-bold text-emerald-700 mt-1">พร้อมรับการเชื่อมต่อจากมือถือ</p>
-            <p class="text-xs text-[#111111]/70 mt-0.5">ทีมงานสามารถให้คะแนน สลับคลิป/รูปภาพ และสั่งซูมขยายขึ้นจอได้ทันที</p>
+            <p class="text-xs text-[#111111]/70 mt-0.5">ทีมงานสามารถให้คะแนน สลับคลิป/รูป/GIF และสั่งซูมขยายขึ้นจอได้ทันที</p>
           </div>
         </div>
 
@@ -1069,7 +1105,7 @@
         return JSON.parse(JSON.stringify(defaultState));
       }
 
-      // Normalize activeMediaType based on available YouTube & Image for a game
+      // Normalize activeMediaType based on available YouTube & Image/GIF for a game
       function resolveActiveMediaType(mediaObj) {
         const hasYt = Boolean(extractYouTubeId(mediaObj?.youtubeUrl));
         const hasImg = Boolean((mediaObj?.imageData || '').trim());
@@ -1400,7 +1436,7 @@
       }
 
       // ========================================================================
-      // YOUTUBE URL PARSER & IMAGE COMPRESSOR
+      // YOUTUBE URL PARSER & IMAGE/GIF PROCESSOR
       // ========================================================================
       function extractYouTubeId(url) {
         if (!url || typeof url !== 'string') return null;
@@ -1428,8 +1464,15 @@
       }
 
       function compressImageFile(file, callback) {
+        const isGif = file.type === 'image/gif' || /\.gif$/i.test(file.name || '');
         const reader = new FileReader();
         reader.onload = (event) => {
+          // Preserve animated GIFs directly as Data URLs without flattening to JPEG
+          if (isGif) {
+            callback(event.target.result);
+            return;
+          }
+
           const img = new Image();
           img.onload = () => {
             const maxDim = 960;
@@ -1536,7 +1579,7 @@
       const drawerOpenAdminBtn = document.getElementById('drawer-open-admin-btn');
 
       // ========================================================================
-      // VIDEO <-> IMAGE SWITCHING & THEATER ZOOM CONTROLLER
+      // VIDEO <-> IMAGE/GIF SWITCHING & THEATER ZOOM CONTROLLER
       // ========================================================================
       let swapTimeoutId = null;
       let mediaFadeTimeoutId = null;
@@ -1548,12 +1591,12 @@
 
         const isVideo = activeType === 'video';
         mediaPillVideoBtn.className = isVideo
-          ? 'font-display font-extrabold text-xs sm:text-sm px-3 py-1 rounded-lg bg-[#111111] text-[#F4D03F] border border-[#111111] transition-all cursor-pointer flex items-center gap-1'
-          : 'font-display font-bold text-xs sm:text-sm px-3 py-1 rounded-lg bg-transparent text-[#111111] hover:bg-white border border-transparent transition-all cursor-pointer flex items-center gap-1';
+          ? 'font-display font-bold text-xs px-2.5 py-1 rounded-full bg-white/25 text-[#F4D03F] transition-all cursor-pointer flex items-center gap-1'
+          : 'font-display font-semibold text-xs px-2.5 py-1 rounded-full bg-transparent text-white/80 hover:bg-white/15 hover:text-white transition-all cursor-pointer flex items-center gap-1';
 
         mediaPillImageBtn.className = !isVideo
-          ? 'font-display font-extrabold text-xs sm:text-sm px-3 py-1 rounded-lg bg-[#111111] text-[#F4D03F] border border-[#111111] transition-all cursor-pointer flex items-center gap-1'
-          : 'font-display font-bold text-xs sm:text-sm px-3 py-1 rounded-lg bg-transparent text-[#111111] hover:bg-white border border-transparent transition-all cursor-pointer flex items-center gap-1';
+          ? 'font-display font-bold text-xs px-2.5 py-1 rounded-full bg-white/25 text-[#F4D03F] transition-all cursor-pointer flex items-center gap-1'
+          : 'font-display font-semibold text-xs px-2.5 py-1 rounded-full bg-transparent text-white/80 hover:bg-white/15 hover:text-white transition-all cursor-pointer flex items-center gap-1';
       }
 
       function renderVisualPaneContent(gameIdx, animateCrossfade = false) {
@@ -1566,7 +1609,6 @@
 
         if (!hasYt && !hasImg) {
           mediaVisualHostEl.classList.add('hidden');
-          mediaVisualHostEl.classList.remove('flex');
           mediaVisualPaneEl.innerHTML = '';
           currentRenderedPaneKey = '';
           return;
@@ -1576,10 +1618,12 @@
         media.activeMediaType = resolvedType;
 
         mediaVisualHostEl.classList.remove('hidden');
-        mediaVisualHostEl.classList.add('flex');
         updateMediaSwitcherPills(gameIdx, resolvedType, hasBoth);
 
-        const nextKey = `${gameIdx}:${resolvedType}:${resolvedType === 'video' ? ytId : imgSrc.slice(0, 64)}:${state.isMediaZoomed}`;
+        const mediaSignature = resolvedType === 'video'
+          ? ytId
+          : `${imgSrc.length}:${imgSrc.slice(0, 48)}:${imgSrc.slice(-24)}`;
+        const nextKey = `${gameIdx}:${resolvedType}:${mediaSignature}:${state.isMediaZoomed}`;
         if (nextKey === currentRenderedPaneKey && mediaVisualPaneEl.innerHTML !== '') {
           return;
         }
@@ -1600,17 +1644,16 @@
               </div>
             `;
           } else if (hasImg) {
-            const maxHeightClass = state.isMediaZoomed ? 'max-h-[72vh]' : 'max-h-[44vh]';
+            const maxHeightClass = state.isMediaZoomed ? 'max-h-[74vh]' : 'max-h-[46vh]';
             mediaVisualPaneEl.innerHTML = `
               <div
                 id="stage-zoomable-image-box"
-                title="${state.isMediaZoomed ? 'คลิกเพื่อย่อกลับ' : 'คลิกเพื่อขยายใหญ่'}"
-                class="w-full bg-[#F8F6F0] border-[2.5px] border-[#111111] rounded-xl p-3 sm:p-4 shadow-[4px_4px_0px_#111111] flex items-center justify-center cursor-zoom-in"
+                class="w-full bg-[#F8F6F0] border-[2.5px] border-[#111111] rounded-xl p-2.5 sm:p-3.5 shadow-[4px_4px_0px_#111111] flex items-center justify-center cursor-pointer"
               >
                 <img
                   src="${imgSrc}"
                   alt="${escapeHtml(state.games[gameIdx])}"
-                  onerror="this.onerror=null; this.src='https://placehold.co/960x540/F8F6F0/111111?text=ไม่สามารถโหลดรูปภาพได้';"
+                  onerror="this.onerror=null; this.src='https://placehold.co/960x540/F8F6F0/111111?text=ไม่สามารถโหลดรูปภาพหรือ GIF ได้';"
                   class="${maxHeightClass} w-auto max-w-full rounded-lg object-contain transition-all duration-300"
                 />
               </div>
@@ -1633,7 +1676,7 @@
               mediaVisualPaneEl.classList.remove('is-fading-out');
             });
             mediaFadeTimeoutId = null;
-          }, 180);
+          }, 200);
         } else {
           mediaVisualPaneEl.classList.remove('is-fading-out');
           injectHtml();
@@ -1696,7 +1739,7 @@
           zoomGameDotEl.style.backgroundColor = GAME_COLORS[idx] || '#F4D03F';
           zoomModalTitleEl.textContent = state.games[idx];
           mediaZoomBtnIcon.textContent = '🗕';
-          mediaZoomBtnLabel.textContent = 'ย่อกลับปกติ';
+          mediaZoomBtnLabel.textContent = 'ย่อกลับ';
 
           // Reparent persistent visual host into zoom slot so iframe doesn't reload
           if (mediaVisualHostEl.parentElement !== zoomMediaSlotEl) {
@@ -1707,7 +1750,7 @@
         } else {
           theaterZoomOverlayEl.classList.remove('is-zoomed');
           mediaZoomBtnIcon.textContent = '🔍';
-          mediaZoomBtnLabel.textContent = 'ขยายใหญ่';
+          mediaZoomBtnLabel.textContent = 'ขยาย';
 
           const accordionSlot = document.getElementById('accordion-media-slot');
           if (accordionSlot && mediaVisualHostEl.parentElement !== accordionSlot) {
@@ -1768,7 +1811,7 @@
           mediaContentStageEl.innerHTML = `
             <div class="w-full bg-[#F8F6F0] border-2 border-dashed border-[#111111]/45 rounded-xl py-7 px-4 flex flex-col items-center justify-center text-center gap-3">
               <p class="thai-safe font-display font-bold text-base sm:text-lg text-[#111111]/75">
-                ยังไม่ได้ตั้งค่าคำอธิบาย ลิงก์ YouTube หรือรูปภาพสำหรับเกมนี้
+                ยังไม่ได้ตั้งค่าคำอธิบาย ลิงก์ YouTube หรือรูปภาพ/GIF สำหรับเกมนี้
               </p>
               <button
                 type="button"
@@ -1853,7 +1896,7 @@
               mediaContentStageEl.innerHTML = '';
               currentRenderedPaneKey = '';
             }
-          }, 450);
+          }, 460);
           return;
         }
 
@@ -1935,7 +1978,7 @@
           youtubeParseStatusEl.textContent = `✓ พบวิดีโอ YouTube (ID: ${ytId}) พร้อมแสดงผล`;
           youtubeParseStatusEl.className = 'text-xs font-bold mt-1.5 text-emerald-700';
         } else {
-          youtubeParseStatusEl.textContent = '⚠ รูปแบบลิงก์ YouTube ไม่ถูกต้อง (ระบบจะสลับไปแสดงรูปภาพแทนหากมี)';
+          youtubeParseStatusEl.textContent = '⚠ รูปแบบลิงก์ YouTube ไม่ถูกต้อง (ระบบจะสลับไปแสดงรูปภาพ/GIF แทนหากมี)';
           youtubeParseStatusEl.className = 'text-xs font-bold mt-1.5 text-[#E74C3C]';
         }
       }
@@ -2001,9 +2044,9 @@
       inputImageFileEl.addEventListener('change', (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
-        compressImageFile(file, (compressedDataUrl) => {
-          inputImageUrlEl.value = compressedDataUrl;
-          updateModalImagePreview(compressedDataUrl);
+        compressImageFile(file, (processedDataUrl) => {
+          inputImageUrlEl.value = processedDataUrl;
+          updateModalImagePreview(processedDataUrl);
         });
       });
 
@@ -2589,7 +2632,7 @@
           });
         }
 
-        // Tab 2: Remote Accordion Open/Close, Video<->Image Switch, Theater Zoom & Media Editors
+        // Tab 2: Remote Accordion Open/Close, Video<->Image/GIF Switch, Theater Zoom & Media Editors
         const accBtnsEl = document.getElementById('admin-remote-accordion-btns');
         if (accBtnsEl) {
           accBtnsEl.innerHTML = [0, 1, 2].map(idx => {
@@ -2623,7 +2666,7 @@
           });
         }
 
-        // Sync Video <-> Image & Zoom Control Buttons in Tab 2
+        // Sync Video <-> Image/GIF & Zoom Control Buttons in Tab 2
         const activeIdx = state.activeGameAccordion;
         const activeMedia = activeIdx !== null ? (state.gameMedia[activeIdx] || {}) : {};
         const hasYt = Boolean(extractYouTubeId(activeMedia.youtubeUrl));
@@ -2711,12 +2754,12 @@
                     type="text"
                     data-admin-img="${idx}"
                     value="${escapeHtml(m.imageData)}"
-                    placeholder="ลิงก์รูปภาพ (URL)"
+                    placeholder="ลิงก์รูปภาพ / GIF (URL)"
                     class="flex-1 bg-[#F8F6F0] border-2 border-[#111111] rounded-lg px-2.5 py-1.5 text-sm"
                   />
                   <label class="btn-vox bg-[#F4D03F] text-[#111111] font-display font-bold text-xs px-3 py-1.5 rounded-lg cursor-pointer shrink-0">
-                    📁 รูป
-                    <input type="file" accept="image/*" data-admin-file="${idx}" class="hidden" />
+                    📁 รูป/GIF
+                    <input type="file" accept="image/*,.gif" data-admin-file="${idx}" class="hidden" />
                   </label>
                 </div>
               </div>
