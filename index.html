@@ -331,6 +331,46 @@
       transform: scale(1.06);
     }
 
+    /* Vox Documentary Range Slider */
+    .vox-range {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 12px;
+      background: #F0EDE4;
+      border: 2px solid #111111;
+      border-radius: 999px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .vox-range::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 7px;
+      background: #F4D03F;
+      border: 2.5px solid #111111;
+      box-shadow: 2px 2px 0px #111111;
+      cursor: pointer;
+      transition: transform 0.12s ease;
+    }
+
+    .vox-range::-webkit-slider-thumb:hover {
+      transform: scale(1.08);
+    }
+
+    .vox-range::-moz-range-thumb {
+      width: 22px;
+      height: 22px;
+      border-radius: 7px;
+      background: #F4D03F;
+      border: 2.5px solid #111111;
+      box-shadow: 2px 2px 0px #111111;
+      cursor: pointer;
+    }
+
     /* Hide number input arrows for cleaner look */
     input[type="number"]::-webkit-inner-spin-button,
     input[type="number"]::-webkit-outer-spin-button {
@@ -356,6 +396,12 @@
 
   <!-- Confetti Canvas -->
   <canvas id="confetti-canvas"></canvas>
+
+  <!-- Hidden Background Music Host (Plays on Stage MacBook without cluttering screen) -->
+  <div id="stage-bgm-host" aria-hidden="true" class="fixed -left-[9999px] top-0 w-px h-px opacity-0 pointer-events-none overflow-hidden">
+    <audio id="stage-bgm-audio" loop preload="auto"></audio>
+    <div id="stage-bgm-yt-wrap"></div>
+  </div>
 
   <!-- ========================================================================
        VIEW 1: CLEAN REAL-TIME STAGE VIEW (PROJECTOR READY — NO TOP-RIGHT BUTTONS)
@@ -798,6 +844,64 @@
         </div>
       </div>
 
+      <!-- Background Music (BGM) 3-Slot Controller Card -->
+      <div class="vox-card bg-white p-4 flex flex-col gap-3.5">
+        <div class="flex items-center justify-between gap-2 pb-2 border-b-2 border-[#111111]">
+          <div class="flex items-center gap-2 min-w-0">
+            <span class="w-3.5 h-3.5 rounded-full bg-[#F4D03F] border border-[#111111] shrink-0"></span>
+            <h2 class="thai-safe-tight font-display font-extrabold text-base text-[#111111] truncate">
+              🎵 เพลงประกอบ (Background Music)
+            </h2>
+          </div>
+          <span id="admin-bgm-status-badge" class="text-xs font-display font-bold px-2.5 py-0.5 rounded-md border border-[#111111] bg-[#F8F6F0] text-[#111111] shrink-0">
+            หยุดอยู่
+          </span>
+        </div>
+
+        <!-- 3 Music Slots (Switch & Paste YouTube or Direct Audio URL) -->
+        <div id="admin-bgm-slots-container" class="flex flex-col gap-2.5">
+          <!-- Populated dynamically -->
+        </div>
+
+        <!-- BGM Play/Pause, Mute & Vox Volume Slider -->
+        <div class="bg-[#F8F6F0] border-2 border-[#111111] rounded-xl p-3 flex flex-col gap-3">
+          <div class="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              id="admin-bgm-toggle-play-btn"
+              class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-extrabold text-sm py-2.5 px-3 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <span id="admin-bgm-play-icon">▶</span>
+              <span id="admin-bgm-play-label">เปิดเพลงประกอบ</span>
+            </button>
+            <button
+              type="button"
+              id="admin-bgm-mute-btn"
+              class="btn-vox bg-white hover:bg-gray-50 text-[#111111] font-display font-extrabold text-sm py-2.5 px-3 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <span id="admin-bgm-mute-icon">🔊</span>
+              <span id="admin-bgm-mute-label">เสียงปกติ</span>
+            </button>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <span class="font-display font-bold text-xs text-[#111111] shrink-0">ความดัง:</span>
+            <input
+              id="admin-bgm-volume-slider"
+              type="range"
+              min="0"
+              max="100"
+              value="45"
+              aria-label="ระดับเสียงเพลงประกอบ"
+              class="vox-range flex-1"
+            />
+            <span id="admin-bgm-volume-value" class="font-display font-black text-xs bg-white border-2 border-[#111111] px-2 py-0.5 rounded-lg w-12 text-center shrink-0">
+              45%
+            </span>
+          </div>
+        </div>
+      </div>
+
       <!-- Per-Game Media & Rules Editors -->
       <div id="admin-media-editors" class="flex flex-col gap-4">
         <!-- Populated dynamically -->
@@ -1131,6 +1235,15 @@
         activeGameAccordion: null,
         isMediaZoomed: false,
         isVideoMuted: false,
+        bgmTracks: [
+          { label: 'เพลงที่ 1', url: '' },
+          { label: 'เพลงที่ 2', url: '' },
+          { label: 'เพลงที่ 3', url: '' }
+        ],
+        activeBgmSlot: 0,
+        bgmPlaying: false,
+        bgmVolume: 45,
+        bgmMuted: false,
         updatedAt: Date.now()
       };
 
@@ -1192,6 +1305,20 @@
             : null;
           base.isMediaZoomed = Boolean(parsed.isMediaZoomed) && base.activeGameAccordion !== null;
           base.isVideoMuted = Boolean(parsed.isVideoMuted);
+          if (Array.isArray(parsed.bgmTracks) && parsed.bgmTracks.length === 3) {
+            base.bgmTracks = parsed.bgmTracks.map((tr, i) => ({
+              label: tr?.label || base.bgmTracks[i].label,
+              url: tr?.url || ''
+            }));
+          }
+          base.activeBgmSlot = (typeof parsed.activeBgmSlot === 'number' && parsed.activeBgmSlot >= 0 && parsed.activeBgmSlot <= 2)
+            ? parsed.activeBgmSlot
+            : 0;
+          base.bgmPlaying = Boolean(parsed.bgmPlaying);
+          base.bgmVolume = typeof parsed.bgmVolume === 'number'
+            ? Math.max(0, Math.min(100, Math.round(parsed.bgmVolume)))
+            : 45;
+          base.bgmMuted = Boolean(parsed.bgmMuted);
           return base;
         } catch (err) {
           console.warn('Recovering default state due to storage read error:', err);
@@ -1269,6 +1396,10 @@
             youtubeUrl: m?.youtubeUrl || '',
             imageData: m?.imageData || '',
             activeMediaType: m?.activeMediaType === 'image' ? 'image' : 'video'
+          })),
+          bgmTracks: (incomingState.bgmTracks || defaultState.bgmTracks).map((tr, i) => ({
+            label: tr?.label || defaultState.bgmTracks[i].label,
+            url: tr?.url || ''
           }))
         };
 
@@ -1284,6 +1415,7 @@
           syncHeaderTexts();
           renderLeaderboard(true);
           renderDrawerControls();
+          syncStageBgmPlayer();
 
           const nextMediaJson = JSON.stringify(state.gameMedia);
           if (state.activeGameAccordion !== prevAccordion) {
@@ -1310,6 +1442,8 @@
             applyIncomingState(event.data.state, true);
           } else if (event.data?.type === 'VIDEO_COMMAND' && currentRole === 'stage') {
             handleStageVideoCommand(event.data.action, event.data.gameIdx);
+          } else if (event.data?.type === 'BGM_COMMAND' && currentRole === 'stage') {
+            handleStageBgmCommand(event.data);
           }
         };
       }
@@ -1384,6 +1518,8 @@
                 });
               } else if (msg?.type === 'VIDEO_COMMAND') {
                 handleStageVideoCommand(msg.action, msg.gameIdx);
+              } else if (msg?.type === 'BGM_COMMAND') {
+                handleStageBgmCommand(msg);
               } else if (msg?.type === 'REQUEST_STATE') {
                 if (conn.open) conn.send({ type: 'SYNC_STATE', state });
               }
@@ -1560,6 +1696,102 @@
           return;
         }
         executeYtAction(iframe, action);
+      }
+
+      // ========================================================================
+      // BACKGROUND MUSIC (BGM) STAGE PLAYER ENGINE (YOUTUBE OR AUDIO URL)
+      // ========================================================================
+      let currentBgmYtId = '';
+      let currentBgmAudioSrc = '';
+      let bgmYtReady = false;
+
+      function applyStageBgmYtControls(iframe) {
+        if (!iframe) return;
+        const vol = Math.max(0, Math.min(100, Number(state.bgmVolume) || 0));
+        postYtCmd(iframe, 'setVolume', [vol]);
+        postYtCmd(iframe, state.bgmMuted ? 'mute' : 'unMute');
+        postYtCmd(iframe, state.bgmPlaying ? 'playVideo' : 'pauseVideo');
+      }
+
+      function syncStageBgmPlayer() {
+        if (currentRole !== 'stage') return;
+        const audioEl = document.getElementById('stage-bgm-audio');
+        const ytWrapEl = document.getElementById('stage-bgm-yt-wrap');
+        if (!audioEl || !ytWrapEl) return;
+
+        const activeTrack = state.bgmTracks[state.activeBgmSlot] || { url: '' };
+        const rawUrl = (activeTrack.url || '').trim();
+        const ytId = extractYouTubeId(rawUrl);
+
+        if (ytId) {
+          // Stop direct audio if active
+          if (currentBgmAudioSrc) {
+            audioEl.pause();
+            audioEl.removeAttribute('src');
+            currentBgmAudioSrc = '';
+          }
+
+          if (currentBgmYtId !== ytId) {
+            currentBgmYtId = ytId;
+            bgmYtReady = false;
+            const originParam = (window.location.origin && window.location.origin !== 'null')
+              ? `&origin=${encodeURIComponent(window.location.origin)}`
+              : '';
+            const embedUrl = `https://www.youtube.com/embed/${ytId}?rel=0&modestbranding=1&enablejsapi=1&loop=1&playlist=${ytId}${originParam}`;
+            ytWrapEl.innerHTML = `<iframe id="stage-bgm-yt" src="${embedUrl}" allow="autoplay; encrypted-media" class="w-px h-px border-0"></iframe>`;
+            const ytIframe = document.getElementById('stage-bgm-yt');
+            if (ytIframe) {
+              ytIframe.addEventListener('load', () => {
+                setTimeout(() => {
+                  bgmYtReady = true;
+                  applyStageBgmYtControls(ytIframe);
+                }, 450);
+              });
+            }
+          } else if (bgmYtReady) {
+            applyStageBgmYtControls(document.getElementById('stage-bgm-yt'));
+          }
+        } else if (rawUrl) {
+          // Stop YouTube BGM if active
+          if (currentBgmYtId) {
+            ytWrapEl.innerHTML = '';
+            currentBgmYtId = '';
+            bgmYtReady = false;
+          }
+
+          if (currentBgmAudioSrc !== rawUrl) {
+            currentBgmAudioSrc = rawUrl;
+            audioEl.src = rawUrl;
+          }
+          audioEl.volume = Math.max(0, Math.min(1, (Number(state.bgmVolume) || 0) / 100));
+          audioEl.muted = Boolean(state.bgmMuted);
+          if (state.bgmPlaying) {
+            audioEl.play().catch(() => {});
+          } else {
+            audioEl.pause();
+          }
+        } else {
+          // Empty slot: stop both
+          if (currentBgmYtId) {
+            ytWrapEl.innerHTML = '';
+            currentBgmYtId = '';
+            bgmYtReady = false;
+          }
+          if (currentBgmAudioSrc) {
+            audioEl.pause();
+            audioEl.removeAttribute('src');
+            currentBgmAudioSrc = '';
+          }
+        }
+      }
+
+      function handleStageBgmCommand(cmd) {
+        if (!cmd) return;
+        if (typeof cmd.activeBgmSlot === 'number') state.activeBgmSlot = cmd.activeBgmSlot;
+        if (typeof cmd.bgmPlaying === 'boolean') state.bgmPlaying = cmd.bgmPlaying;
+        if (typeof cmd.bgmVolume === 'number') state.bgmVolume = cmd.bgmVolume;
+        if (typeof cmd.bgmMuted === 'boolean') state.bgmMuted = cmd.bgmMuted;
+        syncStageBgmPlayer();
       }
 
       function compressImageFile(file, callback) {
@@ -2896,6 +3128,102 @@
           muteBtnEl.classList.toggle('text-[#111111]', !state.isVideoMuted);
         }
 
+        // Tab 2: Background Music (BGM) 3-Slot Controller
+        const bgmSlotsEl = document.getElementById('admin-bgm-slots-container');
+        if (bgmSlotsEl) {
+          bgmSlotsEl.innerHTML = [0, 1, 2].map(idx => {
+            const tr = state.bgmTracks[idx] || { label: `เพลงที่ ${idx + 1}`, url: '' };
+            const isActive = state.activeBgmSlot === idx;
+            const hasUrl = Boolean((tr.url || '').trim());
+            const isYt = Boolean(extractYouTubeId(tr.url));
+            const typeTag = !hasUrl ? 'ว่าง' : (isYt ? 'YouTube' : 'Audio');
+            return `
+              <div class="bg-[#F8F6F0] border-2 border-[#111111] rounded-xl p-2.5 flex flex-col gap-2 ${isActive ? 'shadow-[3px_3px_0px_#111111] bg-[#FFFBEB]' : ''}">
+                <div class="flex items-center justify-between gap-2">
+                  <button
+                    type="button"
+                    data-admin-bgm-select="${idx}"
+                    class="btn-vox ${isActive ? 'bg-[#111111] text-[#F4D03F]' : 'bg-white text-[#111111]'} font-display font-bold text-xs px-3 py-1 rounded-lg flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <span>${isActive ? '●' : '○'}</span>
+                    <span>ช่อง ${idx + 1}: ${escapeHtml(tr.label || `เพลงที่ ${idx + 1}`)}</span>
+                  </button>
+                  <span class="text-[11px] font-display font-bold px-2 py-0.5 rounded border border-[#111111] bg-white text-[#111111]">
+                    ${typeTag}
+                  </span>
+                </div>
+                <input
+                  type="url"
+                  data-admin-bgm-url="${idx}"
+                  value="${escapeHtml(tr.url)}"
+                  placeholder="วางลิงก์ YouTube หรือไฟล์เสียง (.mp3) ช่องที่ ${idx + 1}"
+                  class="w-full bg-white border-2 border-[#111111] rounded-lg px-2.5 py-1.5 text-xs sm:text-sm font-medium text-[#111111] focus:outline-none"
+                />
+              </div>
+            `;
+          }).join('');
+
+          bgmSlotsEl.querySelectorAll('[data-admin-bgm-select]').forEach(btn => {
+            btn.addEventListener('click', () => {
+              const idx = Number(btn.dataset.adminBgmSelect);
+              state.activeBgmSlot = idx;
+              saveAndBroadcast();
+              broadcastPayload({ type: 'BGM_COMMAND', activeBgmSlot: idx });
+              renderAdminUI();
+            });
+          });
+
+          bgmSlotsEl.querySelectorAll('[data-admin-bgm-url]').forEach(inp => {
+            inp.addEventListener('change', () => {
+              const idx = Number(inp.dataset.adminBgmUrl);
+              state.bgmTracks[idx].url = inp.value.trim();
+              saveAndBroadcast();
+              renderAdminUI();
+            });
+          });
+        }
+
+        const activeBgmUrl = (state.bgmTracks[state.activeBgmSlot]?.url || '').trim();
+        const bgmBadgeEl = document.getElementById('admin-bgm-status-badge');
+        const bgmPlayBtn = document.getElementById('admin-bgm-toggle-play-btn');
+        const bgmPlayIcon = document.getElementById('admin-bgm-play-icon');
+        const bgmPlayLabel = document.getElementById('admin-bgm-play-label');
+        const bgmMuteBtn = document.getElementById('admin-bgm-mute-btn');
+        const bgmMuteIcon = document.getElementById('admin-bgm-mute-icon');
+        const bgmMuteLabel = document.getElementById('admin-bgm-mute-label');
+        const bgmSlider = document.getElementById('admin-bgm-volume-slider');
+        const bgmVolVal = document.getElementById('admin-bgm-volume-value');
+
+        if (bgmBadgeEl) {
+          if (state.bgmPlaying && activeBgmUrl) {
+            bgmBadgeEl.textContent = `▶ กำลังเล่นช่อง ${state.activeBgmSlot + 1}`;
+            bgmBadgeEl.className = 'text-xs font-display font-bold px-2.5 py-0.5 rounded-md border border-[#111111] bg-[#F4D03F] text-[#111111] shrink-0';
+          } else {
+            bgmBadgeEl.textContent = activeBgmUrl ? 'หยุดอยู่' : 'ยังไม่มีลิงก์';
+            bgmBadgeEl.className = 'text-xs font-display font-bold px-2.5 py-0.5 rounded-md border border-[#111111] bg-[#F8F6F0] text-[#111111] shrink-0';
+          }
+        }
+        if (bgmPlayBtn && bgmPlayIcon && bgmPlayLabel) {
+          bgmPlayBtn.disabled = !activeBgmUrl;
+          bgmPlayBtn.classList.toggle('opacity-45', !activeBgmUrl);
+          bgmPlayIcon.textContent = state.bgmPlaying ? '⏸' : '▶';
+          bgmPlayLabel.textContent = state.bgmPlaying ? 'หยุดเพลงประกอบ' : 'เปิดเพลงประกอบ';
+          bgmPlayBtn.classList.toggle('bg-[#111111]', state.bgmPlaying);
+          bgmPlayBtn.classList.toggle('text-[#F4D03F]', state.bgmPlaying);
+          bgmPlayBtn.classList.toggle('bg-[#F4D03F]', !state.bgmPlaying);
+          bgmPlayBtn.classList.toggle('text-[#111111]', !state.bgmPlaying);
+        }
+        if (bgmMuteBtn && bgmMuteIcon && bgmMuteLabel) {
+          bgmMuteIcon.textContent = state.bgmMuted ? '🔇' : '🔊';
+          bgmMuteLabel.textContent = state.bgmMuted ? 'ปิดเสียงอยู่' : 'เสียงปกติ';
+          bgmMuteBtn.classList.toggle('bg-[#E74C3C]', state.bgmMuted);
+          bgmMuteBtn.classList.toggle('text-white', state.bgmMuted);
+          bgmMuteBtn.classList.toggle('bg-white', !state.bgmMuted);
+          bgmMuteBtn.classList.toggle('text-[#111111]', !state.bgmMuted);
+        }
+        if (bgmSlider) bgmSlider.value = state.bgmVolume;
+        if (bgmVolVal) bgmVolVal.textContent = `${state.bgmVolume}%`;
+
         const mediaEditorsEl = document.getElementById('admin-media-editors');
         if (mediaEditorsEl) {
           mediaEditorsEl.innerHTML = [0, 1, 2].map(idx => {
@@ -3076,6 +3404,43 @@
         });
       }
 
+      // Admin BGM Controls (Play/Pause, Mute, Live Volume Slider)
+      const adminBgmPlayBtn = document.getElementById('admin-bgm-toggle-play-btn');
+      if (adminBgmPlayBtn) {
+        adminBgmPlayBtn.addEventListener('click', () => {
+          const activeUrl = (state.bgmTracks[state.activeBgmSlot]?.url || '').trim();
+          if (!activeUrl) return;
+          state.bgmPlaying = !state.bgmPlaying;
+          saveAndBroadcast();
+          broadcastPayload({ type: 'BGM_COMMAND', bgmPlaying: state.bgmPlaying });
+          renderAdminUI();
+        });
+      }
+
+      const adminBgmMuteBtn = document.getElementById('admin-bgm-mute-btn');
+      if (adminBgmMuteBtn) {
+        adminBgmMuteBtn.addEventListener('click', () => {
+          state.bgmMuted = !state.bgmMuted;
+          saveAndBroadcast();
+          broadcastPayload({ type: 'BGM_COMMAND', bgmMuted: state.bgmMuted });
+          renderAdminUI();
+        });
+      }
+
+      const adminBgmVolSlider = document.getElementById('admin-bgm-volume-slider');
+      const adminBgmVolVal = document.getElementById('admin-bgm-volume-value');
+      if (adminBgmVolSlider) {
+        adminBgmVolSlider.addEventListener('input', () => {
+          const nextVol = Math.max(0, Math.min(100, Number(adminBgmVolSlider.value) || 0));
+          state.bgmVolume = nextVol;
+          if (adminBgmVolVal) adminBgmVolVal.textContent = `${nextVol}%`;
+          broadcastPayload({ type: 'BGM_COMMAND', bgmVolume: nextVol });
+        });
+        adminBgmVolSlider.addEventListener('change', () => {
+          saveAndBroadcast();
+        });
+      }
+
       const adminEventTitleInp = document.getElementById('admin-input-event-title');
       if (adminEventTitleInp) {
         adminEventTitleInp.addEventListener('change', () => {
@@ -3171,6 +3536,7 @@
           renderLeaderboard(false);
           renderDrawerControls();
           syncAccordionFromState();
+          syncStageBgmPlayer();
           updateDrawerPairingUI();
           initStagePeerHost();
         }
