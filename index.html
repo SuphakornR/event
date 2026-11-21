@@ -1314,7 +1314,8 @@
           remainingSec: 180,
           running: false,
           endAt: null,
-          visible: false
+          visible: false,
+          timerVersion: 0
         },
         updatedAt: Date.now()
       };
@@ -1397,7 +1398,8 @@
               remainingSec: Math.max(0, Number(parsed.timer.remainingSec ?? parsed.timer.durationSec ?? 180)),
               running: Boolean(parsed.timer.running),
               endAt: parsed.timer.running && parsed.timer.endAt ? Number(parsed.timer.endAt) : null,
-              visible: Boolean(parsed.timer.visible)
+              visible: Boolean(parsed.timer.visible),
+              timerVersion: Number(parsed.timer.timerVersion) || 0
             };
           }
           return base;
@@ -1482,13 +1484,28 @@
             label: tr?.label || defaultState.bgmTracks[i].label,
             url: tr?.url || ''
           })),
-          timer: incomingState.timer ? {
-            durationSec: Math.max(10, Number(incomingState.timer.durationSec) || 180),
-            remainingSec: Math.max(0, Number(incomingState.timer.remainingSec ?? 180)),
-            running: Boolean(incomingState.timer.running),
-            endAt: incomingState.timer.running && incomingState.timer.endAt ? Number(incomingState.timer.endAt) : null,
-            visible: Boolean(incomingState.timer.visible)
-          } : { ...defaultState.timer }
+          timer: (() => {
+            const incT = incomingState.timer;
+            if (!incT) return { ...defaultState.timer };
+            const incVer = Number(incT.timerVersion) || 0;
+            const prevVer = Number(state.timer?.timerVersion) || 0;
+            const rem = Math.max(0, Number(incT.remainingSec ?? 180));
+            const isRun = Boolean(incT.running);
+            let nextEndAt = null;
+            if (isRun) {
+              nextEndAt = (incVer !== prevVer || !state.timer?.endAt)
+                ? Date.now() + rem * 1000
+                : state.timer.endAt;
+            }
+            return {
+              durationSec: Math.max(10, Number(incT.durationSec) || 180),
+              remainingSec: rem,
+              running: isRun,
+              endAt: nextEndAt,
+              visible: Boolean(incT.visible),
+              timerVersion: incVer
+            };
+          })()
         };
 
         if (state.activeGameAccordion === null) {
@@ -1922,6 +1939,7 @@
             osc.start(now + i * 0.16);
             osc.stop(now + i * 0.16 + 0.6);
           });
+          setTimeout(() => { ctxAudio.close().catch(() => {}); }, 1000);
         } catch (_) {}
       }
 
@@ -1939,6 +1957,7 @@
           t.running = false;
           t.remainingSec = 0;
           t.endAt = null;
+          try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) {}
           if (currentRole === 'stage' && !timerChimePlayed) {
             timerChimePlayed = true;
             playTimerChime();
@@ -3575,6 +3594,7 @@
           state.timer.remainingSec = sec;
           state.timer.running = false;
           state.timer.endAt = null;
+          state.timer.timerVersion = Date.now();
           saveAndBroadcast();
           renderTimerUI();
         });
@@ -3584,10 +3604,12 @@
       if (adminTimerMinus30) {
         adminTimerMinus30.addEventListener('click', () => {
           const cur = getLiveRemainingSec();
-          const next = Math.max(10, cur - 30);
+          const next = Math.max(0, cur - 30);
           state.timer.remainingSec = next;
-          if (!state.timer.running) state.timer.durationSec = next;
-          else state.timer.endAt = Date.now() + next * 1000;
+          if (!state.timer.running) state.timer.durationSec = Math.max(10, next);
+          else if (next > 0) state.timer.endAt = Date.now() + next * 1000;
+          else { state.timer.running = false; state.timer.endAt = null; }
+          state.timer.timerVersion = Date.now();
           saveAndBroadcast();
           renderTimerUI();
         });
@@ -3601,6 +3623,7 @@
           state.timer.remainingSec = next;
           if (!state.timer.running) state.timer.durationSec = next;
           else state.timer.endAt = Date.now() + next * 1000;
+          state.timer.timerVersion = Date.now();
           saveAndBroadcast();
           renderTimerUI();
         });
@@ -3621,6 +3644,7 @@
             state.timer.endAt = Date.now() + rem * 1000;
             state.timer.visible = true;
           }
+          state.timer.timerVersion = Date.now();
           saveAndBroadcast();
           renderTimerUI();
         });
@@ -3632,6 +3656,7 @@
           state.timer.running = false;
           state.timer.endAt = null;
           state.timer.remainingSec = state.timer.durationSec || 180;
+          state.timer.timerVersion = Date.now();
           saveAndBroadcast();
           renderTimerUI();
         });
@@ -3641,6 +3666,7 @@
       if (adminTimerVisibilityBtn) {
         adminTimerVisibilityBtn.addEventListener('click', () => {
           state.timer.visible = !state.timer.visible;
+          state.timer.timerVersion = Date.now();
           saveAndBroadcast();
           renderTimerUI();
         });
