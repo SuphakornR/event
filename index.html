@@ -307,6 +307,54 @@
       box-shadow: 1px 1px 0px #111111;
     }
 
+    /* Smooth Backstage Reveal / Collapse & Panel Transitions */
+    .vox-collapse {
+      display: grid;
+      grid-template-rows: 0fr;
+      opacity: 0;
+      margin-top: 0 !important;
+      pointer-events: none;
+      transition: grid-template-rows 0.26s cubic-bezier(0.22, 1, 0.36, 1),
+                  opacity 0.2s ease,
+                  margin-top 0.24s ease;
+    }
+
+    .vox-collapse.is-open {
+      grid-template-rows: 1fr;
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .vox-collapse > .vox-collapse-inner {
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    @keyframes voxFadeSlide {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .vox-panel-enter {
+      animation: voxFadeSlide 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    @keyframes voxSyncPulse {
+      0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(41, 128, 185, 0.7); }
+      60% { transform: scale(1.35); box-shadow: 0 0 0 6px rgba(41, 128, 185, 0); }
+      100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(41, 128, 185, 0); }
+    }
+
+    .vox-sync-pulse {
+      animation: voxSyncPulse 0.36s ease-out;
+    }
+
     /* Collapsible Control Drawer */
     #control-drawer {
       transition: transform 0.38s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.28s ease;
@@ -765,230 +813,241 @@
   <!-- ========================================================================
        VIEW 2: MOBILE BACKSTAGE REMOTE CONTROLLER (?role=admin&room=XXXX)
        ======================================================================== -->
-  <section id="mobile-admin-view" class="hidden w-full max-w-2xl mx-auto px-4 py-5 pb-16 flex-col gap-4">
-    <!-- Top Connection Banner -->
-    <div class="vox-card bg-[#111111] text-[#F8F6F0] p-4 flex flex-col gap-3">
+  <section id="mobile-admin-view" class="hidden w-full max-w-2xl mx-auto px-4 py-5 pb-16 flex-col gap-3.5">
+    <!-- Top Connection Banner (Minimal) -->
+    <div class="vox-card bg-[#111111] text-[#F8F6F0] p-3.5 flex flex-col gap-2.5">
       <div class="flex items-center justify-between gap-2">
-        <div class="flex items-center gap-2.5">
-          <span id="admin-conn-dot" class="w-3.5 h-3.5 rounded-full bg-amber-400 border border-white shrink-0"></span>
-          <div>
-            <h1 class="thai-safe-tight font-display font-extrabold text-lg text-white">หลังบ้านควบคุมตารางคะแนน</h1>
-            <p id="admin-conn-text" class="text-xs text-[#F8F6F0]/80">กำลังเตรียมการเชื่อมต่อ...</p>
+        <div class="flex items-center gap-2.5 min-w-0">
+          <span id="admin-conn-dot" class="w-3 h-3 rounded-full bg-amber-400 border border-white shrink-0"></span>
+          <div class="min-w-0">
+            <h1 class="thai-safe-tight font-display font-extrabold text-base text-white truncate">หลังบ้านควบคุม</h1>
+            <p id="admin-conn-text" class="text-[11px] text-[#F8F6F0]/75 truncate">กำลังเตรียมการเชื่อมต่อ...</p>
           </div>
         </div>
-        <button
-          type="button"
-          id="admin-switch-to-stage-btn"
-          class="bg-[#F8F6F0] text-[#111111] font-display font-bold text-xs px-3 py-1.5 rounded-lg border-2 border-white cursor-pointer shrink-0"
-        >
-          สลับไปหน้าจอหลัก
-        </button>
+        <div class="flex items-center gap-1.5 shrink-0">
+          <button
+            type="button"
+            id="admin-toggle-room-btn"
+            class="bg-white/10 hover:bg-white/20 text-[#F4D03F] font-display font-bold text-xs px-2.5 py-1.5 rounded-lg border border-white/25 cursor-pointer"
+          >
+            ห้อง
+          </button>
+          <button
+            type="button"
+            id="admin-switch-to-stage-btn"
+            class="bg-[#F8F6F0] text-[#111111] font-display font-bold text-xs px-2.5 py-1.5 rounded-lg border-2 border-white cursor-pointer"
+          >
+            จอหลัก
+          </button>
+        </div>
       </div>
 
-      <!-- Room Code Connect Bar -->
-      <div class="flex items-center gap-2 bg-white/10 p-2 rounded-xl border border-white/20">
-        <span class="text-xs font-bold text-[#F4D03F] px-1 shrink-0">รหัสห้อง:</span>
-        <input
-          id="admin-room-input"
-          type="text"
-          maxlength="6"
-          placeholder="เช่น A7K9"
-          class="w-24 uppercase font-display font-black text-center text-base tracking-widest bg-white text-[#111111] rounded-lg px-2 py-1 border-2 border-[#111111] focus:outline-none"
-        />
-        <button
-          type="button"
-          id="admin-connect-btn"
-          class="flex-1 bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-extrabold text-sm py-1.5 px-3 rounded-lg border-2 border-[#111111] cursor-pointer"
-        >
-          เชื่อมต่อจอหลัก
-        </button>
+      <!-- Collapsible Room Code Connect Bar -->
+      <div id="admin-room-bar" class="vox-collapse is-open">
+        <div class="vox-collapse-inner">
+          <div class="flex items-center gap-2 bg-white/10 p-2 rounded-xl border border-white/20">
+            <span class="text-xs font-bold text-[#F4D03F] px-1 shrink-0">รหัส:</span>
+            <input
+              id="admin-room-input"
+              type="text"
+              maxlength="6"
+              placeholder="A7K9"
+              class="w-20 uppercase font-display font-black text-center text-sm tracking-widest bg-white text-[#111111] rounded-lg px-2 py-1 border-2 border-[#111111] focus:outline-none"
+            />
+            <button
+              type="button"
+              id="admin-connect-btn"
+              class="flex-1 bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-extrabold text-xs py-1.5 px-3 rounded-lg border-2 border-[#111111] cursor-pointer"
+            >
+              เชื่อมต่อ
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- Mobile Navigation Tabs -->
     <div class="grid grid-cols-3 gap-2">
-      <button type="button" data-admin-tab="scores" class="admin-tab-btn btn-vox bg-[#F4D03F] text-[#111111] font-display font-extrabold text-sm py-2.5 rounded-xl cursor-pointer">
-        1. ให้คะแนน
+      <button type="button" data-admin-tab="scores" class="admin-tab-btn btn-vox bg-[#F4D03F] text-[#111111] font-display font-extrabold text-sm py-2 rounded-xl cursor-pointer">
+        1. คะแนน
       </button>
-      <button type="button" data-admin-tab="stage-media" class="admin-tab-btn btn-vox bg-white text-[#111111] font-display font-extrabold text-sm py-2.5 rounded-xl cursor-pointer">
-        2. คุมสื่อ/กติกา
+      <button type="button" data-admin-tab="stage-media" class="admin-tab-btn btn-vox bg-white text-[#111111] font-display font-extrabold text-sm py-2 rounded-xl cursor-pointer">
+        2. คุมเวที
       </button>
-      <button type="button" data-admin-tab="names" class="admin-tab-btn btn-vox bg-white text-[#111111] font-display font-extrabold text-sm py-2.5 rounded-xl cursor-pointer">
-        3. แก้ชื่อ/หัวข้อ
+      <button type="button" data-admin-tab="names" class="admin-tab-btn btn-vox bg-white text-[#111111] font-display font-extrabold text-sm py-2 rounded-xl cursor-pointer">
+        3. ตั้งค่า
       </button>
     </div>
 
-    <!-- TAB 1: SCORES & VICTORY / RESET -->
-    <div id="admin-panel-scores" class="flex flex-col gap-4">
-      <div class="grid grid-cols-2 gap-2.5">
+    <!-- TAB 1: SCORES & VICTORY / RESET (1 Game at a Time = Less Clutter) -->
+    <div id="admin-panel-scores" class="vox-panel-enter flex flex-col gap-3">
+      <div class="grid grid-cols-2 gap-2">
         <button
           type="button"
           id="admin-btn-victory"
-          class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-extrabold text-sm py-3 px-3 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer"
+          class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-extrabold text-sm py-2.5 px-3 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer"
         >
           <span>👑</span>
-          <span>ประกาศ VICTORY</span>
+          <span>VICTORY</span>
         </button>
         <button
           type="button"
           id="admin-btn-reset"
-          class="btn-vox bg-white hover:bg-red-50 text-[#E74C3C] font-display font-extrabold text-sm py-3 px-3 rounded-xl cursor-pointer"
+          class="btn-vox bg-white hover:bg-red-50 text-[#E74C3C] font-display font-extrabold text-sm py-2.5 px-3 rounded-xl cursor-pointer"
         >
           รีเซ็ตคะแนน
         </button>
       </div>
 
-      <div id="admin-teams-container" class="flex flex-col gap-4">
+      <!-- Game Selector for Scoring -->
+      <div id="admin-score-game-tabs" class="grid grid-cols-3 gap-1.5">
         <!-- Populated dynamically -->
+      </div>
+
+      <div id="admin-teams-container" class="flex flex-col gap-3">
+        <!-- Populated dynamically (selected game only) -->
       </div>
     </div>
 
-    <!-- TAB 2: REMOTE GAME ACCORDION, TIMER, VIDEO PLAYBACK, SWITCHER, BGM & MEDIA EDITORS -->
-    <div id="admin-panel-stage-media" class="hidden flex-col gap-4">
-      <!-- Game Countdown Timer Card -->
-      <div class="vox-card bg-white p-4 flex flex-col gap-3">
-        <div class="flex items-center justify-between gap-2 pb-2 border-b-2 border-[#111111]">
-          <div class="flex items-center gap-2 min-w-0">
-            <span class="w-3.5 h-3.5 rounded-full bg-[#E74C3C] border border-[#111111] shrink-0"></span>
-            <h2 class="thai-safe-tight font-display font-extrabold text-base text-[#111111] truncate">
-              ⏱️ ตัวจับเวลาเกม (Game Timer)
-            </h2>
-          </div>
+    <!-- TAB 2: LIVE STAGE CONTROL ONLY (TIMER, STAGE MEDIA, BGM) -->
+    <div id="admin-panel-stage-media" class="vox-panel-enter hidden flex-col gap-3.5">
+      <!-- Game Countdown Timer Card (Streamlined) -->
+      <div class="vox-card bg-white p-3.5 flex flex-col gap-2.5">
+        <div class="flex items-center justify-between gap-2">
+          <h2 class="thai-safe-tight font-display font-extrabold text-sm text-[#111111]">
+            ⏱️ ตัวจับเวลา
+          </h2>
           <span id="admin-timer-display" class="font-display font-black text-xl tabular-nums bg-[#F8F6F0] border-2 border-[#111111] px-3 py-0.5 rounded-xl text-[#111111] shrink-0">
             03:00
           </span>
         </div>
 
-        <!-- Quick Presets & +/-30s -->
-        <div class="grid grid-cols-6 gap-1.5">
-          <button type="button" data-timer-preset="60" class="btn-vox bg-[#F8F6F0] hover:bg-yellow-100 text-[#111111] font-display font-bold text-xs py-1.5 rounded-lg cursor-pointer">1 น.</button>
-          <button type="button" data-timer-preset="120" class="btn-vox bg-[#F8F6F0] hover:bg-yellow-100 text-[#111111] font-display font-bold text-xs py-1.5 rounded-lg cursor-pointer">2 น.</button>
-          <button type="button" data-timer-preset="180" class="btn-vox bg-[#F8F6F0] hover:bg-yellow-100 text-[#111111] font-display font-bold text-xs py-1.5 rounded-lg cursor-pointer">3 น.</button>
-          <button type="button" data-timer-preset="300" class="btn-vox bg-[#F8F6F0] hover:bg-yellow-100 text-[#111111] font-display font-bold text-xs py-1.5 rounded-lg cursor-pointer">5 น.</button>
-          <button type="button" id="admin-timer-minus30" class="btn-vox bg-white hover:bg-red-50 text-[#E74C3C] font-display font-extrabold text-xs py-1.5 rounded-lg cursor-pointer">-30วิ</button>
-          <button type="button" id="admin-timer-plus30" class="btn-vox bg-white hover:bg-yellow-100 text-[#111111] font-display font-extrabold text-xs py-1.5 rounded-lg cursor-pointer">+30วิ</button>
-        </div>
-
-        <!-- Start/Pause, Reset, Show/Hide, Corner/Center Mode -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <!-- Primary Timer Controls -->
+        <div class="flex items-center gap-1.5">
           <button
             type="button"
             id="admin-timer-toggle-btn"
-            class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-extrabold text-xs sm:text-sm py-2.5 px-2 rounded-xl flex items-center justify-center gap-1 cursor-pointer"
+            class="flex-1 btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-extrabold text-sm py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer"
           >
             <span id="admin-timer-toggle-icon">▶</span>
-            <span id="admin-timer-toggle-label">เริ่มจับเวลา</span>
+            <span id="admin-timer-toggle-label">เริ่ม</span>
           </button>
           <button
             type="button"
             id="admin-timer-reset-btn"
-            class="btn-vox bg-[#2980B9] hover:bg-[#2471a3] text-white font-display font-extrabold text-xs sm:text-sm py-2.5 px-2 rounded-xl flex items-center justify-center gap-1 cursor-pointer"
+            aria-label="รีเซ็ตเวลา"
+            class="btn-vox bg-white hover:bg-gray-100 text-[#111111] font-display font-extrabold text-sm py-2 px-3 rounded-xl cursor-pointer"
           >
-            <span>↺</span>
-            <span>รีเซ็ต</span>
+            ↺
           </button>
           <button
             type="button"
             id="admin-timer-visibility-btn"
-            class="btn-vox bg-white hover:bg-gray-50 text-[#111111] font-display font-extrabold text-xs sm:text-sm py-2.5 px-2 rounded-xl flex items-center justify-center gap-1 cursor-pointer"
+            class="btn-vox bg-white hover:bg-gray-50 text-[#111111] font-display font-bold text-xs py-2 px-2.5 rounded-xl flex items-center gap-1 cursor-pointer"
           >
             <span id="admin-timer-vis-icon">👁</span>
-            <span id="admin-timer-vis-label">แสดงบนจอ</span>
+            <span id="admin-timer-vis-label">แสดง</span>
           </button>
           <button
             type="button"
             id="admin-timer-mode-btn"
-            class="btn-vox bg-white hover:bg-yellow-50 text-[#111111] font-display font-extrabold text-xs sm:text-sm py-2.5 px-2 rounded-xl flex items-center justify-center gap-1 cursor-pointer"
+            class="btn-vox bg-white hover:bg-yellow-50 text-[#111111] font-display font-bold text-xs py-2 px-2.5 rounded-xl flex items-center gap-1 cursor-pointer"
           >
             <span id="admin-timer-mode-icon">📺</span>
             <span id="admin-timer-mode-label">กลางจอ</span>
           </button>
         </div>
+
+        <!-- Contextual Presets (Smoothly collapses while running) -->
+        <div id="admin-timer-presets-wrap" class="vox-collapse is-open">
+          <div class="vox-collapse-inner">
+            <div class="grid grid-cols-4 gap-1.5 pt-0.5">
+              <button type="button" data-timer-preset="60" class="btn-vox bg-[#F8F6F0] hover:bg-yellow-100 text-[#111111] font-display font-bold text-xs py-1 rounded-lg cursor-pointer">1 น.</button>
+              <button type="button" data-timer-preset="180" class="btn-vox bg-[#F8F6F0] hover:bg-yellow-100 text-[#111111] font-display font-bold text-xs py-1 rounded-lg cursor-pointer">3 น.</button>
+              <button type="button" data-timer-preset="300" class="btn-vox bg-[#F8F6F0] hover:bg-yellow-100 text-[#111111] font-display font-bold text-xs py-1 rounded-lg cursor-pointer">5 น.</button>
+              <button type="button" id="admin-timer-plus30" class="btn-vox bg-white hover:bg-yellow-100 text-[#111111] font-display font-extrabold text-xs py-1 rounded-lg cursor-pointer">+30วิ</button>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <!-- Live Stage Remote Control Card -->
-      <div class="vox-card bg-white p-4 flex flex-col gap-3.5">
-        <div class="flex items-center justify-between gap-2 pb-2 border-b-2 border-[#111111]">
-          <h2 class="thai-safe-tight font-display font-extrabold text-base text-[#111111]">
-            🎛️ ควบคุมการแสดงสื่อบนหน้าจอหลักสด
+      <!-- Live Stage Remote Control Card (Streamlined & Contextual) -->
+      <div class="vox-card bg-white p-3.5 flex flex-col gap-2.5">
+        <div class="flex items-center justify-between gap-2">
+          <h2 class="thai-safe-tight font-display font-extrabold text-sm text-[#111111]">
+            🎛️ การ์ดเกม &amp; สื่อบนจอ
           </h2>
-          <span id="admin-live-zoom-badge" class="text-xs font-display font-bold px-2.5 py-0.5 rounded-md border border-[#111111] bg-[#F8F6F0]">
-            ขนาดปกติ
+          <span id="admin-live-zoom-badge" class="text-[11px] font-display font-bold px-2 py-0.5 rounded-md border border-[#111111] bg-[#F8F6F0]">
+            ปิดอยู่
           </span>
         </div>
 
-        <!-- 1. Open/Close Game 1, 2, 3 Accordion on Main Screen -->
-        <div class="flex flex-col gap-2">
-          <span class="text-xs font-bold text-[#111111]/75">เลือกเปิด/ปิดการ์ดเกมบนหน้าบ้าน:</span>
-          <div id="admin-remote-accordion-btns" class="flex flex-col gap-2">
-            <!-- Populated dynamically -->
+        <!-- 1. Open/Close Game 1, 2, 3 Accordion (Compact 3-pill row) -->
+        <div id="admin-remote-accordion-btns" class="grid grid-cols-3 gap-1.5">
+          <!-- Populated dynamically -->
+        </div>
+
+        <!-- 2. Contextual Media Mode + Zoom (Smoothly reveals only when active game has media) -->
+        <div id="admin-media-actions-wrap" class="vox-collapse">
+          <div class="vox-collapse-inner">
+            <div id="admin-media-actions-grid" class="grid grid-cols-3 gap-1.5 pt-0.5">
+              <button
+                type="button"
+                id="admin-switch-video-btn"
+                class="btn-vox bg-white text-[#111111] font-display font-bold text-xs py-2 px-2 rounded-xl flex items-center justify-center gap-1 cursor-pointer"
+              >
+                <span>🎬</span>
+                <span>วิดีโอ</span>
+              </button>
+              <button
+                type="button"
+                id="admin-switch-image-btn"
+                class="btn-vox bg-white text-[#111111] font-display font-bold text-xs py-2 px-2 rounded-xl flex items-center justify-center gap-1 cursor-pointer"
+              >
+                <span>🖼️</span>
+                <span>รูป/GIF</span>
+              </button>
+              <button
+                type="button"
+                id="admin-toggle-zoom-btn"
+                class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-extrabold text-xs py-2 px-2 rounded-xl flex items-center justify-center gap-1 cursor-pointer"
+              >
+                <span id="admin-zoom-btn-icon">🔍</span>
+                <span id="admin-zoom-btn-text">ซูม</span>
+              </button>
+            </div>
           </div>
         </div>
 
-        <!-- 2. Switch Video <-> Image/GIF & Toggle Theater Zoom on Main Screen -->
-        <div class="bg-[#F8F6F0] border-2 border-[#111111] rounded-xl p-3 flex flex-col gap-2.5">
-          <span class="text-xs font-bold text-[#111111]">สลับคลิปวิดีโอ / รูปภาพ (GIF) และสั่งซูมบนหน้าบ้าน:</span>
-
-          <div class="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              id="admin-switch-video-btn"
-              class="btn-vox bg-white text-[#111111] font-display font-bold text-xs sm:text-sm py-2.5 px-2 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer"
-            >
-              <span>🎬</span>
-              <span>แสดงวิดีโอ (Clip)</span>
-            </button>
-            <button
-              type="button"
-              id="admin-switch-image-btn"
-              class="btn-vox bg-white text-[#111111] font-display font-bold text-xs sm:text-sm py-2.5 px-2 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer"
-            >
-              <span>🖼️</span>
-              <span>แสดงรูป / GIF</span>
-            </button>
-          </div>
-
-          <button
-            type="button"
-            id="admin-toggle-zoom-btn"
-            class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-extrabold text-sm py-3 px-3 rounded-xl flex items-center justify-center gap-2 cursor-pointer"
-          >
-            <span id="admin-zoom-btn-icon">🔍</span>
-            <span id="admin-zoom-btn-text">ซูมขยายเต็มจอบนหน้าบ้าน</span>
-          </button>
-
-          <!-- 3. Remote YouTube Video Playback Controls (Vox Palette) -->
-          <div class="pt-2.5 border-t-2 border-[#111111]/15 flex flex-col gap-2">
-            <span class="text-xs font-bold text-[#111111]">🎬 ควบคุมวิดีโอบนหน้าจอหลัก:</span>
-            <div class="grid grid-cols-4 gap-1.5">
+        <!-- 3. YouTube Playback Controls (Smoothly reveals only when active game has YouTube) -->
+        <div id="admin-video-controls-wrap" class="vox-collapse">
+          <div class="vox-collapse-inner">
+            <div class="grid grid-cols-4 gap-1.5 pt-2 border-t border-[#111111]/15">
               <button
                 type="button"
                 id="admin-video-play-btn"
-                class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-extrabold text-xs py-2.5 px-1 rounded-xl flex items-center justify-center gap-1 cursor-pointer"
+                class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-extrabold text-xs py-2 rounded-xl cursor-pointer"
               >
-                <span>▶</span>
-                <span>เล่น</span>
+                ▶ เล่น
               </button>
               <button
                 type="button"
                 id="admin-video-pause-btn"
-                class="btn-vox bg-white hover:bg-[#FFFDF5] text-[#111111] font-display font-extrabold text-xs py-2.5 px-1 rounded-xl flex items-center justify-center gap-1 cursor-pointer"
+                class="btn-vox bg-white hover:bg-[#FFFDF5] text-[#111111] font-display font-extrabold text-xs py-2 rounded-xl cursor-pointer"
               >
-                <span>⏸</span>
-                <span>พัก</span>
+                ⏸ พัก
               </button>
               <button
                 type="button"
                 id="admin-video-restart-btn"
-                class="btn-vox bg-[#2980B9] hover:bg-[#2471a3] text-white font-display font-extrabold text-xs py-2.5 px-1 rounded-xl flex items-center justify-center gap-1 cursor-pointer"
+                class="btn-vox bg-white hover:bg-gray-100 text-[#111111] font-display font-extrabold text-xs py-2 rounded-xl cursor-pointer"
               >
-                <span>↺</span>
-                <span>เริ่มใหม่</span>
+                ↺ ใหม่
               </button>
               <button
                 type="button"
                 id="admin-video-mute-btn"
-                class="btn-vox bg-white hover:bg-gray-50 text-[#111111] font-display font-extrabold text-xs py-2.5 px-1 rounded-xl flex items-center justify-center gap-1 cursor-pointer"
+                class="btn-vox bg-white hover:bg-gray-50 text-[#111111] font-display font-extrabold text-xs py-2 rounded-xl flex items-center justify-center gap-1 cursor-pointer"
               >
                 <span id="admin-video-mute-icon">🔊</span>
                 <span id="admin-video-mute-label">เสียง</span>
@@ -998,72 +1057,69 @@
         </div>
       </div>
 
-      <!-- Background Music (BGM) 3-Slot Controller Card -->
-      <div class="vox-card bg-white p-4 flex flex-col gap-3.5">
-        <div class="flex items-center justify-between gap-2 pb-2 border-b-2 border-[#111111]">
-          <div class="flex items-center gap-2 min-w-0">
-            <span class="w-3.5 h-3.5 rounded-full bg-[#F4D03F] border border-[#111111] shrink-0"></span>
-            <h2 class="thai-safe-tight font-display font-extrabold text-base text-[#111111] truncate">
-              🎵 เพลงประกอบ (Background Music)
-            </h2>
-          </div>
-          <span id="admin-bgm-status-badge" class="text-xs font-display font-bold px-2.5 py-0.5 rounded-md border border-[#111111] bg-[#F8F6F0] text-[#111111] shrink-0">
+      <!-- Background Music (BGM) Compact Controller -->
+      <div class="vox-card bg-white p-3.5 flex flex-col gap-2.5">
+        <div class="flex items-center justify-between gap-2">
+          <h2 class="thai-safe-tight font-display font-extrabold text-sm text-[#111111]">
+            🎵 เพลงประกอบ
+          </h2>
+          <span id="admin-bgm-status-badge" class="text-[11px] font-display font-bold px-2 py-0.5 rounded-md border border-[#111111] bg-[#F8F6F0] text-[#111111] shrink-0">
             หยุดอยู่
           </span>
         </div>
 
-        <!-- 3 Music Slots (Switch & Paste YouTube or Direct Audio URL) -->
-        <div id="admin-bgm-slots-container" class="flex flex-col gap-2.5">
+        <!-- 3 Compact Slot Pills + 1 Active URL Input -->
+        <div id="admin-bgm-slots-container" class="flex flex-col gap-2">
           <!-- Populated dynamically -->
         </div>
 
-        <!-- BGM Play/Pause, Mute & Vox Volume Slider -->
-        <div class="bg-[#F8F6F0] border-2 border-[#111111] rounded-xl p-3 flex flex-col gap-3">
-          <div class="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              id="admin-bgm-toggle-play-btn"
-              class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-extrabold text-sm py-2.5 px-3 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer"
-            >
-              <span id="admin-bgm-play-icon">▶</span>
-              <span id="admin-bgm-play-label">เปิดเพลงประกอบ</span>
-            </button>
-            <button
-              type="button"
-              id="admin-bgm-mute-btn"
-              class="btn-vox bg-white hover:bg-gray-50 text-[#111111] font-display font-extrabold text-sm py-2.5 px-3 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer"
-            >
-              <span id="admin-bgm-mute-icon">🔊</span>
-              <span id="admin-bgm-mute-label">เสียงปกติ</span>
-            </button>
-          </div>
-
-          <div class="flex items-center gap-3">
-            <span class="font-display font-bold text-xs text-[#111111] shrink-0">ความดัง:</span>
-            <input
-              id="admin-bgm-volume-slider"
-              type="range"
-              min="0"
-              max="100"
-              value="45"
-              aria-label="ระดับเสียงเพลงประกอบ"
-              class="vox-range flex-1"
-            />
-            <span id="admin-bgm-volume-value" class="font-display font-black text-xs bg-white border-2 border-[#111111] px-2 py-0.5 rounded-lg w-12 text-center shrink-0">
-              45%
-            </span>
-          </div>
+        <!-- BGM Play/Pause, Mute & Volume -->
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            id="admin-bgm-toggle-play-btn"
+            class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-extrabold text-xs py-2 px-3 rounded-xl flex items-center justify-center gap-1 cursor-pointer shrink-0"
+          >
+            <span id="admin-bgm-play-icon">▶</span>
+            <span id="admin-bgm-play-label">เปิดเพลง</span>
+          </button>
+          <button
+            type="button"
+            id="admin-bgm-mute-btn"
+            aria-label="ปิด/เปิดเสียงเพลงประกอบ"
+            class="btn-vox bg-white hover:bg-gray-50 text-[#111111] font-display font-extrabold text-xs py-2 px-2.5 rounded-xl cursor-pointer shrink-0"
+          >
+            <span id="admin-bgm-mute-icon">🔊</span>
+          </button>
+          <input
+            id="admin-bgm-volume-slider"
+            type="range"
+            min="0"
+            max="100"
+            value="45"
+            aria-label="ระดับเสียงเพลงประกอบ"
+            class="vox-range flex-1 min-w-0"
+          />
+          <span id="admin-bgm-volume-value" class="font-display font-black text-xs w-9 text-right shrink-0">
+            45%
+          </span>
         </div>
-      </div>
-
-      <!-- Per-Game Media & Rules Editors -->
-      <div id="admin-media-editors" class="flex flex-col gap-4">
-        <!-- Populated dynamically -->
       </div>
     </div>
 
-    <!-- TAB 3: EDIT EVENT TITLE, SUBTITLE, GROUP NAMES & GAME TITLES -->
-    <div id="admin-panel-names" class="hidden flex-col gap-4">
+    <!-- TAB 3: SETUP (TITLES, NAMES, RULES & MEDIA LINKS) -->
+    <div id="admin-panel-names" class="vox-panel-enter hidden flex-col gap-3.5">
+      <!-- Collapsible Per-Game Media & Rules Editor (1 Game at a Time) -->
+      <details class="vox-card bg-white p-3.5 group">
+        <summary class="font-display font-extrabold text-sm text-[#111111] cursor-pointer list-none flex items-center justify-between">
+          <span>✏️ แก้ไขกติกา &amp; ลิงก์สื่อ</span>
+          <span class="text-xs font-bold text-[#111111]/60 group-open:rotate-180 transition-transform">▼</span>
+        </summary>
+        <div id="admin-media-editors" class="mt-3 pt-3 border-t border-[#111111]/15 flex flex-col gap-2.5">
+          <!-- Populated dynamically -->
+        </div>
+      </details>
+
       <div class="vox-card bg-white p-4 flex flex-col gap-3">
         <label class="font-display font-bold text-sm text-[#111111]">ชื่อกิจกรรมหลักบนหัวกระดาษ</label>
         <input
@@ -1090,6 +1146,177 @@
       </div>
     </div>
   </section>
+
+  <!-- ========================================================================
+       VIEW 3: PLAYER TARGET BUILDER VIEW (?role=play&room=XXXX)
+       ======================================================================== -->
+  <section id="player-game-view" class="hidden w-full max-w-xl mx-auto px-4 py-5 pb-16 flex-col gap-3.5">
+    <!-- Top Connection Banner -->
+    <div class="vox-card bg-[#111111] text-[#F8F6F0] p-3.5 flex flex-col gap-2.5">
+      <div class="flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <span id="player-conn-dot" class="w-3 h-3 rounded-full bg-amber-400 border border-white shrink-0"></span>
+          <div class="min-w-0">
+            <h1 class="thai-safe-tight font-display font-extrabold text-base text-white truncate">🧱 Target Builder</h1>
+            <p id="player-conn-text" class="text-[11px] text-[#F8F6F0]/75 truncate">กำลังเชื่อมต่อห้อง...</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-1.5 shrink-0">
+          <button type="button" id="player-toggle-room-btn" class="bg-white/10 hover:bg-white/20 text-[#F4D03F] font-display font-bold text-xs px-2.5 py-1.5 rounded-lg border border-white/25 cursor-pointer">
+            ห้อง
+          </button>
+          <button type="button" id="player-switch-to-stage-btn" class="bg-[#F8F6F0] text-[#111111] font-display font-bold text-xs px-2.5 py-1.5 rounded-lg border-2 border-white cursor-pointer">
+            จอหลัก
+          </button>
+        </div>
+      </div>
+
+      <div id="player-room-bar" class="vox-collapse is-open">
+        <div class="vox-collapse-inner">
+          <div class="flex items-center gap-2 bg-white/10 p-2 rounded-xl border border-white/20">
+            <span class="text-xs font-bold text-[#F4D03F] px-1 shrink-0">รหัส:</span>
+            <input id="player-room-input" type="text" maxlength="6" placeholder="A7K9" class="w-20 uppercase font-display font-black text-center text-sm tracking-widest bg-white text-[#111111] rounded-lg px-2 py-1 border-2 border-[#111111] focus:outline-none" />
+            <button type="button" id="player-connect-btn" class="flex-1 bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-extrabold text-xs py-1.5 px-3 rounded-lg border-2 border-[#111111] cursor-pointer">
+              เชื่อมต่อ
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Join Form (Shown until player joins) -->
+    <div id="player-join-card" class="vox-card bg-white p-4 flex flex-col gap-3 vox-panel-enter">
+      <h2 class="font-display font-extrabold text-base text-[#111111]">เข้าร่วมเกมสร้างทางสู่เป้าหมาย 🎯</h2>
+      <p class="text-xs text-[#111111]/70">แต่ละรอบทุกคนจะสุ่มได้บล็อก (ช่วยเดิน / อันตราย / ถึงตาย) เพื่อวางสร้างทางไปให้ถึงเป้าหมาย!</p>
+      <input id="player-name-input" type="text" maxlength="16" placeholder="พิมพ์ชื่อเล่นของคุณ..." class="thai-safe-tight w-full bg-[#F8F6F0] border-2 border-[#111111] rounded-xl px-3 py-2 text-sm font-bold text-[#111111]" />
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-bold text-[#111111]">สีตัวละคร:</span>
+        <div id="player-color-picker" class="flex items-center gap-2">
+          <button type="button" data-player-color="#F4D03F" class="w-7 h-7 rounded-full border-2 border-[#111111] ring-2 ring-[#111111] cursor-pointer" style="background:#F4D03F"></button>
+          <button type="button" data-player-color="#E74C3C" class="w-7 h-7 rounded-full border-2 border-[#111111] cursor-pointer" style="background:#E74C3C"></button>
+          <button type="button" data-player-color="#2980B9" class="w-7 h-7 rounded-full border-2 border-[#111111] cursor-pointer" style="background:#2980B9"></button>
+          <button type="button" data-player-color="#10B981" class="w-7 h-7 rounded-full border-2 border-[#111111] cursor-pointer" style="background:#10B981"></button>
+        </div>
+      </div>
+      <button type="button" id="player-join-btn" class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-extrabold text-sm py-2.5 rounded-xl cursor-pointer">
+        เข้าร่วมเกมเลย!
+      </button>
+    </div>
+
+    <!-- Active Player HUD (Shown after joining) -->
+    <div id="player-play-card" class="hidden flex-col gap-3 vox-panel-enter">
+      <!-- Status & Current Block -->
+      <div class="vox-card bg-white p-3.5 flex flex-col gap-2.5">
+        <div class="flex items-center justify-between gap-2">
+          <div class="flex items-center gap-2 min-w-0">
+            <span id="player-my-dot" class="w-3.5 h-3.5 rounded-full border-2 border-[#111111] shrink-0"></span>
+            <span id="player-my-name" class="font-display font-extrabold text-sm text-[#111111] truncate">ผู้เล่น</span>
+          </div>
+          <span id="player-round-badge" class="text-xs font-display font-bold px-2.5 py-0.5 rounded-lg border-2 border-[#111111] bg-[#F8F6F0] shrink-0">
+            รอบ 0
+          </span>
+        </div>
+
+        <div id="player-block-box" class="bg-[#F8F6F0] border-2 border-[#111111] rounded-xl p-3 flex items-center gap-3">
+          <span id="player-block-icon" class="text-3xl shrink-0">🎲</span>
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span id="player-block-name" class="font-display font-extrabold text-sm text-[#111111]">รอเริ่มรอบ...</span>
+              <span id="player-block-cat" class="text-[10px] font-display font-black uppercase px-2 py-0.5 rounded border border-[#111111] bg-white">LOBBY</span>
+            </div>
+            <p id="player-block-desc" class="text-xs text-[#111111]/75 mt-0.5">รอผู้ดำเนินรายการกด "สุ่มบล็อกรอบใหม่"</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Interactive 10x6 Board -->
+      <div class="vox-card bg-white p-3 flex flex-col gap-2">
+        <div class="flex items-center justify-between text-xs font-bold text-[#111111]/75">
+          <span>แตะช่องว่างเพื่อวางบล็อกของคุณ</span>
+          <span id="player-board-status" class="text-[#2980B9]">-</span>
+        </div>
+        <div id="player-board-grid" class="grid grid-cols-10 gap-1 select-none">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       STAGE TARGET BUILDER ARENA OVERLAY
+       ======================================================================== -->
+  <div id="builder-stage-overlay" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 backdrop-blur-[2px] p-3 sm:p-5 overflow-y-auto" role="dialog" aria-modal="true">
+    <div class="vox-card bg-[#F8F6F0] w-full max-w-5xl p-4 sm:p-5 flex flex-col gap-3.5 my-auto vox-panel-enter">
+      <!-- Top Bar -->
+      <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b-2 border-[#111111]">
+        <div class="flex items-center gap-2.5">
+          <span class="text-2xl">🧱</span>
+          <div>
+            <h2 class="thai-safe-tight font-display font-black text-lg sm:text-xl text-[#111111]">TARGET BUILDER ARENA</h2>
+            <p class="text-xs text-[#111111]/70">สุ่มบล็อกสร้างทางจาก 🏁 ไปยัง 🎯 (ระวังบล็อกอันตราย &amp; กับดัก!)</p>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <span id="builder-stage-round-badge" class="font-display font-extrabold text-xs px-2.5 py-1 rounded-lg border-2 border-[#111111] bg-[#F4D03F]">รอบ 0</span>
+          <span id="builder-stage-players-badge" class="font-display font-extrabold text-xs px-2.5 py-1 rounded-lg border-2 border-[#111111] bg-white">ผู้เล่น 0 คน</span>
+          <button type="button" id="builder-toggle-qr-btn" class="btn-vox bg-white hover:bg-yellow-50 text-[#111111] font-display font-bold text-xs px-3 py-1.5 rounded-lg cursor-pointer">
+            📱 QR เข้าร่วม
+          </button>
+          <button type="button" id="builder-close-btn" class="w-8 h-8 rounded-lg border-2 border-[#111111] bg-white hover:bg-[#E74C3C] hover:text-white font-display font-bold text-sm flex items-center justify-center cursor-pointer">
+            ✕
+          </button>
+        </div>
+      </div>
+
+      <!-- Collapsible Join QR Card -->
+      <div id="builder-qr-collapse" class="vox-collapse">
+        <div class="vox-collapse-inner">
+          <div class="bg-white border-2 border-[#111111] rounded-xl p-3 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <img id="builder-join-qr-img" src="" alt="QR เข้าร่วมเกม" class="w-20 h-20 border-2 border-[#111111] rounded-lg bg-[#F8F6F0] p-1 shrink-0" />
+              <div>
+                <p class="font-display font-extrabold text-sm text-[#111111]">สแกนเพื่อเข้าร่วมเล่นเกม (ห้อง <span id="builder-join-room-code">----</span>)</p>
+                <p class="text-xs text-[#111111]/70">ผู้เล่นทุกคนจะได้รับบล็อกแบบสุ่มในแต่ละรอบ</p>
+              </div>
+            </div>
+            <div class="flex gap-2 w-full sm:w-auto">
+              <button type="button" id="builder-copy-join-btn" class="btn-vox flex-1 sm:flex-initial bg-[#F8F6F0] hover:bg-yellow-100 text-[#111111] font-display font-bold text-xs px-3 py-2 rounded-xl cursor-pointer">📋 คัดลอกลิงก์</button>
+              <button type="button" id="builder-open-join-btn" class="btn-vox flex-1 sm:flex-initial bg-[#2980B9] text-white font-display font-bold text-xs px-3 py-2 rounded-xl cursor-pointer">🎮 เปิดหน้าเล่น</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 10x6 Arena Grid -->
+      <div class="bg-white border-2 border-[#111111] rounded-xl p-2.5 sm:p-3.5 shadow-[4px_4px_0px_#111111]">
+        <div id="builder-stage-grid" class="grid grid-cols-10 gap-1 sm:gap-1.5 select-none">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+
+      <!-- Players Strip -->
+      <div id="builder-players-strip" class="flex flex-wrap items-center gap-1.5">
+        <!-- Populated dynamically -->
+      </div>
+
+      <!-- Host Controls & Log -->
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-2 border-t-2 border-[#111111]">
+        <p id="builder-stage-log" class="text-xs sm:text-sm font-bold text-[#111111] flex-1">รอผู้เล่นเข้าร่วม หรือกดสุ่มบล็อกเพื่อเริ่ม!</p>
+        <div class="flex flex-wrap items-center gap-2 shrink-0">
+          <button type="button" id="builder-deal-btn" class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-extrabold text-xs sm:text-sm px-3.5 py-2 rounded-xl cursor-pointer">
+            🎲 สุ่มบล็อกรอบใหม่
+          </button>
+          <button type="button" id="builder-resolve-btn" class="btn-vox bg-[#111111] hover:bg-[#262626] text-[#F4D03F] font-display font-extrabold text-xs sm:text-sm px-3.5 py-2 rounded-xl cursor-pointer">
+            🚀 เดินหน้า
+          </button>
+          <button type="button" id="builder-reset-btn" class="btn-vox bg-white hover:bg-red-50 text-[#E74C3C] font-display font-bold text-xs sm:text-sm px-3 py-2 rounded-xl cursor-pointer">
+            ↺ รีเซ็ต
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- ========================================================================
        GAME MEDIA & RULE DESCRIPTION MODAL (OPENED BY WRENCH ICON)
@@ -1203,6 +1430,17 @@
        SUBTLE BOTTOM-RIGHT SETTINGS GEAR TRIGGER (ONLY CONTROL TRIGGER ON STAGE)
        ======================================================================== -->
   <button
+    id="builder-stage-fab"
+    type="button"
+    aria-label="เปิดเกม Target Builder"
+    title="Target Builder (ผู้เล่นเข้าร่วมได้)"
+    class="control-fab fixed bottom-5 right-[4.5rem] z-40 h-11 px-3 rounded-xl bg-[#F4D03F] text-[#111111] border-[2.5px] border-[#111111] shadow-[3px_3px_0px_#111111] font-display font-extrabold text-xs flex items-center gap-1.5 cursor-pointer"
+  >
+    <span>🧱</span>
+    <span class="hidden sm:inline">เล่นเกม</span>
+  </button>
+
+  <button
     id="drawer-toggle-btn"
     type="button"
     aria-label="เปิด/ปิดแผงควบคุมคะแนนและ QR หลังบ้าน (กด H หรือ Spacebar)"
@@ -1312,6 +1550,11 @@
         </div>
       </div>
 
+      <!-- Game Selector for Desktop Drawer Scoring -->
+      <div id="drawer-score-game-tabs" class="grid grid-cols-3 gap-2 mb-3.5">
+        <!-- Rendered dynamically by JS -->
+      </div>
+
       <!-- Team Scoring Control Grid -->
       <div id="drawer-teams-grid" class="grid grid-cols-1 lg:grid-cols-3 gap-4 pb-6">
         <!-- Rendered dynamically by JS -->
@@ -1330,10 +1573,77 @@
       const CHANNEL_NAME = 'vox_freshy_marketing_sync_channel';
       const GAME_COLORS = ['#F4D03F', '#E74C3C', '#2980B9'];
 
-      // Parse URL Query Parameters (?role=admin|stage & ?room=XXXX)
+      // Parse URL Query Parameters (?role=admin|play|stage & ?room=XXXX)
       const urlParams = new URLSearchParams(window.location.search);
-      const initialRole = urlParams.get('role') === 'admin' ? 'admin' : 'stage';
+      const rawRole = urlParams.get('role');
+      const initialRole = rawRole === 'admin' ? 'admin' : (rawRole === 'play' ? 'play' : 'stage');
       const urlRoomParam = (urlParams.get('room') || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+
+      const BUILDER_ROWS = 6;
+      const BUILDER_COLS = 10;
+      const BUILDER_START = { r: 4, c: 0 };
+      const BUILDER_TARGET = { r: 1, c: 9 };
+      const BUILDER_BLOCKS = {
+        solid:   { id: 'solid',   icon: '🧱', name: 'Solid Block',   cat: 'helpful',   desc: 'พื้นแข็งแรง เดินผ่านได้ปลอดภัย', weight: 22 },
+        spring:  { id: 'spring',  icon: '🪜', name: 'Spring Boost',  cat: 'helpful',   desc: 'เด้งขึ้นบน +1 แถว และพุ่งไปข้างหน้า +1 ช่อง!', weight: 14 },
+        bridge:  { id: 'bridge',  icon: '🌉', name: 'Bridge Plank',  cat: 'helpful',   desc: 'วางแล้วต่อสะพาน 2 ช่องแนวนอนรวดเดียว!', weight: 10 },
+        shield:  { id: 'shield',  icon: '🛡️', name: 'Shield Block',  cat: 'helpful',   desc: 'ลบล้างกับดักรอบข้างและกันระเบิด!', weight: 10 },
+        fragile: { id: 'fragile', icon: '⚠️', name: 'Fragile Glass', cat: 'dangerous', desc: 'อันตราย: เหยียบได้ครั้งเดียวแล้วจะแตกพัง!', weight: 14 },
+        ice:     { id: 'ice',     icon: '🧊', name: 'Slippery Ice',  cat: 'dangerous', desc: 'อันตราย: ลื่นไถลไปข้างหน้าอีก 1 ช่อง (ระวังตกเหว!)', weight: 10 },
+        bomb:    { id: 'bomb',    icon: '💣', name: 'Bomb Block',    cat: 'dangerous', desc: 'อันตราย: ระเบิดในรอบถัดไป ทำลายบล็อกรอบข้าง!', weight: 8 },
+        spike:   { id: 'spike',   icon: '☠️', name: 'Death Spike',   cat: 'deathly',   desc: 'ถึงตาย: เหยียบแล้วร่วงกลับจุดเริ่มต้น!', weight: 7 },
+        void:    { id: 'void',    icon: '🕳️', name: 'Void Trap',     cat: 'deathly',   desc: 'ถึงตาย: หลุมมรณะ ตกลงไปต้องเริ่มใหม่!', weight: 5 }
+      };
+
+      function createEmptyBuilderBoard() {
+        return Array.from({ length: BUILDER_ROWS }, () => Array.from({ length: BUILDER_COLS }, () => null));
+      }
+
+      function createDefaultBuilderState() {
+        return {
+          round: 0,
+          phase: 'lobby',
+          players: [],
+          board: createEmptyBuilderBoard(),
+          lastLog: 'รอผู้เล่นเข้าร่วม หรือกดสุ่มบล็อกเพื่อเริ่ม!',
+          winners: []
+        };
+      }
+
+      function normalizeBuilderState(raw) {
+        const base = createDefaultBuilderState();
+        if (!raw || typeof raw !== 'object') return base;
+        base.round = Math.max(0, Number(raw.round) || 0);
+        base.phase = ['lobby', 'building', 'resolved', 'won'].includes(raw.phase) ? raw.phase : 'lobby';
+        if (Array.isArray(raw.players)) {
+          base.players = raw.players.map(p => ({
+            id: String(p.id || ''),
+            name: String(p.name || 'Player').slice(0, 16),
+            color: p.color || '#F4D03F',
+            r: Math.max(0, Math.min(BUILDER_ROWS - 1, Number(p.r ?? BUILDER_START.r))),
+            c: Math.max(0, Math.min(BUILDER_COLS - 1, Number(p.c ?? BUILDER_START.c))),
+            blockId: BUILDER_BLOCKS[p.blockId] ? p.blockId : null,
+            placedThisRound: Boolean(p.placedThisRound),
+            status: ['alive', 'dead', 'winner'].includes(p.status) ? p.status : 'alive',
+            wins: Math.max(0, Number(p.wins) || 0)
+          }));
+        }
+        if (Array.isArray(raw.board) && raw.board.length === BUILDER_ROWS) {
+          base.board = raw.board.map(row =>
+            Array.isArray(row) && row.length === BUILDER_COLS
+              ? row.map(cell => (cell && BUILDER_BLOCKS[cell.type] ? {
+                  type: cell.type,
+                  ownerId: cell.ownerId || '',
+                  ownerName: cell.ownerName || '',
+                  ttl: typeof cell.ttl === 'number' ? cell.ttl : 1
+                } : null))
+              : Array.from({ length: BUILDER_COLS }, () => null)
+          );
+        }
+        base.lastLog = typeof raw.lastLog === 'string' ? raw.lastLog : base.lastLog;
+        base.winners = Array.isArray(raw.winners) ? raw.winners : [];
+        return base;
+      }
 
       function generateRoomCode() {
         const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -1420,6 +1730,7 @@
           mode: 'corner',
           timerVersion: 0
         },
+        builderGame: createDefaultBuilderState(),
         updatedAt: Date.now()
       };
 
@@ -1512,6 +1823,7 @@
           : 45;
         base.bgmMuted = Boolean(parsed.bgmMuted);
         base.timer = normalizeTimer(parsed.timer, prevTimer);
+        base.builderGame = normalizeBuilderState(parsed.builderGame);
         return base;
       }
 
@@ -1558,6 +1870,16 @@
       const stageConnections = new Set();
       let adminConnection = null;
 
+      function pulseAdminSyncFeedback() {
+        const dotEl = document.getElementById('admin-conn-dot');
+        if (dotEl) {
+          dotEl.classList.remove('vox-sync-pulse');
+          void dotEl.offsetWidth;
+          dotEl.classList.add('vox-sync-pulse');
+        }
+        try { if (navigator.vibrate) navigator.vibrate(10); } catch (_) {}
+      }
+
       function broadcastPayload(payload) {
         if (bc) {
           try { bc.postMessage(payload); } catch (_) {}
@@ -1568,8 +1890,11 @@
               try { conn.send(payload); } catch (_) {}
             }
           });
-        } else if (currentRole === 'admin' && adminConnection && adminConnection.open) {
-          try { adminConnection.send(payload); } catch (_) {}
+        } else if (currentRole === 'admin' || currentRole === 'play') {
+          if (adminConnection && adminConnection.open) {
+            try { adminConnection.send(payload); } catch (_) {}
+          }
+          if (currentRole === 'admin') pulseAdminSyncFeedback();
         }
       }
 
@@ -1646,6 +1971,9 @@
           if (triggerConfettiIfNewWinner && !wasWinner && state.winnerAnnounced) {
             launchConfetti();
           }
+          renderBuilderStageUI();
+        } else if (currentRole === 'play') {
+          renderPlayerGameUI();
         } else {
           renderAdminUI();
         }
@@ -1657,6 +1985,8 @@
             applyIncomingState(event.data.state, true);
           } else if (event.data?.type === 'ACTION' && currentRole === 'stage') {
             applyAtomicAction(event.data);
+          } else if (event.data?.type === 'BUILDER_ACTION' && currentRole === 'stage') {
+            applyBuilderAction(event.data);
           } else if (event.data?.type === 'VIDEO_COMMAND' && currentRole === 'stage') {
             handleStageVideoCommand(event.data.action, event.data.gameIdx);
           } else if (event.data?.type === 'BGM_COMMAND' && currentRole === 'stage') {
@@ -1677,6 +2007,13 @@
       function buildAdminUrl(code) {
         const url = new URL(window.location.href);
         url.searchParams.set('role', 'admin');
+        url.searchParams.set('room', code);
+        return url.toString();
+      }
+
+      function buildPlayerUrl(code) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('role', 'play');
         url.searchParams.set('room', code);
         return url.toString();
       }
@@ -1735,6 +2072,8 @@
                 });
               } else if (msg?.type === 'ACTION') {
                 applyAtomicAction(msg);
+              } else if (msg?.type === 'BUILDER_ACTION') {
+                applyBuilderAction(msg);
               } else if (msg?.type === 'VIDEO_COMMAND') {
                 handleStageVideoCommand(msg.action, msg.gameIdx);
               } else if (msg?.type === 'BGM_COMMAND') {
@@ -1808,7 +2147,9 @@
 
             conn.on('open', () => {
               if (dotEl) dotEl.className = 'w-3.5 h-3.5 rounded-sm bg-[#2980B9] border border-white shrink-0';
-              if (textEl) textEl.textContent = `เชื่อมต่อจอหลักสำเร็จ (ห้อง ${roomCode})`;
+              if (textEl) textEl.textContent = `เชื่อมต่อแล้ว (${roomCode})`;
+              const roomBar = document.getElementById('admin-room-bar');
+              if (roomBar) roomBar.classList.remove('is-open');
               conn.send({ type: 'REQUEST_STATE' });
             });
 
@@ -2195,7 +2536,7 @@
         }
         if (toggleBtn && toggleIcon && toggleLabel) {
           toggleIcon.textContent = t.running ? '⏸' : '▶';
-          toggleLabel.textContent = t.running ? 'พักเวลา' : 'เริ่มจับเวลา';
+          toggleLabel.textContent = t.running ? 'พัก' : 'เริ่ม';
           toggleBtn.classList.toggle('bg-[#111111]', t.running);
           toggleBtn.classList.toggle('text-[#F4D03F]', t.running);
           toggleBtn.classList.toggle('bg-[#F4D03F]', !t.running);
@@ -2203,7 +2544,7 @@
         }
         if (visBtn && visIcon && visLabel) {
           visIcon.textContent = t.visible ? '🙈' : '👁';
-          visLabel.textContent = t.visible ? 'ซ่อนจากจอ' : 'แสดงบนจอ';
+          visLabel.textContent = t.visible ? 'ซ่อน' : 'แสดง';
           visBtn.classList.toggle('bg-[#111111]', t.visible);
           visBtn.classList.toggle('text-[#F4D03F]', t.visible);
           visBtn.classList.toggle('bg-white', !t.visible);
@@ -2217,6 +2558,10 @@
           modeBtn.classList.toggle('text-[#F4D03F]', isCenter);
           modeBtn.classList.toggle('bg-white', !isCenter);
           modeBtn.classList.toggle('text-[#111111]', !isCenter);
+        }
+        const presetsWrap = document.getElementById('admin-timer-presets-wrap');
+        if (presetsWrap) {
+          presetsWrap.classList.toggle('is-open', !t.running);
         }
       }
 
@@ -3237,61 +3582,75 @@
       // ========================================================================
       // SHARED SCORE CONTROL CARD RENDERER & TWO-STEP SAFE RESET HELPER
       // ========================================================================
-      function renderScoreControlCards(containerEl, attrPrefix, showUnitSuffix = false) {
+      let activeDrawerScoreGame = 0;
+
+      function renderSingleGameScoreControls({ tabsEl, containerEl, attrPrefix, selectedGameIdx, onSelectGame }) {
+        if (tabsEl) {
+          tabsEl.innerHTML = [0, 1, 2].map(gIdx => {
+            const active = selectedGameIdx === gIdx;
+            const isLiveOnStage = state.activeGameAccordion === gIdx;
+            return `
+              <button
+                type="button"
+                data-${attrPrefix}-game-tab="${gIdx}"
+                class="btn-vox ${active ? 'bg-[#111111] text-[#F4D03F]' : 'bg-white text-[#111111]'} font-display font-bold text-xs py-2 px-2 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <span class="w-2.5 h-2.5 rounded-full border border-current shrink-0" style="background:${GAME_COLORS[gIdx]}"></span>
+                <span class="truncate">${escapeHtml(state.games[gIdx])}</span>
+                ${isLiveOnStage ? '<span class="w-1.5 h-1.5 rounded-full bg-[#E74C3C] shrink-0" title="กำลังเปิดบนจอ"></span>' : ''}
+              </button>
+            `;
+          }).join('');
+          tabsEl.querySelectorAll(`[data-${attrPrefix}-game-tab]`).forEach(btn => {
+            btn.addEventListener('click', () => {
+              onSelectGame(Number(btn.getAttribute(`data-${attrPrefix}-game-tab`)));
+            });
+          });
+        }
+
         if (!containerEl) return;
+        const gIdx = selectedGameIdx;
         containerEl.innerHTML = state.teams.map(team => {
           const total = getTeamTotal(team);
           return `
-            <div class="vox-card bg-white p-4 flex flex-col gap-3">
-              <div class="flex items-center justify-between gap-2 pb-2 border-b-2 border-[#111111]">
+            <div class="vox-card bg-white p-3.5 flex flex-col gap-2.5">
+              <div class="flex items-center justify-between gap-2">
                 <div class="flex items-center gap-2 min-w-0">
-                  <span class="w-4 h-4 rounded-full border-2 border-[#111111] shrink-0" style="background:${team.color}"></span>
-                  <h3 class="thai-safe-tight font-display font-extrabold text-base sm:text-lg text-[#111111] truncate">${escapeHtml(team.name)}</h3>
+                  <span class="w-3.5 h-3.5 rounded-full border-2 border-[#111111] shrink-0" style="background:${team.color}"></span>
+                  <h3 class="thai-safe-tight font-display font-extrabold text-base text-[#111111] truncate">${escapeHtml(team.name)}</h3>
                 </div>
-                <span class="font-display font-black text-lg bg-[#F8F6F0] border-2 border-[#111111] px-2.5 py-0.5 rounded-lg shrink-0">
-                  ${total}${showUnitSuffix ? ' คะแนน' : ''}
+                <span class="font-display font-black text-sm bg-[#F8F6F0] border-2 border-[#111111] px-2.5 py-0.5 rounded-lg shrink-0">
+                  รวม ${total}
                 </span>
               </div>
-
-              ${[0, 1, 2].map(gIdx => `
-                <div class="bg-[#F8F6F0] border-2 border-[#111111] rounded-xl p-2.5 flex flex-col gap-2">
-                  <div class="flex items-center justify-between gap-2">
-                    <div class="flex items-center gap-1.5 min-w-0 flex-1">
-                      <span class="w-2.5 h-2.5 rounded-full border border-[#111111] shrink-0" style="background:${GAME_COLORS[gIdx]}"></span>
-                      <span class="thai-safe-tight text-xs font-bold text-[#111111] truncate">${escapeHtml(state.games[gIdx])}</span>
-                    </div>
-                    <input
-                      type="number"
-                      min="0"
-                      value="${team.scores[gIdx]}"
-                      data-${attrPrefix}-input="${team.id}:${gIdx}"
-                      aria-label="คะแนน ${escapeHtml(team.name)} ${escapeHtml(state.games[gIdx])}"
-                      class="w-16 text-center font-display font-extrabold text-base bg-white border-2 border-[#111111] rounded-lg py-0.5 text-[#111111]"
-                    />
-                  </div>
-                  <div class="grid grid-cols-4 gap-1.5">
-                    <button type="button" data-${attrPrefix}-delta="${team.id}:${gIdx}:-5" class="btn-vox bg-white hover:bg-red-50 text-[#E74C3C] font-display font-extrabold text-xs sm:text-sm py-1.5 rounded-lg cursor-pointer">-5</button>
-                    <button type="button" data-${attrPrefix}-delta="${team.id}:${gIdx}:5" class="btn-vox bg-white hover:bg-yellow-100 text-[#111111] font-display font-extrabold text-xs sm:text-sm py-1.5 rounded-lg cursor-pointer">+5</button>
-                    <button type="button" data-${attrPrefix}-delta="${team.id}:${gIdx}:10" class="btn-vox bg-white hover:bg-yellow-100 text-[#111111] font-display font-extrabold text-xs sm:text-sm py-1.5 rounded-lg cursor-pointer">+10</button>
-                    <button type="button" data-${attrPrefix}-delta="${team.id}:${gIdx}:15" class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-extrabold text-xs sm:text-sm py-1.5 rounded-lg cursor-pointer">+15</button>
-                  </div>
-                </div>
-              `).join('')}
+              <div class="grid grid-cols-4 gap-1.5 items-center">
+                <button type="button" data-${attrPrefix}-delta="${team.id}:${gIdx}:-5" class="btn-vox bg-white hover:bg-red-50 text-[#E74C3C] font-display font-extrabold text-sm py-2 rounded-xl cursor-pointer">-5</button>
+                <input
+                  type="number"
+                  min="0"
+                  value="${team.scores[gIdx]}"
+                  data-${attrPrefix}-input="${team.id}:${gIdx}"
+                  aria-label="คะแนน ${escapeHtml(team.name)} ${escapeHtml(state.games[gIdx])}"
+                  class="w-full text-center font-display font-black text-base bg-[#F8F6F0] border-2 border-[#111111] rounded-xl py-1.5 text-[#111111]"
+                />
+                <button type="button" data-${attrPrefix}-delta="${team.id}:${gIdx}:5" class="btn-vox bg-white hover:bg-yellow-100 text-[#111111] font-display font-extrabold text-sm py-2 rounded-xl cursor-pointer">+5</button>
+                <button type="button" data-${attrPrefix}-delta="${team.id}:${gIdx}:10" class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-extrabold text-sm py-2 rounded-xl cursor-pointer">+10</button>
+              </div>
             </div>
           `;
         }).join('');
 
         containerEl.querySelectorAll(`[data-${attrPrefix}-delta]`).forEach(btn => {
           btn.addEventListener('click', () => {
-            const [teamId, gIdx, delta] = btn.getAttribute(`data-${attrPrefix}-delta`).split(':');
-            adjustTeamGameScore(teamId, Number(gIdx), Number(delta));
+            const [teamId, gameIdx, delta] = btn.getAttribute(`data-${attrPrefix}-delta`).split(':');
+            adjustTeamGameScore(teamId, Number(gameIdx), Number(delta));
           });
         });
 
         containerEl.querySelectorAll(`[data-${attrPrefix}-input]`).forEach(inp => {
           inp.addEventListener('change', () => {
-            const [teamId, gIdx] = inp.getAttribute(`data-${attrPrefix}-input`).split(':');
-            setTeamGameScore(teamId, Number(gIdx), inp.value);
+            const [teamId, gameIdx] = inp.getAttribute(`data-${attrPrefix}-input`).split(':');
+            setTeamGameScore(teamId, Number(gameIdx), inp.value);
           });
         });
       }
@@ -3322,7 +3681,16 @@
       }
 
       function renderDrawerControls() {
-        renderScoreControlCards(drawerTeamsGrid, 'drawer', true);
+        renderSingleGameScoreControls({
+          tabsEl: document.getElementById('drawer-score-game-tabs'),
+          containerEl: drawerTeamsGrid,
+          attrPrefix: 'drawer',
+          selectedGameIdx: activeDrawerScoreGame,
+          onSelectGame: (gIdx) => {
+            activeDrawerScoreGame = gIdx;
+            renderDrawerControls();
+          }
+        });
       }
 
       let isDrawerOpen = false;
@@ -3396,6 +3764,8 @@
       // MOBILE BACKSTAGE ADMIN VIEW (?role=admin&room=XXXX)
       // ========================================================================
       let activeAdminTab = 'scores';
+      let activeAdminScoreGame = 0;
+      let activeAdminEditorGame = 0;
 
       function setAdminTab(tabName) {
         activeAdminTab = tabName;
@@ -3432,11 +3802,24 @@
         broadcastPayload({ type: 'VIDEO_COMMAND', action, gameIdx: idx });
       }
 
-      function renderAdminUI() {
-        // Tab 1: Teams Scoring Cards (reuses shared renderer)
-        renderScoreControlCards(document.getElementById('admin-teams-container'), 'admin', false);
+      function renderAdminScoreCards() {
+        renderSingleGameScoreControls({
+          tabsEl: document.getElementById('admin-score-game-tabs'),
+          containerEl: document.getElementById('admin-teams-container'),
+          attrPrefix: 'admin',
+          selectedGameIdx: activeAdminScoreGame,
+          onSelectGame: (gIdx) => {
+            activeAdminScoreGame = gIdx;
+            renderAdminScoreCards();
+          }
+        });
+      }
 
-        // Tab 2: Remote Accordion Open/Close, Video<->Image/GIF Switch, Theater Zoom & Video Playback
+      function renderAdminUI() {
+        // Tab 1: Teams Scoring Cards (1 game at a time)
+        renderAdminScoreCards();
+
+        // Tab 2: Remote Accordion Open/Close (Compact 3-pill row)
         const accBtnsEl = document.getElementById('admin-remote-accordion-btns');
         if (accBtnsEl) {
           accBtnsEl.innerHTML = [0, 1, 2].map(idx => {
@@ -3445,12 +3828,10 @@
               <button
                 type="button"
                 data-admin-toggle-acc="${idx}"
-                class="btn-vox ${isOpen ? 'bg-[#111111] text-[#F4D03F]' : 'bg-[#F8F6F0] text-[#111111]'} font-display font-bold text-sm py-2.5 px-3.5 rounded-xl flex items-center justify-between gap-2 cursor-pointer"
+                class="btn-vox ${isOpen ? 'bg-[#111111] text-[#F4D03F]' : 'bg-[#F8F6F0] text-[#111111]'} font-display font-bold text-xs py-2 px-2 rounded-xl flex items-center justify-center gap-1 cursor-pointer"
               >
+                <span class="w-2 h-2 rounded-full border border-current shrink-0" style="background:${GAME_COLORS[idx]}"></span>
                 <span class="truncate">${escapeHtml(state.games[idx])}</span>
-                <span class="text-xs px-2 py-0.5 rounded ${isOpen ? 'bg-[#F4D03F] text-[#111111]' : 'bg-white border border-[#111111]'} shrink-0">
-                  ${isOpen ? 'กำลังเปิดแสดง (กดเพื่อปิด)' : 'กดเปิดขึ้นจอ'}
-                </span>
               </button>
             `;
           }).join('');
@@ -3463,6 +3844,7 @@
                 state.isMediaZoomed = false;
               } else {
                 state.activeGameAccordion = idx;
+                activeAdminScoreGame = idx; // Auto-follow active stage game in Tab 1
               }
               saveAndBroadcast();
               renderAdminUI();
@@ -3470,13 +3852,24 @@
           });
         }
 
-        // Sync Video <-> Image/GIF, Zoom & Playback Buttons in Tab 2
+        // Sync Video <-> Image/GIF, Zoom & Playback Buttons in Tab 2 (Contextual + Smooth Collapse)
         const activeIdx = state.activeGameAccordion;
         const activeMedia = activeIdx !== null ? (state.gameMedia[activeIdx] || {}) : {};
         const hasYt = Boolean(extractYouTubeId(activeMedia.youtubeUrl));
         const hasImg = Boolean((activeMedia.imageData || '').trim());
         const hasAnyMedia = hasYt || hasImg;
+        const hasBothMedia = hasYt && hasImg;
         const resolvedType = resolveActiveMediaType(activeMedia);
+
+        const mediaWrapEl = document.getElementById('admin-media-actions-wrap');
+        const mediaGridEl = document.getElementById('admin-media-actions-grid');
+        if (mediaWrapEl) {
+          mediaWrapEl.classList.toggle('is-open', activeIdx !== null && hasAnyMedia);
+        }
+        if (mediaGridEl) {
+          mediaGridEl.classList.toggle('grid-cols-3', hasBothMedia);
+          mediaGridEl.classList.toggle('grid-cols-1', !hasBothMedia);
+        }
 
         const switchVideoBtn = document.getElementById('admin-switch-video-btn');
         const switchImageBtn = document.getElementById('admin-switch-image-btn');
@@ -3487,8 +3880,8 @@
 
         if (switchVideoBtn) {
           const isVideoActive = activeIdx !== null && hasYt && resolvedType === 'video';
-          switchVideoBtn.disabled = activeIdx === null || !hasYt;
-          switchVideoBtn.classList.toggle('opacity-40', switchVideoBtn.disabled);
+          switchVideoBtn.classList.toggle('hidden', !hasBothMedia);
+          switchVideoBtn.classList.toggle('flex', hasBothMedia);
           switchVideoBtn.classList.toggle('bg-[#111111]', isVideoActive);
           switchVideoBtn.classList.toggle('text-[#F4D03F]', isVideoActive);
           switchVideoBtn.classList.toggle('bg-white', !isVideoActive);
@@ -3497,8 +3890,8 @@
 
         if (switchImageBtn) {
           const isImageActive = activeIdx !== null && hasImg && resolvedType === 'image';
-          switchImageBtn.disabled = activeIdx === null || !hasImg;
-          switchImageBtn.classList.toggle('opacity-40', switchImageBtn.disabled);
+          switchImageBtn.classList.toggle('hidden', !hasBothMedia);
+          switchImageBtn.classList.toggle('flex', hasBothMedia);
           switchImageBtn.classList.toggle('bg-[#111111]', isImageActive);
           switchImageBtn.classList.toggle('text-[#F4D03F]', isImageActive);
           switchImageBtn.classList.toggle('bg-white', !isImageActive);
@@ -3513,78 +3906,71 @@
             toggleZoomBtn.classList.remove('bg-[#F4D03F]', 'text-[#111111]');
             toggleZoomBtn.classList.add('bg-[#E74C3C]', 'text-white');
             if (zoomBtnIconEl) zoomBtnIconEl.textContent = '🗕';
-            if (zoomBtnTextEl) zoomBtnTextEl.textContent = 'ย่อสื่อกลับปกติบนหน้าบ้าน';
+            if (zoomBtnTextEl) zoomBtnTextEl.textContent = hasBothMedia ? 'ย่อ' : 'ย่อสื่อกลับปกติ';
             if (zoomBadgeEl) {
-              zoomBadgeEl.textContent = '🔍 กำลังซูมขยายเต็มจอ';
-              zoomBadgeEl.className = 'text-xs font-display font-bold px-2.5 py-0.5 rounded-md border border-[#111111] bg-[#F4D03F] text-[#111111]';
+              zoomBadgeEl.textContent = '🔍 กำลังซูม';
+              zoomBadgeEl.className = 'text-[11px] font-display font-bold px-2 py-0.5 rounded-md border border-[#111111] bg-[#F4D03F] text-[#111111]';
             }
           } else {
             toggleZoomBtn.classList.add('bg-[#F4D03F]', 'text-[#111111]');
             toggleZoomBtn.classList.remove('bg-[#E74C3C]', 'text-white');
             if (zoomBtnIconEl) zoomBtnIconEl.textContent = '🔍';
-            if (zoomBtnTextEl) zoomBtnTextEl.textContent = 'ซูมขยายเต็มจอบนหน้าบ้าน';
+            if (zoomBtnTextEl) zoomBtnTextEl.textContent = hasBothMedia ? 'ซูม' : '🔍 ซูมขยายเต็มจอ';
             if (zoomBadgeEl) {
-              zoomBadgeEl.textContent = activeIdx !== null ? 'เปิดแสดงขนาดปกติ' : 'ปิดบล็อกสื่ออยู่';
-              zoomBadgeEl.className = 'text-xs font-display font-bold px-2.5 py-0.5 rounded-md border border-[#111111] bg-[#F8F6F0] text-[#111111]';
+              zoomBadgeEl.textContent = activeIdx !== null ? 'ปกติ' : 'ปิดอยู่';
+              zoomBadgeEl.className = 'text-[11px] font-display font-bold px-2 py-0.5 rounded-md border border-[#111111] bg-[#F8F6F0] text-[#111111]';
             }
           }
         }
 
-        // Sync Video Playback Control Buttons (Vox Palette)
+        // Sync Video Playback Control Buttons (Smoothly reveals only when active game has YouTube)
         const canControlVideo = activeIdx !== null && hasYt;
-        ['admin-video-play-btn', 'admin-video-pause-btn', 'admin-video-restart-btn', 'admin-video-mute-btn'].forEach(id => {
-          const btn = document.getElementById(id);
-          if (btn) {
-            btn.disabled = !canControlVideo;
-            btn.classList.toggle('opacity-40', !canControlVideo);
-          }
-        });
+        const videoWrapEl = document.getElementById('admin-video-controls-wrap');
+        if (videoWrapEl) {
+          videoWrapEl.classList.toggle('is-open', canControlVideo);
+        }
         const muteIconEl = document.getElementById('admin-video-mute-icon');
         const muteLabelEl = document.getElementById('admin-video-mute-label');
         const muteBtnEl = document.getElementById('admin-video-mute-btn');
         if (muteIconEl && muteLabelEl && muteBtnEl) {
           muteIconEl.textContent = state.isVideoMuted ? '🔇' : '🔊';
-          muteLabelEl.textContent = state.isVideoMuted ? 'ปิดเสียง' : 'เสียง';
+          muteLabelEl.textContent = state.isVideoMuted ? 'ปิด' : 'เสียง';
           muteBtnEl.classList.toggle('bg-[#E74C3C]', state.isVideoMuted);
           muteBtnEl.classList.toggle('text-white', state.isVideoMuted);
           muteBtnEl.classList.toggle('bg-white', !state.isVideoMuted);
           muteBtnEl.classList.toggle('text-[#111111]', !state.isVideoMuted);
         }
 
-        // Tab 2: Background Music (BGM) 3-Slot Controller (focus-safe)
+        // Tab 2: Background Music (BGM) 3 Compact Slot Pills + 1 Active URL Input (focus-safe)
         const bgmSlotsEl = document.getElementById('admin-bgm-slots-container');
         if (bgmSlotsEl && !bgmSlotsEl.contains(document.activeElement)) {
-          bgmSlotsEl.innerHTML = [0, 1, 2].map(idx => {
-            const tr = state.bgmTracks[idx] || { label: `เพลงที่ ${idx + 1}`, url: '' };
-            const isActive = state.activeBgmSlot === idx;
-            const hasUrl = Boolean((tr.url || '').trim());
-            const isYt = Boolean(extractYouTubeId(tr.url));
-            const typeTag = !hasUrl ? 'ว่าง' : (isYt ? 'YouTube' : 'Audio');
-            return `
-              <div class="bg-[#F8F6F0] border-2 border-[#111111] rounded-xl p-2.5 flex flex-col gap-2 ${isActive ? 'shadow-[3px_3px_0px_#111111] bg-[#FFFBEB]' : ''}">
-                <div class="flex items-center justify-between gap-2">
+          const activeTrack = state.bgmTracks[state.activeBgmSlot] || { label: `เพลงที่ ${state.activeBgmSlot + 1}`, url: '' };
+          bgmSlotsEl.innerHTML = `
+            <div class="grid grid-cols-3 gap-1.5">
+              ${[0, 1, 2].map(idx => {
+                const tr = state.bgmTracks[idx] || { url: '' };
+                const isActive = state.activeBgmSlot === idx;
+                const hasUrl = Boolean((tr.url || '').trim());
+                return `
                   <button
                     type="button"
                     data-admin-bgm-select="${idx}"
-                    class="btn-vox ${isActive ? 'bg-[#111111] text-[#F4D03F]' : 'bg-white text-[#111111]'} font-display font-bold text-xs px-3 py-1 rounded-lg flex items-center gap-1.5 cursor-pointer"
+                    class="btn-vox ${isActive ? 'bg-[#111111] text-[#F4D03F]' : 'bg-[#F8F6F0] text-[#111111]'} font-display font-bold text-xs py-1.5 px-2 rounded-xl flex items-center justify-center gap-1 cursor-pointer"
                   >
-                    <span>${isActive ? '●' : '○'}</span>
-                    <span>ช่อง ${idx + 1}: ${escapeHtml(tr.label || `เพลงที่ ${idx + 1}`)}</span>
+                    <span>${hasUrl ? '●' : '○'}</span>
+                    <span>ช่อง ${idx + 1}</span>
                   </button>
-                  <span class="text-[11px] font-display font-bold px-2 py-0.5 rounded border border-[#111111] bg-white text-[#111111]">
-                    ${typeTag}
-                  </span>
-                </div>
-                <input
-                  type="url"
-                  data-admin-bgm-url="${idx}"
-                  value="${escapeHtml(tr.url)}"
-                  placeholder="วางลิงก์ YouTube หรือไฟล์เสียง (.mp3) ช่องที่ ${idx + 1}"
-                  class="w-full bg-white border-2 border-[#111111] rounded-lg px-2.5 py-1.5 text-xs sm:text-sm font-medium text-[#111111] focus:outline-none"
-                />
-              </div>
-            `;
-          }).join('');
+                `;
+              }).join('')}
+            </div>
+            <input
+              type="url"
+              data-admin-bgm-url="${state.activeBgmSlot}"
+              value="${escapeHtml(activeTrack.url)}"
+              placeholder="วางลิงก์ YouTube หรือ .mp3 (ช่อง ${state.activeBgmSlot + 1})"
+              class="w-full bg-[#F8F6F0] border-2 border-[#111111] rounded-xl px-2.5 py-1.5 text-xs font-medium text-[#111111] focus:outline-none focus:bg-white"
+            />
+          `;
 
           bgmSlotsEl.querySelectorAll('[data-admin-bgm-select]').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -3613,32 +3999,30 @@
         const bgmPlayLabel = document.getElementById('admin-bgm-play-label');
         const bgmMuteBtn = document.getElementById('admin-bgm-mute-btn');
         const bgmMuteIcon = document.getElementById('admin-bgm-mute-icon');
-        const bgmMuteLabel = document.getElementById('admin-bgm-mute-label');
         const bgmSlider = document.getElementById('admin-bgm-volume-slider');
         const bgmVolVal = document.getElementById('admin-bgm-volume-value');
 
         if (bgmBadgeEl) {
           if (state.bgmPlaying && activeBgmUrl) {
-            bgmBadgeEl.textContent = `▶ กำลังเล่นช่อง ${state.activeBgmSlot + 1}`;
-            bgmBadgeEl.className = 'text-xs font-display font-bold px-2.5 py-0.5 rounded-md border border-[#111111] bg-[#F4D03F] text-[#111111] shrink-0';
+            bgmBadgeEl.textContent = `▶ ช่อง ${state.activeBgmSlot + 1}`;
+            bgmBadgeEl.className = 'text-[11px] font-display font-bold px-2 py-0.5 rounded-md border border-[#111111] bg-[#F4D03F] text-[#111111] shrink-0';
           } else {
-            bgmBadgeEl.textContent = activeBgmUrl ? 'หยุดอยู่' : 'ยังไม่มีลิงก์';
-            bgmBadgeEl.className = 'text-xs font-display font-bold px-2.5 py-0.5 rounded-md border border-[#111111] bg-[#F8F6F0] text-[#111111] shrink-0';
+            bgmBadgeEl.textContent = activeBgmUrl ? 'หยุดอยู่' : 'ว่าง';
+            bgmBadgeEl.className = 'text-[11px] font-display font-bold px-2 py-0.5 rounded-md border border-[#111111] bg-[#F8F6F0] text-[#111111] shrink-0';
           }
         }
         if (bgmPlayBtn && bgmPlayIcon && bgmPlayLabel) {
           bgmPlayBtn.disabled = !activeBgmUrl;
           bgmPlayBtn.classList.toggle('opacity-45', !activeBgmUrl);
           bgmPlayIcon.textContent = state.bgmPlaying ? '⏸' : '▶';
-          bgmPlayLabel.textContent = state.bgmPlaying ? 'หยุดเพลงประกอบ' : 'เปิดเพลงประกอบ';
+          bgmPlayLabel.textContent = state.bgmPlaying ? 'หยุดเพลง' : 'เปิดเพลง';
           bgmPlayBtn.classList.toggle('bg-[#111111]', state.bgmPlaying);
           bgmPlayBtn.classList.toggle('text-[#F4D03F]', state.bgmPlaying);
           bgmPlayBtn.classList.toggle('bg-[#F4D03F]', !state.bgmPlaying);
           bgmPlayBtn.classList.toggle('text-[#111111]', !state.bgmPlaying);
         }
-        if (bgmMuteBtn && bgmMuteIcon && bgmMuteLabel) {
+        if (bgmMuteBtn && bgmMuteIcon) {
           bgmMuteIcon.textContent = state.bgmMuted ? '🔇' : '🔊';
-          bgmMuteLabel.textContent = state.bgmMuted ? 'ปิดเสียงอยู่' : 'เสียงปกติ';
           bgmMuteBtn.classList.toggle('bg-[#E74C3C]', state.bgmMuted);
           bgmMuteBtn.classList.toggle('text-white', state.bgmMuted);
           bgmMuteBtn.classList.toggle('bg-white', !state.bgmMuted);
@@ -3649,65 +4033,75 @@
 
         const mediaEditorsEl = document.getElementById('admin-media-editors');
         if (mediaEditorsEl && !mediaEditorsEl.contains(document.activeElement)) {
-          mediaEditorsEl.innerHTML = [0, 1, 2].map(idx => {
-            const m = state.gameMedia[idx] || { description: '', youtubeUrl: '', imageData: '', activeMediaType: 'video' };
-            return `
-              <div class="vox-card bg-white p-4 flex flex-col gap-2.5">
-                <div class="flex items-center gap-2">
-                  <span class="w-3.5 h-3.5 rounded-full border border-[#111111]" style="background:${GAME_COLORS[idx]}"></span>
-                  <h3 class="thai-safe-tight font-display font-extrabold text-sm text-[#111111]">${escapeHtml(state.games[idx])}</h3>
-                </div>
-                <textarea
-                  rows="2"
-                  data-admin-desc="${idx}"
-                  placeholder="คำอธิบาย / กติกาเกม..."
-                  class="thai-safe w-full bg-[#F8F6F0] border-2 border-[#111111] rounded-lg px-2.5 py-1.5 text-sm"
-                >${escapeHtml(m.description)}</textarea>
-                <input
-                  type="url"
-                  data-admin-yt="${idx}"
-                  value="${escapeHtml(m.youtubeUrl)}"
-                  placeholder="ลิงก์ YouTube (ถ้ามี)"
-                  class="w-full bg-[#F8F6F0] border-2 border-[#111111] rounded-lg px-2.5 py-1.5 text-sm"
-                />
-                <div class="flex items-center gap-2">
-                  <input
-                    type="text"
-                    data-admin-img="${idx}"
-                    value="${escapeHtml(m.imageData)}"
-                    placeholder="ลิงก์รูปภาพ / GIF (URL)"
-                    class="flex-1 bg-[#F8F6F0] border-2 border-[#111111] rounded-lg px-2.5 py-1.5 text-sm"
-                  />
-                  <label class="btn-vox bg-[#F4D03F] text-[#111111] font-display font-bold text-xs px-3 py-1.5 rounded-lg cursor-pointer shrink-0">
-                    📁 รูป/GIF
-                    <input type="file" accept="image/*,.gif" data-admin-file="${idx}" class="hidden" />
-                  </label>
-                </div>
-              </div>
-            `;
-          }).join('');
+          const idx = activeAdminEditorGame;
+          const m = state.gameMedia[idx] || { description: '', youtubeUrl: '', imageData: '', activeMediaType: 'video' };
+          mediaEditorsEl.innerHTML = `
+            <div class="grid grid-cols-3 gap-1.5">
+              ${[0, 1, 2].map(gIdx => `
+                <button
+                  type="button"
+                  data-admin-editor-game="${gIdx}"
+                  class="btn-vox ${idx === gIdx ? 'bg-[#111111] text-[#F4D03F]' : 'bg-[#F8F6F0] text-[#111111]'} font-display font-bold text-xs py-1.5 px-2 rounded-xl truncate cursor-pointer"
+                >
+                  ${escapeHtml(state.games[gIdx])}
+                </button>
+              `).join('')}
+            </div>
+            <textarea
+              rows="2"
+              data-admin-desc="${idx}"
+              placeholder="คำอธิบาย / กติกาเกม..."
+              class="thai-safe w-full bg-[#F8F6F0] border-2 border-[#111111] rounded-lg px-2.5 py-1.5 text-sm"
+            >${escapeHtml(m.description)}</textarea>
+            <input
+              type="url"
+              data-admin-yt="${idx}"
+              value="${escapeHtml(m.youtubeUrl)}"
+              placeholder="ลิงก์ YouTube (ถ้ามี)"
+              class="w-full bg-[#F8F6F0] border-2 border-[#111111] rounded-lg px-2.5 py-1.5 text-sm"
+            />
+            <div class="flex items-center gap-2">
+              <input
+                type="text"
+                data-admin-img="${idx}"
+                value="${escapeHtml(m.imageData)}"
+                placeholder="ลิงก์รูปภาพ / GIF (URL)"
+                class="flex-1 bg-[#F8F6F0] border-2 border-[#111111] rounded-lg px-2.5 py-1.5 text-sm"
+              />
+              <label class="btn-vox bg-[#F4D03F] text-[#111111] font-display font-bold text-xs px-3 py-1.5 rounded-lg cursor-pointer shrink-0">
+                📁 รูป/GIF
+                <input type="file" accept="image/*,.gif" data-admin-file="${idx}" class="hidden" />
+              </label>
+            </div>
+          `;
 
+          mediaEditorsEl.querySelectorAll('[data-admin-editor-game]').forEach(btn => {
+            btn.addEventListener('click', () => {
+              activeAdminEditorGame = Number(btn.dataset.adminEditorGame);
+              renderAdminUI();
+            });
+          });
           mediaEditorsEl.querySelectorAll('[data-admin-desc]').forEach(el => {
             el.addEventListener('change', () => {
-              const idx = Number(el.dataset.adminDesc);
-              state.gameMedia[idx].description = el.value.trim();
+              const gIdx = Number(el.dataset.adminDesc);
+              state.gameMedia[gIdx].description = el.value.trim();
               saveAndBroadcast();
             });
           });
           mediaEditorsEl.querySelectorAll('[data-admin-yt]').forEach(el => {
             el.addEventListener('change', () => {
-              const idx = Number(el.dataset.adminYt);
-              state.gameMedia[idx].youtubeUrl = el.value.trim();
-              state.gameMedia[idx].activeMediaType = resolveActiveMediaType(state.gameMedia[idx]);
+              const gIdx = Number(el.dataset.adminYt);
+              state.gameMedia[gIdx].youtubeUrl = el.value.trim();
+              state.gameMedia[gIdx].activeMediaType = resolveActiveMediaType(state.gameMedia[gIdx]);
               saveAndBroadcast();
               renderAdminUI();
             });
           });
           mediaEditorsEl.querySelectorAll('[data-admin-img]').forEach(el => {
             el.addEventListener('change', () => {
-              const idx = Number(el.dataset.adminImg);
-              state.gameMedia[idx].imageData = el.value.trim();
-              state.gameMedia[idx].activeMediaType = resolveActiveMediaType(state.gameMedia[idx]);
+              const gIdx = Number(el.dataset.adminImg);
+              state.gameMedia[gIdx].imageData = el.value.trim();
+              state.gameMedia[gIdx].activeMediaType = resolveActiveMediaType(state.gameMedia[gIdx]);
               saveAndBroadcast();
               renderAdminUI();
             });
@@ -3715,11 +4109,11 @@
           mediaEditorsEl.querySelectorAll('[data-admin-file]').forEach(el => {
             el.addEventListener('change', (e) => {
               const file = e.target.files?.[0];
-              const idx = Number(el.dataset.adminFile);
+              const gIdx = Number(el.dataset.adminFile);
               if (!file) return;
               compressImageFile(file, (dataUrl) => {
-                state.gameMedia[idx].imageData = dataUrl;
-                state.gameMedia[idx].activeMediaType = resolveActiveMediaType(state.gameMedia[idx]);
+                state.gameMedia[gIdx].imageData = dataUrl;
+                state.gameMedia[gIdx].activeMediaType = resolveActiveMediaType(state.gameMedia[gIdx]);
                 saveAndBroadcast();
                 renderAdminUI();
               });
@@ -3964,29 +4358,597 @@
       if (adminSwitchToStageBtn) {
         adminSwitchToStageBtn.addEventListener('click', () => switchRoleView('stage'));
       }
+      onClick('admin-toggle-room-btn', () => {
+        const roomBar = document.getElementById('admin-room-bar');
+        if (roomBar) roomBar.classList.toggle('is-open');
+      });
 
       // ========================================================================
-      // ROLE SWITCHER ('stage' vs 'admin')
+      // TARGET BUILDER MULTIPLAYER GAME ENGINE & PLAYER VIEW (?role=play)
       // ========================================================================
+      const PLAYER_ID_KEY = 'vox_builder_player_id_v1';
+      let localPlayerId = '';
+      try {
+        localPlayerId = sessionStorage.getItem(PLAYER_ID_KEY) || '';
+        if (!localPlayerId) {
+          localPlayerId = 'p_' + Math.random().toString(36).slice(2, 9);
+          sessionStorage.setItem(PLAYER_ID_KEY, localPlayerId);
+        }
+      } catch (_) {
+        localPlayerId = 'p_' + Math.random().toString(36).slice(2, 9);
+      }
+      let selectedPlayerColor = '#F4D03F';
+      let isBuilderOverlayOpen = false;
+
+      function rollRandomBuilderBlock() {
+        const list = Object.values(BUILDER_BLOCKS);
+        const totalWeight = list.reduce((s, b) => s + b.weight, 0);
+        let r = Math.random() * totalWeight;
+        for (const b of list) {
+          r -= b.weight;
+          if (r <= 0) return b.id;
+        }
+        return 'solid';
+      }
+
+      function isStartCell(r, c) { return r === BUILDER_START.r && c === BUILDER_START.c; }
+      function isTargetCell(r, c) { return r === BUILDER_TARGET.r && c === BUILDER_TARGET.c; }
+      function isWalkableCell(board, r, c) {
+        if (r < 0 || r >= BUILDER_ROWS || c < 0 || c >= BUILDER_COLS) return false;
+        return isStartCell(r, c) || isTargetCell(r, c) || Boolean(board[r][c]);
+      }
+
+      function findNextBuilderStep(board, sr, sc) {
+        const key = (r, c) => `${r},${c}`;
+        const visited = new Set([key(sr, sc)]);
+        const parent = {};
+        const queue = [[sr, sc]];
+        let bestCell = null;
+        let bestDist = Math.abs(sr - BUILDER_TARGET.r) + Math.abs(sc - BUILDER_TARGET.c);
+
+        while (queue.length > 0) {
+          const [r, c] = queue.shift();
+          if (isTargetCell(r, c)) {
+            bestCell = [r, c];
+            break;
+          }
+          const dist = Math.abs(r - BUILDER_TARGET.r) + Math.abs(c - BUILDER_TARGET.c);
+          if (dist < bestDist) {
+            bestDist = dist;
+            bestCell = [r, c];
+          }
+          const dirs = [[-1, 0], [0, 1], [1, 0], [0, -1]];
+          for (const [dr, dc] of dirs) {
+            const nr = r + dr;
+            const nc = c + dc;
+            const k = key(nr, nc);
+            if (!visited.has(k) && isWalkableCell(board, nr, nc)) {
+              visited.add(k);
+              parent[k] = [r, c];
+              queue.push([nr, nc]);
+            }
+          }
+        }
+
+        if (!bestCell) return null;
+        let cur = bestCell;
+        while (parent[key(cur[0], cur[1])]) {
+          const prev = parent[key(cur[0], cur[1])];
+          if (prev[0] === sr && prev[1] === sc) return cur;
+          cur = prev;
+        }
+        return null;
+      }
+
+      function applyBuilderAction(msg) {
+        if (!msg || !msg.op) return;
+        const g = state.builderGame || createDefaultBuilderState();
+        state.builderGame = g;
+        const dirs = [[-1, 0], [0, 1], [1, 0], [0, -1]];
+
+        if (msg.op === 'JOIN' && msg.player) {
+          const pid = String(msg.player.id || '');
+          if (!pid) return;
+          const existing = g.players.find(p => p.id === pid);
+          if (existing) {
+            existing.name = String(msg.player.name || existing.name).slice(0, 16);
+            existing.color = msg.player.color || existing.color;
+          } else {
+            g.players.push({
+              id: pid,
+              name: String(msg.player.name || 'Player').slice(0, 16),
+              color: msg.player.color || '#F4D03F',
+              r: BUILDER_START.r,
+              c: BUILDER_START.c,
+              blockId: g.phase === 'building' ? rollRandomBuilderBlock() : null,
+              placedThisRound: false,
+              status: 'alive',
+              wins: 0
+            });
+          }
+          g.lastLog = `${escapeHtml(msg.player.name)} เข้าร่วมเกมแล้ว!`;
+        } else if (msg.op === 'DEAL_ROUND') {
+          if (g.players.length === 0) {
+            g.lastLog = 'ยังไม่มีผู้เล่นเข้าร่วม (สแกน QR เพื่อเข้าร่วม)';
+          } else {
+            g.round += 1;
+            g.phase = 'building';
+            g.winners = [];
+            g.players.forEach(p => {
+              if (p.status === 'dead' || p.status === 'winner') {
+                p.r = BUILDER_START.r;
+                p.c = BUILDER_START.c;
+                p.status = 'alive';
+              }
+              p.blockId = rollRandomBuilderBlock();
+              p.placedThisRound = false;
+            });
+            g.lastLog = `รอบที่ ${g.round}: สุ่มแจกบล็อกให้ผู้เล่น ${g.players.length} คนแล้ว!`;
+          }
+        } else if (msg.op === 'PLACE_BLOCK') {
+          const r = Number(msg.r);
+          const c = Number(msg.c);
+          const p = g.players.find(pl => pl.id === msg.playerId);
+          if (!p || g.phase !== 'building' || p.placedThisRound || !p.blockId) return;
+          if (r < 0 || r >= BUILDER_ROWS || c < 0 || c >= BUILDER_COLS) return;
+          if (isStartCell(r, c) || isTargetCell(r, c) || g.board[r][c]) return;
+
+          const bType = p.blockId;
+          g.board[r][c] = { type: bType, ownerId: p.id, ownerName: p.name, ttl: 1 };
+          p.placedThisRound = true;
+
+          if (bType === 'bridge' && c + 1 < BUILDER_COLS && !isStartCell(r, c + 1) && !isTargetCell(r, c + 1) && !g.board[r][c + 1]) {
+            g.board[r][c + 1] = { type: 'solid', ownerId: p.id, ownerName: p.name, ttl: 1 };
+          } else if (bType === 'shield') {
+            dirs.forEach(([dr, dc]) => {
+              const nr = r + dr;
+              const nc = c + dc;
+              if (nr >= 0 && nr < BUILDER_ROWS && nc >= 0 && nc < BUILDER_COLS && g.board[nr][nc]) {
+                const nt = g.board[nr][nc].type;
+                if (nt === 'spike' || nt === 'void' || nt === 'bomb') {
+                  g.board[nr][nc] = null;
+                }
+              }
+            });
+          }
+          g.lastLog = `${p.name} วาง ${BUILDER_BLOCKS[bType]?.icon || '🧱'} ${BUILDER_BLOCKS[bType]?.name || ''}`;
+        } else if (msg.op === 'RESOLVE_ROUND') {
+          if (g.players.length === 0) return;
+          const logs = [];
+
+          // 1. Detonate expired bombs
+          for (let r = 0; r < BUILDER_ROWS; r++) {
+            for (let c = 0; c < BUILDER_COLS; c++) {
+              const cell = g.board[r][c];
+              if (cell && cell.type === 'bomb') {
+                if (cell.ttl <= 0) {
+                  g.board[r][c] = null;
+                  dirs.forEach(([dr, dc]) => {
+                    const nr = r + dr;
+                    const nc = c + dc;
+                    if (nr >= 0 && nr < BUILDER_ROWS && nc >= 0 && nc < BUILDER_COLS && g.board[nr][nc]?.type !== 'shield') {
+                      g.board[nr][nc] = null;
+                    }
+                  });
+                  logs.push('💥 ระเบิดทำงาน!');
+                } else {
+                  cell.ttl -= 1;
+                }
+              }
+            }
+          }
+
+          // 2. Advance each alive player up to 2 steps toward Target
+          const roundWinners = [];
+          g.players.forEach(p => {
+            if (p.status !== 'alive') return;
+            for (let step = 0; step < 2; step++) {
+              if (isTargetCell(p.r, p.c) || p.status !== 'alive') break;
+              const next = findNextBuilderStep(g.board, p.r, p.c);
+              if (!next) break;
+              p.r = next[0];
+              p.c = next[1];
+
+              if (isTargetCell(p.r, p.c)) {
+                p.status = 'winner';
+                p.wins += 1;
+                roundWinners.push(p.name);
+                break;
+              }
+
+              const landed = g.board[p.r][p.c];
+              if (!landed) continue;
+              if (landed.type === 'spike' || landed.type === 'void') {
+                p.status = 'dead';
+                logs.push(`☠️ ${p.name} เหยียบกับดัก!`);
+                break;
+              } else if (landed.type === 'fragile') {
+                g.board[p.r][p.c] = null;
+                logs.push(`⚠️ กระจกใต้เท้า ${p.name} แตก!`);
+              } else if (landed.type === 'spring') {
+                const sr = Math.max(0, p.r - 1);
+                const sc = Math.min(BUILDER_COLS - 1, p.c + 1);
+                if (isWalkableCell(g.board, sr, sc)) {
+                  p.r = sr;
+                  p.c = sc;
+                  logs.push(`🪜 ${p.name} เด้งพุ่งขึ้น!`);
+                  if (isTargetCell(p.r, p.c)) {
+                    p.status = 'winner';
+                    p.wins += 1;
+                    roundWinners.push(p.name);
+                    break;
+                  }
+                }
+              } else if (landed.type === 'ice') {
+                const ic = Math.min(BUILDER_COLS - 1, p.c + 1);
+                if (isWalkableCell(g.board, p.r, ic)) {
+                  p.c = ic;
+                } else {
+                  p.status = 'dead';
+                  logs.push(`🧊 ${p.name} ลื่นตกเหว!`);
+                  break;
+                }
+              }
+            }
+          });
+
+          if (roundWinners.length > 0) {
+            g.phase = 'won';
+            g.winners = roundWinners;
+            g.lastLog = `🏆 ${roundWinners.join(', ')} ไปถึงเป้าหมายสำเร็จ!`;
+            if (currentRole === 'stage') launchConfetti();
+          } else {
+            g.phase = 'resolved';
+            g.lastLog = logs.length > 0 ? logs.slice(0, 2).join(' • ') : `จบรอบที่ ${g.round} — กดสุ่มบล็อกรอบถัดไป!`;
+          }
+        } else if (msg.op === 'RESET_GAME') {
+          const keptPlayers = g.players.map(p => ({
+            ...p,
+            r: BUILDER_START.r,
+            c: BUILDER_START.c,
+            blockId: null,
+            placedThisRound: false,
+            status: 'alive'
+          }));
+          state.builderGame = {
+            ...createDefaultBuilderState(),
+            players: keptPlayers,
+            lastLog: 'รีเซ็ตกระดานแล้ว พร้อมเริ่มรอบใหม่!'
+          };
+        }
+
+        saveAndBroadcast();
+        if (currentRole === 'stage') renderBuilderStageUI();
+        if (currentRole === 'play') renderPlayerGameUI();
+      }
+
+      function renderBuilderGrid(gridEl, isInteractive, myPlayerId = null) {
+        if (!gridEl) return;
+        const g = state.builderGame || createDefaultBuilderState();
+        const me = myPlayerId ? g.players.find(p => p.id === myPlayerId) : null;
+        const canPlace = Boolean(isInteractive && me && g.phase === 'building' && !me.placedThisRound && me.blockId && me.status === 'alive');
+
+        let html = '';
+        for (let r = 0; r < BUILDER_ROWS; r++) {
+          for (let c = 0; c < BUILDER_COLS; c++) {
+            const start = isStartCell(r, c);
+            const target = isTargetCell(r, c);
+            const cell = g.board[r]?.[c];
+            const block = cell ? BUILDER_BLOCKS[cell.type] : null;
+            const playersHere = g.players.filter(p => p.r === r && p.c === c);
+
+            let bgClass = 'bg-[#F8F6F0]';
+            if (start) bgClass = 'bg-emerald-100';
+            else if (target) bgClass = 'bg-[#F4D03F]';
+            else if (block) {
+              if (block.cat === 'helpful') bgClass = 'bg-sky-100';
+              else if (block.cat === 'dangerous') bgClass = 'bg-amber-100';
+              else bgClass = 'bg-red-100';
+            }
+
+            const clickable = canPlace && !start && !target && !cell;
+            const hoverClass = clickable ? 'hover:bg-yellow-100 cursor-pointer ring-inset hover:ring-2 hover:ring-[#111111]' : '';
+
+            const avatarsHtml = playersHere.length > 0
+              ? `<div class="absolute inset-0 flex flex-wrap items-center justify-center gap-0.5 p-0.5 pointer-events-none">
+                  ${playersHere.map(p => `
+                    <span title="${escapeHtml(p.name)}" class="w-3 h-3 sm:w-4 sm:h-4 rounded-full border-[1.5px] border-[#111111] shadow-sm ${p.status === 'dead' ? 'opacity-40 grayscale' : ''}" style="background:${p.color}"></span>
+                  `).join('')}
+                </div>`
+              : '';
+
+            html += `
+              <button
+                type="button"
+                ${clickable ? `data-builder-cell="${r}:${c}"` : 'disabled'}
+                class="relative aspect-square rounded-lg border-2 border-[#111111] ${bgClass} ${hoverClass} flex items-center justify-center text-sm sm:text-xl transition-colors"
+              >
+                <span class="${playersHere.length > 0 ? 'opacity-35' : ''}">${start ? '🏁' : target ? '🎯' : (block ? block.icon : '')}</span>
+                ${avatarsHtml}
+              </button>
+            `;
+          }
+        }
+        gridEl.innerHTML = html;
+
+        if (canPlace) {
+          gridEl.querySelectorAll('[data-builder-cell]').forEach(btn => {
+            btn.addEventListener('click', () => {
+              const [r, c] = btn.getAttribute('data-builder-cell').split(':').map(Number);
+              sendBuilderAction({ op: 'PLACE_BLOCK', playerId: myPlayerId, r, c });
+            });
+          });
+        }
+      }
+
+      function sendBuilderAction(action) {
+        const payload = { type: 'BUILDER_ACTION', ...action };
+        if (currentRole === 'stage') {
+          applyBuilderAction(payload);
+        } else {
+          broadcastPayload(payload);
+          if (!adminConnection?.open) {
+            // Local fallback when testing in same browser without PeerJS
+            if (bc) {
+              try { bc.postMessage(payload); } catch (_) {}
+            }
+          }
+        }
+      }
+
+      function renderBuilderStageUI() {
+        const g = state.builderGame || createDefaultBuilderState();
+        const roundEl = document.getElementById('builder-stage-round-badge');
+        const playersBadge = document.getElementById('builder-stage-players-badge');
+        const logEl = document.getElementById('builder-stage-log');
+        const stripEl = document.getElementById('builder-players-strip');
+        const roomSpan = document.getElementById('builder-join-room-code');
+        const qrImg = document.getElementById('builder-join-qr-img');
+
+        if (roundEl) roundEl.textContent = `รอบ ${g.round}`;
+        if (playersBadge) playersBadge.textContent = `ผู้เล่น ${g.players.length} คน`;
+        if (logEl) logEl.textContent = g.lastLog;
+        if (roomSpan) roomSpan.textContent = roomCode;
+        if (qrImg) {
+          const joinUrl = buildPlayerUrl(roomCode);
+          qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&margin=4&data=${encodeURIComponent(joinUrl)}`;
+        }
+        if (stripEl) {
+          stripEl.innerHTML = g.players.length === 0
+            ? '<span class="text-xs text-[#111111]/60 font-semibold">ยังไม่มีผู้เล่น — กด "📱 QR เข้าร่วม" เพื่อให้ผู้เล่นสแกนเข้าเกม</span>'
+            : g.players.map(p => {
+                const blk = p.blockId ? BUILDER_BLOCKS[p.blockId] : null;
+                return `
+                  <span class="inline-flex items-center gap-1.5 text-xs font-display font-bold px-2.5 py-1 rounded-lg border-2 border-[#111111] bg-white">
+                    <span class="w-2.5 h-2.5 rounded-full border border-[#111111]" style="background:${p.color}"></span>
+                    <span>${escapeHtml(p.name)}</span>
+                    ${p.status === 'winner' ? '<span>🏆</span>' : p.status === 'dead' ? '<span>💀</span>' : (g.phase === 'building' && blk ? `<span>${p.placedThisRound ? '✓' : blk.icon}</span>` : '')}
+                  </span>
+                `;
+              }).join('');
+        }
+        renderBuilderGrid(document.getElementById('builder-stage-grid'), false);
+      }
+
+      function renderPlayerGameUI() {
+        const g = state.builderGame || createDefaultBuilderState();
+        const me = g.players.find(p => p.id === localPlayerId);
+        const joinCard = document.getElementById('player-join-card');
+        const playCard = document.getElementById('player-play-card');
+        if (!joinCard || !playCard) return;
+
+        joinCard.classList.toggle('hidden', Boolean(me));
+        joinCard.classList.toggle('flex', !me);
+        playCard.classList.toggle('hidden', !me);
+        playCard.classList.toggle('flex', Boolean(me));
+
+        if (!me) return;
+        const dotEl = document.getElementById('player-my-dot');
+        const nameEl = document.getElementById('player-my-name');
+        const roundEl = document.getElementById('player-round-badge');
+        const blockIcon = document.getElementById('player-block-icon');
+        const blockName = document.getElementById('player-block-name');
+        const blockCat = document.getElementById('player-block-cat');
+        const blockDesc = document.getElementById('player-block-desc');
+        const statusEl = document.getElementById('player-board-status');
+
+        if (dotEl) dotEl.style.background = me.color;
+        if (nameEl) nameEl.textContent = me.name;
+        if (roundEl) roundEl.textContent = `รอบ ${g.round}`;
+
+        const blk = me.blockId ? BUILDER_BLOCKS[me.blockId] : null;
+        if (me.status === 'winner') {
+          if (blockIcon) blockIcon.textContent = '🏆';
+          if (blockName) blockName.textContent = 'คุณถึงเป้าหมายแล้ว!';
+          if (blockCat) { blockCat.textContent = 'WINNER'; blockCat.className = 'text-[10px] font-display font-black uppercase px-2 py-0.5 rounded border border-[#111111] bg-[#F4D03F]'; }
+          if (blockDesc) blockDesc.textContent = 'ยินดีด้วย! รอเริ่มเกมรอบใหม่';
+        } else if (me.status === 'dead') {
+          if (blockIcon) blockIcon.textContent = '💀';
+          if (blockName) blockName.textContent = 'โดนกับดัก!';
+          if (blockCat) { blockCat.textContent = 'RESPAWN'; blockCat.className = 'text-[10px] font-display font-black uppercase px-2 py-0.5 rounded border border-[#111111] bg-[#E74C3C] text-white'; }
+          if (blockDesc) blockDesc.textContent = 'คุณจะกลับไปจุดเริ่มต้นในรอบถัดไป';
+        } else if (g.phase === 'building' && blk) {
+          if (blockIcon) blockIcon.textContent = blk.icon;
+          if (blockName) blockName.textContent = me.placedThisRound ? `${blk.name} (วางแล้ว ✓)` : blk.name;
+          if (blockCat) {
+            blockCat.textContent = blk.cat.toUpperCase();
+            const catBg = blk.cat === 'helpful' ? 'bg-sky-100' : (blk.cat === 'dangerous' ? 'bg-amber-200' : 'bg-[#E74C3C] text-white');
+            blockCat.className = `text-[10px] font-display font-black uppercase px-2 py-0.5 rounded border border-[#111111] ${catBg}`;
+          }
+          if (blockDesc) blockDesc.textContent = me.placedThisRound ? 'รอผู้เล่นอื่นวางบล็อกให้ครบ...' : blk.desc;
+        } else {
+          if (blockIcon) blockIcon.textContent = '🎲';
+          if (blockName) blockName.textContent = 'รอเริ่มรอบ...';
+          if (blockCat) { blockCat.textContent = g.phase.toUpperCase(); blockCat.className = 'text-[10px] font-display font-black uppercase px-2 py-0.5 rounded border border-[#111111] bg-white'; }
+          if (blockDesc) blockDesc.textContent = g.lastLog || 'รอผู้ดำเนินรายการกดสุ่มบล็อก';
+        }
+
+        if (statusEl) {
+          statusEl.textContent = g.phase === 'building' && !me.placedThisRound ? 'ถึงตาคุณวางบล็อก!' : g.lastLog;
+        }
+        renderBuilderGrid(document.getElementById('player-board-grid'), true, localPlayerId);
+      }
+
+      function connectPlayerToRoom(targetCode) {
+        const cleanCode = (targetCode || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+        if (!cleanCode) return;
+        roomCode = cleanCode;
+        try { localStorage.setItem(ROOM_STORAGE_KEY, roomCode); } catch (_) {}
+
+        const dotEl = document.getElementById('player-conn-dot');
+        const textEl = document.getElementById('player-conn-text');
+        if (dotEl) dotEl.className = 'w-3 h-3 rounded-full bg-[#F4D03F] border border-white shrink-0 animate-pulse';
+        if (textEl) textEl.textContent = `กำลังเชื่อมต่อห้อง ${roomCode}...`;
+
+        if (typeof Peer === 'undefined') {
+          if (textEl) textEl.textContent = 'เชื่อมต่อผ่านเบราว์เซอร์เดียวกัน (Offline)';
+          return;
+        }
+        if (adminConnection) {
+          try { adminConnection.close(); } catch (_) {}
+          adminConnection = null;
+        }
+        try {
+          if (peerInstance && !peerInstance.destroyed && peerInstance.id && peerInstance.id.startsWith('vox-sb-')) {
+            try { peerInstance.destroy(); } catch (_) {}
+            peerInstance = null;
+          }
+          if (!peerInstance || peerInstance.destroyed) {
+            peerInstance = new Peer();
+          }
+          const startConnect = () => {
+            const hostPeerId = `vox-sb-${roomCode.toLowerCase()}`;
+            const conn = peerInstance.connect(hostPeerId, { reliable: true });
+            adminConnection = conn;
+            conn.on('open', () => {
+              if (dotEl) dotEl.className = 'w-3 h-3 rounded-full bg-[#2980B9] border border-white shrink-0';
+              if (textEl) textEl.textContent = `เชื่อมต่อแล้ว (${roomCode})`;
+              const roomBar = document.getElementById('player-room-bar');
+              if (roomBar) roomBar.classList.remove('is-open');
+              conn.send({ type: 'REQUEST_STATE' });
+            });
+            conn.on('data', (msg) => {
+              if (msg?.type === 'SYNC_STATE' && msg.state) {
+                applyIncomingState(msg.state, false);
+              }
+            });
+            conn.on('close', () => {
+              if (dotEl) dotEl.className = 'w-3 h-3 rounded-full bg-[#E74C3C] border border-white shrink-0';
+              if (textEl) textEl.textContent = 'การเชื่อมต่อหลุด กดเชื่อมต่อใหม่';
+            });
+          };
+          if (peerInstance.open) startConnect();
+          else peerInstance.once('open', startConnect);
+        } catch (err) {
+          console.warn('Player PeerJS connect error:', err);
+        }
+      }
+
+      // Stage Arena & Player Event Listeners
+      const builderOverlayEl = document.getElementById('builder-stage-overlay');
+      const setBuilderOverlayOpen = (open) => {
+        isBuilderOverlayOpen = Boolean(open);
+        if (!builderOverlayEl) return;
+        builderOverlayEl.classList.toggle('hidden', !isBuilderOverlayOpen);
+        builderOverlayEl.classList.toggle('flex', isBuilderOverlayOpen);
+        if (isBuilderOverlayOpen) renderBuilderStageUI();
+      };
+
+      onClick('builder-stage-fab', () => setBuilderOverlayOpen(true));
+      onClick('builder-close-btn', () => setBuilderOverlayOpen(false));
+      onClick('builder-toggle-qr-btn', () => {
+        const qrCol = document.getElementById('builder-qr-collapse');
+        if (qrCol) qrCol.classList.toggle('is-open');
+      });
+      onClick('builder-copy-join-btn', () => {
+        const url = buildPlayerUrl(roomCode);
+        const btn = document.getElementById('builder-copy-join-btn');
+        navigator.clipboard?.writeText(url).then(() => {
+          if (btn) {
+            btn.textContent = '✓ คัดลอกแล้ว';
+            setTimeout(() => { btn.textContent = '📋 คัดลอกลิงก์'; }, 1800);
+          }
+        }).catch(() => {});
+      });
+      onClick('builder-open-join-btn', () => {
+        window.open(buildPlayerUrl(roomCode), '_blank');
+      });
+      onClick('builder-deal-btn', () => sendBuilderAction({ op: 'DEAL_ROUND' }));
+      onClick('builder-resolve-btn', () => sendBuilderAction({ op: 'RESOLVE_ROUND' }));
+      onClick('builder-reset-btn', () => sendBuilderAction({ op: 'RESET_GAME' }));
+
+      document.querySelectorAll('[data-player-color]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          selectedPlayerColor = btn.dataset.playerColor;
+          document.querySelectorAll('[data-player-color]').forEach(b => b.classList.remove('ring-2', 'ring-[#111111]'));
+          btn.classList.add('ring-2', 'ring-[#111111]');
+        });
+      });
+
+      onClick('player-join-btn', () => {
+        const nameInp = document.getElementById('player-name-input');
+        const name = (nameInp?.value || '').trim() || `Player ${Math.floor(10 + Math.random() * 89)}`;
+        sendBuilderAction({
+          op: 'JOIN',
+          player: { id: localPlayerId, name, color: selectedPlayerColor }
+        });
+      });
+      const playerRoomInput = document.getElementById('player-room-input');
+      if (playerRoomInput) playerRoomInput.value = roomCode;
+      onClick('player-connect-btn', () => connectPlayerToRoom(playerRoomInput?.value || roomCode));
+      onClick('player-toggle-room-btn', () => {
+        const bar = document.getElementById('player-room-bar');
+        if (bar) bar.classList.toggle('is-open');
+      });
+      onClick('player-switch-to-stage-btn', () => switchRoleView('stage'));
+
+      // ========================================================================
+      // ROLE SWITCHER ('stage' vs 'admin' vs 'play')
+      // ========================================================================
+      const playerGameViewEl = document.getElementById('player-game-view');
+
       function switchRoleView(role) {
-        currentRole = role === 'admin' ? 'admin' : 'stage';
+        currentRole = role === 'admin' ? 'admin' : (role === 'play' ? 'play' : 'stage');
+
+        mobileAdminViewEl.classList.add('hidden');
+        mobileAdminViewEl.classList.remove('flex');
+        if (playerGameViewEl) {
+          playerGameViewEl.classList.add('hidden');
+          playerGameViewEl.classList.remove('flex');
+        }
 
         if (currentRole === 'admin') {
           stageContainerEl.classList.add('hidden');
           drawerToggleBtn.classList.add('hidden');
           drawerEl.classList.add('hidden');
+          const fab = document.getElementById('builder-stage-fab');
+          if (fab) fab.classList.add('hidden');
           theaterZoomOverlayEl.classList.remove('is-zoomed');
           if (centerTimerOverlayEl) centerTimerOverlayEl.classList.remove('is-open');
           mobileAdminViewEl.classList.remove('hidden');
           mobileAdminViewEl.classList.add('flex');
           renderAdminUI();
           connectAdminToRoom(roomCode);
+        } else if (currentRole === 'play') {
+          stageContainerEl.classList.add('hidden');
+          drawerToggleBtn.classList.add('hidden');
+          drawerEl.classList.add('hidden');
+          const fab = document.getElementById('builder-stage-fab');
+          if (fab) fab.classList.add('hidden');
+          theaterZoomOverlayEl.classList.remove('is-zoomed');
+          if (centerTimerOverlayEl) centerTimerOverlayEl.classList.remove('is-open');
+          if (playerGameViewEl) {
+            playerGameViewEl.classList.remove('hidden');
+            playerGameViewEl.classList.add('flex');
+          }
+          renderPlayerGameUI();
+          connectPlayerToRoom(roomCode);
         } else {
-          mobileAdminViewEl.classList.add('hidden');
-          mobileAdminViewEl.classList.remove('flex');
           stageContainerEl.classList.remove('hidden');
           drawerToggleBtn.classList.remove('hidden');
           drawerEl.classList.remove('hidden');
+          const fab = document.getElementById('builder-stage-fab');
+          if (fab) fab.classList.remove('hidden');
           syncHeaderTexts();
           renderLeaderboard(false);
           renderDrawerControls();
@@ -3994,6 +4956,7 @@
           syncStageBgmPlayer();
           renderTimerUI();
           updateDrawerPairingUI();
+          renderBuilderStageUI();
           initStagePeerHost();
         }
       }
