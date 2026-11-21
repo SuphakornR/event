@@ -410,9 +410,21 @@
 
     <!-- Clean Vox Editorial Masthead -->
     <header class="mb-6 sm:mb-7 border-b-[3px] border-[#111111] pb-5">
-      <div class="inline-flex items-center gap-2 bg-[#111111] text-[#F8F6F0] px-3 py-1 rounded-md font-display font-extrabold text-xs sm:text-sm tracking-wider mb-2.5 shadow-[3px_3px_0px_#F4D03F]">
-        <span class="w-2 h-2 rounded-full bg-[#F4D03F]"></span>
-        <span>LIVE SCOREBOARD</span>
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-2.5">
+        <div class="inline-flex items-center gap-2 bg-[#111111] text-[#F8F6F0] px-3 py-1 rounded-md font-display font-extrabold text-xs sm:text-sm tracking-wider shadow-[3px_3px_0px_#F4D03F]">
+          <span class="w-2 h-2 rounded-full bg-[#F4D03F]"></span>
+          <span>LIVE SCOREBOARD</span>
+        </div>
+
+        <!-- Stage Game Timer Pill (Hidden unless toggled/started from backstage) -->
+        <div
+          id="stage-timer-pill"
+          class="hidden inline-flex items-center gap-2.5 bg-[#FFFFFF] text-[#111111] border-[2.5px] border-[#111111] px-3.5 py-1 rounded-xl font-display font-black shadow-[4px_4px_0px_#111111] transition-colors duration-300"
+        >
+          <span id="stage-timer-dot" class="w-2.5 h-2.5 rounded-full bg-[#F4D03F] border border-[#111111] shrink-0"></span>
+          <span id="stage-timer-label" class="text-xs font-extrabold tracking-wide uppercase opacity-75">TIME</span>
+          <span id="stage-timer-display" class="text-xl sm:text-2xl tabular-nums tracking-tight leading-none">03:00</span>
+        </div>
       </div>
 
       <h1
@@ -750,8 +762,61 @@
       </div>
     </div>
 
-    <!-- TAB 2: REMOTE GAME ACCORDION, VIDEO PLAYBACK, SWITCHER, THEATER ZOOM & MEDIA EDITORS -->
+    <!-- TAB 2: REMOTE GAME ACCORDION, TIMER, VIDEO PLAYBACK, SWITCHER, BGM & MEDIA EDITORS -->
     <div id="admin-panel-stage-media" class="hidden flex-col gap-4">
+      <!-- Game Countdown Timer Card -->
+      <div class="vox-card bg-white p-4 flex flex-col gap-3">
+        <div class="flex items-center justify-between gap-2 pb-2 border-b-2 border-[#111111]">
+          <div class="flex items-center gap-2 min-w-0">
+            <span class="w-3.5 h-3.5 rounded-full bg-[#E74C3C] border border-[#111111] shrink-0"></span>
+            <h2 class="thai-safe-tight font-display font-extrabold text-base text-[#111111] truncate">
+              ⏱️ ตัวจับเวลาเกม (Game Timer)
+            </h2>
+          </div>
+          <span id="admin-timer-display" class="font-display font-black text-xl tabular-nums bg-[#F8F6F0] border-2 border-[#111111] px-3 py-0.5 rounded-xl text-[#111111] shrink-0">
+            03:00
+          </span>
+        </div>
+
+        <!-- Quick Presets & +/-30s -->
+        <div class="grid grid-cols-6 gap-1.5">
+          <button type="button" data-timer-preset="60" class="btn-vox bg-[#F8F6F0] hover:bg-yellow-100 text-[#111111] font-display font-bold text-xs py-1.5 rounded-lg cursor-pointer">1 น.</button>
+          <button type="button" data-timer-preset="120" class="btn-vox bg-[#F8F6F0] hover:bg-yellow-100 text-[#111111] font-display font-bold text-xs py-1.5 rounded-lg cursor-pointer">2 น.</button>
+          <button type="button" data-timer-preset="180" class="btn-vox bg-[#F8F6F0] hover:bg-yellow-100 text-[#111111] font-display font-bold text-xs py-1.5 rounded-lg cursor-pointer">3 น.</button>
+          <button type="button" data-timer-preset="300" class="btn-vox bg-[#F8F6F0] hover:bg-yellow-100 text-[#111111] font-display font-bold text-xs py-1.5 rounded-lg cursor-pointer">5 น.</button>
+          <button type="button" id="admin-timer-minus30" class="btn-vox bg-white hover:bg-red-50 text-[#E74C3C] font-display font-extrabold text-xs py-1.5 rounded-lg cursor-pointer">-30วิ</button>
+          <button type="button" id="admin-timer-plus30" class="btn-vox bg-white hover:bg-yellow-100 text-[#111111] font-display font-extrabold text-xs py-1.5 rounded-lg cursor-pointer">+30วิ</button>
+        </div>
+
+        <!-- Start/Pause, Reset, Show/Hide on Stage -->
+        <div class="grid grid-cols-3 gap-2">
+          <button
+            type="button"
+            id="admin-timer-toggle-btn"
+            class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-extrabold text-xs sm:text-sm py-2.5 px-2 rounded-xl flex items-center justify-center gap-1 cursor-pointer"
+          >
+            <span id="admin-timer-toggle-icon">▶</span>
+            <span id="admin-timer-toggle-label">เริ่มจับเวลา</span>
+          </button>
+          <button
+            type="button"
+            id="admin-timer-reset-btn"
+            class="btn-vox bg-[#2980B9] hover:bg-[#2471a3] text-white font-display font-extrabold text-xs sm:text-sm py-2.5 px-2 rounded-xl flex items-center justify-center gap-1 cursor-pointer"
+          >
+            <span>↺</span>
+            <span>รีเซ็ต</span>
+          </button>
+          <button
+            type="button"
+            id="admin-timer-visibility-btn"
+            class="btn-vox bg-white hover:bg-gray-50 text-[#111111] font-display font-extrabold text-xs sm:text-sm py-2.5 px-2 rounded-xl flex items-center justify-center gap-1 cursor-pointer"
+          >
+            <span id="admin-timer-vis-icon">👁</span>
+            <span id="admin-timer-vis-label">แสดงบนจอ</span>
+          </button>
+        </div>
+      </div>
+
       <!-- Live Stage Remote Control Card -->
       <div class="vox-card bg-white p-4 flex flex-col gap-3.5">
         <div class="flex items-center justify-between gap-2 pb-2 border-b-2 border-[#111111]">
@@ -1244,6 +1309,13 @@
         bgmPlaying: false,
         bgmVolume: 45,
         bgmMuted: false,
+        timer: {
+          durationSec: 180,
+          remainingSec: 180,
+          running: false,
+          endAt: null,
+          visible: false
+        },
         updatedAt: Date.now()
       };
 
@@ -1319,6 +1391,15 @@
             ? Math.max(0, Math.min(100, Math.round(parsed.bgmVolume)))
             : 45;
           base.bgmMuted = Boolean(parsed.bgmMuted);
+          if (parsed.timer && typeof parsed.timer === 'object') {
+            base.timer = {
+              durationSec: Math.max(10, Number(parsed.timer.durationSec) || 180),
+              remainingSec: Math.max(0, Number(parsed.timer.remainingSec ?? parsed.timer.durationSec ?? 180)),
+              running: Boolean(parsed.timer.running),
+              endAt: parsed.timer.running && parsed.timer.endAt ? Number(parsed.timer.endAt) : null,
+              visible: Boolean(parsed.timer.visible)
+            };
+          }
           return base;
         } catch (err) {
           console.warn('Recovering default state due to storage read error:', err);
@@ -1400,7 +1481,14 @@
           bgmTracks: (incomingState.bgmTracks || defaultState.bgmTracks).map((tr, i) => ({
             label: tr?.label || defaultState.bgmTracks[i].label,
             url: tr?.url || ''
-          }))
+          })),
+          timer: incomingState.timer ? {
+            durationSec: Math.max(10, Number(incomingState.timer.durationSec) || 180),
+            remainingSec: Math.max(0, Number(incomingState.timer.remainingSec ?? 180)),
+            running: Boolean(incomingState.timer.running),
+            endAt: incomingState.timer.running && incomingState.timer.endAt ? Number(incomingState.timer.endAt) : null,
+            visible: Boolean(incomingState.timer.visible)
+          } : { ...defaultState.timer }
         };
 
         if (state.activeGameAccordion === null) {
@@ -1416,6 +1504,7 @@
           renderLeaderboard(true);
           renderDrawerControls();
           syncStageBgmPlayer();
+          renderTimerUI();
 
           const nextMediaJson = JSON.stringify(state.gameMedia);
           if (state.activeGameAccordion !== prevAccordion) {
@@ -1793,6 +1882,131 @@
         if (typeof cmd.bgmMuted === 'boolean') state.bgmMuted = cmd.bgmMuted;
         syncStageBgmPlayer();
       }
+
+      // ========================================================================
+      // GAME COUNTDOWN TIMER ENGINE (SYNCED VIA endAt + WEB AUDIO CHIME)
+      // ========================================================================
+      let timerChimePlayed = false;
+
+      function formatTimeMMSS(totalSec) {
+        const s = Math.max(0, Math.floor(totalSec));
+        const mins = Math.floor(s / 60);
+        const secs = s % 60;
+        return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+      }
+
+      function getLiveRemainingSec() {
+        const t = state.timer || defaultState.timer;
+        if (t.running && t.endAt) {
+          return Math.max(0, Math.ceil((t.endAt - Date.now()) / 1000));
+        }
+        return Math.max(0, Math.floor(t.remainingSec ?? t.durationSec ?? 180));
+      }
+
+      function playTimerChime() {
+        try {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (!AudioCtx) return;
+          const ctxAudio = new AudioCtx();
+          const now = ctxAudio.currentTime;
+          [880, 1174.66].forEach((freq, i) => {
+            const osc = ctxAudio.createOscillator();
+            const gain = ctxAudio.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, now + i * 0.16);
+            gain.gain.setValueAtTime(0.001, now + i * 0.16);
+            gain.gain.exponentialRampToValueAtTime(0.28, now + i * 0.16 + 0.03);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.16 + 0.55);
+            osc.connect(gain);
+            gain.connect(ctxAudio.destination);
+            osc.start(now + i * 0.16);
+            osc.stop(now + i * 0.16 + 0.6);
+          });
+        } catch (_) {}
+      }
+
+      function renderTimerUI() {
+        const t = state.timer || defaultState.timer;
+        const sec = getLiveRemainingSec();
+        const formatted = formatTimeMMSS(sec);
+
+        if (t.running && sec > 0) {
+          timerChimePlayed = false;
+        }
+
+        // Auto-stop when countdown hits 0
+        if (t.running && sec <= 0) {
+          t.running = false;
+          t.remainingSec = 0;
+          t.endAt = null;
+          if (currentRole === 'stage' && !timerChimePlayed) {
+            timerChimePlayed = true;
+            playTimerChime();
+          }
+        }
+
+        // Stage Timer Pill
+        const stagePill = document.getElementById('stage-timer-pill');
+        const stageDisplay = document.getElementById('stage-timer-display');
+        const stageDot = document.getElementById('stage-timer-dot');
+        const stageLabel = document.getElementById('stage-timer-label');
+        if (stagePill && stageDisplay) {
+          stagePill.classList.toggle('hidden', !t.visible);
+          stageDisplay.textContent = formatted;
+          const isUrgent = t.visible && sec <= 10;
+          stagePill.classList.toggle('bg-[#E74C3C]', isUrgent);
+          stagePill.classList.toggle('text-white', isUrgent);
+          stagePill.classList.toggle('bg-[#FFFFFF]', !isUrgent);
+          stagePill.classList.toggle('text-[#111111]', !isUrgent);
+          if (stageDot) {
+            stageDot.classList.toggle('bg-[#F4D03F]', !isUrgent);
+            stageDot.classList.toggle('bg-white', isUrgent);
+            stageDot.classList.toggle('animate-pulse', t.running && sec > 0);
+          }
+          if (stageLabel) {
+            stageLabel.textContent = sec === 0 ? "TIME'S UP!" : 'TIME';
+          }
+        }
+
+        // Admin Timer Card Controls
+        const adminDisplay = document.getElementById('admin-timer-display');
+        const toggleBtn = document.getElementById('admin-timer-toggle-btn');
+        const toggleIcon = document.getElementById('admin-timer-toggle-icon');
+        const toggleLabel = document.getElementById('admin-timer-toggle-label');
+        const visBtn = document.getElementById('admin-timer-visibility-btn');
+        const visIcon = document.getElementById('admin-timer-vis-icon');
+        const visLabel = document.getElementById('admin-timer-vis-label');
+
+        if (adminDisplay) {
+          adminDisplay.textContent = formatted;
+          adminDisplay.classList.toggle('bg-[#E74C3C]', sec <= 10);
+          adminDisplay.classList.toggle('text-white', sec <= 10);
+          adminDisplay.classList.toggle('bg-[#F8F6F0]', sec > 10);
+          adminDisplay.classList.toggle('text-[#111111]', sec > 10);
+        }
+        if (toggleBtn && toggleIcon && toggleLabel) {
+          toggleIcon.textContent = t.running ? '⏸' : '▶';
+          toggleLabel.textContent = t.running ? 'พักเวลา' : 'เริ่มจับเวลา';
+          toggleBtn.classList.toggle('bg-[#111111]', t.running);
+          toggleBtn.classList.toggle('text-[#F4D03F]', t.running);
+          toggleBtn.classList.toggle('bg-[#F4D03F]', !t.running);
+          toggleBtn.classList.toggle('text-[#111111]', !t.running);
+        }
+        if (visBtn && visIcon && visLabel) {
+          visIcon.textContent = t.visible ? '🙈' : '👁';
+          visLabel.textContent = t.visible ? 'ซ่อนจากจอ' : 'แสดงบนจอ';
+          visBtn.classList.toggle('bg-[#111111]', t.visible);
+          visBtn.classList.toggle('text-[#F4D03F]', t.visible);
+          visBtn.classList.toggle('bg-white', !t.visible);
+          visBtn.classList.toggle('text-[#111111]', !t.visible);
+        }
+      }
+
+      setInterval(() => {
+        if (state.timer?.running || state.timer?.visible) {
+          renderTimerUI();
+        }
+      }, 250);
 
       function compressImageFile(file, callback) {
         const isGif = file.type === 'image/gif' || /\.gif$/i.test(file.name || '');
@@ -3349,9 +3563,88 @@
             });
           });
         }
+
+        renderTimerUI();
       }
 
-      // Admin Static Event Listeners (Video/Image Switch, Zoom & Playback Controls)
+      // Admin Static Event Listeners (Timer, Video/Image Switch, Zoom & Playback Controls)
+      document.querySelectorAll('[data-timer-preset]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const sec = Math.max(10, Number(btn.dataset.timerPreset) || 180);
+          state.timer.durationSec = sec;
+          state.timer.remainingSec = sec;
+          state.timer.running = false;
+          state.timer.endAt = null;
+          saveAndBroadcast();
+          renderTimerUI();
+        });
+      });
+
+      const adminTimerMinus30 = document.getElementById('admin-timer-minus30');
+      if (adminTimerMinus30) {
+        adminTimerMinus30.addEventListener('click', () => {
+          const cur = getLiveRemainingSec();
+          const next = Math.max(10, cur - 30);
+          state.timer.remainingSec = next;
+          if (!state.timer.running) state.timer.durationSec = next;
+          else state.timer.endAt = Date.now() + next * 1000;
+          saveAndBroadcast();
+          renderTimerUI();
+        });
+      }
+
+      const adminTimerPlus30 = document.getElementById('admin-timer-plus30');
+      if (adminTimerPlus30) {
+        adminTimerPlus30.addEventListener('click', () => {
+          const cur = getLiveRemainingSec();
+          const next = cur + 30;
+          state.timer.remainingSec = next;
+          if (!state.timer.running) state.timer.durationSec = next;
+          else state.timer.endAt = Date.now() + next * 1000;
+          saveAndBroadcast();
+          renderTimerUI();
+        });
+      }
+
+      const adminTimerToggleBtn = document.getElementById('admin-timer-toggle-btn');
+      if (adminTimerToggleBtn) {
+        adminTimerToggleBtn.addEventListener('click', () => {
+          if (state.timer.running) {
+            state.timer.remainingSec = getLiveRemainingSec();
+            state.timer.running = false;
+            state.timer.endAt = null;
+          } else {
+            let rem = getLiveRemainingSec();
+            if (rem <= 0) rem = state.timer.durationSec || 180;
+            state.timer.remainingSec = rem;
+            state.timer.running = true;
+            state.timer.endAt = Date.now() + rem * 1000;
+            state.timer.visible = true;
+          }
+          saveAndBroadcast();
+          renderTimerUI();
+        });
+      }
+
+      const adminTimerResetBtn = document.getElementById('admin-timer-reset-btn');
+      if (adminTimerResetBtn) {
+        adminTimerResetBtn.addEventListener('click', () => {
+          state.timer.running = false;
+          state.timer.endAt = null;
+          state.timer.remainingSec = state.timer.durationSec || 180;
+          saveAndBroadcast();
+          renderTimerUI();
+        });
+      }
+
+      const adminTimerVisibilityBtn = document.getElementById('admin-timer-visibility-btn');
+      if (adminTimerVisibilityBtn) {
+        adminTimerVisibilityBtn.addEventListener('click', () => {
+          state.timer.visible = !state.timer.visible;
+          saveAndBroadcast();
+          renderTimerUI();
+        });
+      }
       const adminSwitchVideoBtn = document.getElementById('admin-switch-video-btn');
       if (adminSwitchVideoBtn) {
         adminSwitchVideoBtn.addEventListener('click', () => {
@@ -3537,6 +3830,7 @@
           renderDrawerControls();
           syncAccordionFromState();
           syncStageBgmPlayer();
+          renderTimerUI();
           updateDrawerPairingUI();
           initStagePeerHost();
         }
