@@ -318,6 +318,44 @@
       pointer-events: none;
     }
 
+    /* ==========================================================================
+       CENTER-STAGE VOX COUNTDOWN OVERLAY
+       ========================================================================== */
+    #center-timer-overlay {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    #center-timer-overlay.is-open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    #center-timer-card {
+      transform: scale(0.88) translateY(16px);
+      opacity: 0;
+      transition: transform 0.38s cubic-bezier(0.22, 1, 0.36, 1),
+                  opacity 0.3s ease,
+                  background-color 0.3s ease,
+                  color 0.3s ease;
+    }
+
+    #center-timer-overlay.is-open #center-timer-card {
+      transform: scale(1) translateY(0);
+      opacity: 1;
+    }
+
+    @keyframes timerDigitPop {
+      0% { transform: scale(1); }
+      35% { transform: scale(1.07); }
+      100% { transform: scale(1); }
+    }
+
+    .timer-digit-pop {
+      animation: timerDigitPop 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
     /* Subtle Bottom-Right Settings Gear Trigger (opacity: 0.16 at rest, solid on hover) */
     .control-fab {
       opacity: 0.16;
@@ -682,6 +720,49 @@
   </div>
 
   <!-- ========================================================================
+       CENTER-STAGE VOX COUNTDOWN TIMER OVERLAY
+       ======================================================================== -->
+  <div
+    id="center-timer-overlay"
+    class="fixed inset-0 z-50 bg-[#111111]/75 backdrop-blur-[4px] flex items-center justify-center p-4 sm:p-8"
+    role="dialog"
+    aria-modal="true"
+    aria-label="ตัวจับเวลาเกมกลางจอ"
+  >
+    <div
+      id="center-timer-card"
+      class="vox-card bg-[#FFFFFF] w-full max-w-2xl p-6 sm:p-10 flex flex-col items-center gap-6 text-center"
+    >
+      <div class="w-full flex items-center justify-between gap-3 pb-3 border-b-[2.5px] border-[#111111]">
+        <div class="inline-flex items-center gap-2 bg-[#111111] text-[#F8F6F0] px-3 py-1 rounded-md font-display font-extrabold text-xs tracking-wider shadow-[3px_3px_0px_#F4D03F]">
+          <span id="center-timer-dot" class="w-2.5 h-2.5 rounded-full bg-[#F4D03F]"></span>
+          <span id="center-timer-status-text">GAME COUNTDOWN</span>
+        </div>
+        <button
+          type="button"
+          id="center-timer-minimize-btn"
+          class="opacity-45 hover:opacity-100 btn-vox bg-[#F8F6F0] hover:bg-[#F4D03F] text-[#111111] font-display font-bold text-xs px-3 py-1.5 rounded-xl cursor-pointer transition-all"
+        >
+          🗗 ย่อไปมุมจอ
+        </button>
+      </div>
+
+      <div id="center-timer-digits" class="font-display font-black text-7xl sm:text-8xl lg:text-[7.5rem] tabular-nums leading-none tracking-tight select-none">
+        03:00
+      </div>
+
+      <!-- Vox Barber-Pole Drain Progress Bar -->
+      <div class="w-full h-7 sm:h-9 bg-[#F0EDE4] border-[3px] border-[#111111] rounded-xl overflow-hidden p-0.5 shadow-[4px_4px_0px_#111111]">
+        <div id="center-timer-bar" class="infographic-bar-fill h-full rounded-[6px]" style="width: 100%; background-color: #F4D03F; border-right: 2px solid #111111;"></div>
+      </div>
+
+      <div id="center-timer-timesup-badge" class="hidden bg-[#111111] text-[#F4D03F] border-[3px] border-[#111111] px-5 py-2 rounded-xl font-display font-black text-xl sm:text-2xl tracking-wider shadow-[4px_4px_0px_#F4D03F]">
+        ⏱ TIME'S UP! หมดเวลา!
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
        VIEW 2: MOBILE BACKSTAGE REMOTE CONTROLLER (?role=admin&room=XXXX)
        ======================================================================== -->
   <section id="mobile-admin-view" class="hidden w-full max-w-2xl mx-auto px-4 py-5 pb-16 flex-col gap-4">
@@ -788,8 +869,8 @@
           <button type="button" id="admin-timer-plus30" class="btn-vox bg-white hover:bg-yellow-100 text-[#111111] font-display font-extrabold text-xs py-1.5 rounded-lg cursor-pointer">+30วิ</button>
         </div>
 
-        <!-- Start/Pause, Reset, Show/Hide on Stage -->
-        <div class="grid grid-cols-3 gap-2">
+        <!-- Start/Pause, Reset, Show/Hide, Corner/Center Mode -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
           <button
             type="button"
             id="admin-timer-toggle-btn"
@@ -813,6 +894,14 @@
           >
             <span id="admin-timer-vis-icon">👁</span>
             <span id="admin-timer-vis-label">แสดงบนจอ</span>
+          </button>
+          <button
+            type="button"
+            id="admin-timer-mode-btn"
+            class="btn-vox bg-white hover:bg-yellow-50 text-[#111111] font-display font-extrabold text-xs sm:text-sm py-2.5 px-2 rounded-xl flex items-center justify-center gap-1 cursor-pointer"
+          >
+            <span id="admin-timer-mode-icon">📺</span>
+            <span id="admin-timer-mode-label">กลางจอ</span>
           </button>
         </div>
       </div>
@@ -1117,7 +1206,7 @@
     id="drawer-toggle-btn"
     type="button"
     aria-label="เปิด/ปิดแผงควบคุมคะแนนและ QR หลังบ้าน (กด H หรือ Spacebar)"
-    class="control-fab fixed bottom-5 right-5 z-40 w-11 h-11 rounded-full bg-[#111111] text-[#F8F6F0] border-2 border-[#F8F6F0] shadow-lg flex items-center justify-center cursor-pointer"
+    class="control-fab fixed bottom-5 right-5 z-40 w-11 h-11 rounded-xl bg-[#111111] text-[#F4D03F] border-[2.5px] border-[#111111] shadow-[3px_3px_0px_#F4D03F] flex items-center justify-center cursor-pointer"
   >
     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
       <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -1191,6 +1280,14 @@
               <span id="drawer-room-code-badge" class="bg-[#F4D03F] border-2 border-[#111111] px-2.5 py-0.5 rounded-lg font-display font-black text-sm tracking-widest text-[#111111]">
                 ----
               </span>
+              <button
+                type="button"
+                id="drawer-new-room-btn"
+                title="สุ่มรหัสห้องใหม่และสร้าง QR ใหม่"
+                class="btn-vox bg-white hover:bg-[#F4D03F] text-[#111111] font-display font-bold text-xs px-2.5 py-0.5 rounded-lg cursor-pointer"
+              >
+                🔀 ห้องใหม่
+              </button>
             </div>
             <p id="drawer-peer-status" class="text-xs font-bold text-emerald-700 mt-1">พร้อมรับการเชื่อมต่อจากมือถือ</p>
             <p class="text-xs text-[#111111]/70 mt-0.5">ทีมงานสามารถให้คะแนน เล่น/หยุดคลิป สลับรูป/GIF และสั่งซูมขยายขึ้นจอได้ทันที</p>
@@ -1238,6 +1335,15 @@
       const initialRole = urlParams.get('role') === 'admin' ? 'admin' : 'stage';
       const urlRoomParam = (urlParams.get('room') || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
 
+      function generateRoomCode() {
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        let code = '';
+        for (let i = 0; i < 4; i++) {
+          code += chars[Math.floor(Math.random() * chars.length)];
+        }
+        return code;
+      }
+
       // Persistent 4-character Room Code
       function getOrCreateRoomCode() {
         if (urlRoomParam && urlRoomParam.length >= 4) {
@@ -1248,11 +1354,7 @@
           const saved = localStorage.getItem(ROOM_STORAGE_KEY);
           if (saved && saved.length >= 4) return saved;
         } catch (_) {}
-        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-        let code = '';
-        for (let i = 0; i < 4; i++) {
-          code += chars[Math.floor(Math.random() * chars.length)];
-        }
+        const code = generateRoomCode();
         try { localStorage.setItem(ROOM_STORAGE_KEY, code); } catch (_) {}
         return code;
       }
@@ -1315,6 +1417,7 @@
           running: false,
           endAt: null,
           visible: false,
+          mode: 'corner',
           timerVersion: 0
         },
         updatedAt: Date.now()
@@ -1336,6 +1439,82 @@
         return 'video';
       }
 
+      function normalizeTimer(incT, prevTimer = null) {
+        if (!incT || typeof incT !== 'object') return { ...defaultState.timer };
+        const incVer = Number(incT.timerVersion) || 0;
+        const prevVer = Number(prevTimer?.timerVersion) || 0;
+        const rem = Math.max(0, Number(incT.remainingSec ?? incT.durationSec ?? 180));
+        const isRun = Boolean(incT.running);
+        let nextEndAt = null;
+        if (isRun) {
+          if (prevTimer && incVer === prevVer && prevTimer.endAt) {
+            nextEndAt = prevTimer.endAt;
+          } else {
+            nextEndAt = prevTimer ? Date.now() + rem * 1000 : (Number(incT.endAt) || Date.now() + rem * 1000);
+          }
+        }
+        return {
+          durationSec: Math.max(10, Number(incT.durationSec) || 180),
+          remainingSec: rem,
+          running: isRun,
+          endAt: nextEndAt,
+          visible: Boolean(incT.visible),
+          mode: incT.mode === 'center' ? 'center' : 'corner',
+          timerVersion: incVer
+        };
+      }
+
+      function normalizeState(parsed, prevTimer = null) {
+        if (!parsed || !Array.isArray(parsed.teams) || parsed.teams.length !== 3) {
+          return cloneDefaultState();
+        }
+        const base = cloneDefaultState();
+        base.eventTitle = parsed.eventTitle || base.eventTitle;
+        base.eventSubtitle = parsed.eventSubtitle || base.eventSubtitle;
+        if (Array.isArray(parsed.games) && parsed.games.length === 3) {
+          base.games = parsed.games.map((g, i) => g || base.games[i]);
+        }
+        if (Array.isArray(parsed.gameMedia) && parsed.gameMedia.length === 3) {
+          base.gameMedia = parsed.gameMedia.map(m => ({
+            description: m?.description || '',
+            youtubeUrl: m?.youtubeUrl || '',
+            imageData: m?.imageData || '',
+            activeMediaType: m?.activeMediaType === 'image' ? 'image' : 'video'
+          }));
+        }
+        base.teams = parsed.teams.map((t, i) => ({
+          id: t.id || base.teams[i].id,
+          name: t.name || base.teams[i].name,
+          color: t.color || base.teams[i].color,
+          textColor: t.textColor || base.teams[i].textColor,
+          scores: Array.isArray(t.scores) && t.scores.length === 3
+            ? t.scores.map(s => Number(s) || 0)
+            : [0, 0, 0]
+        }));
+        base.winnerAnnounced = Boolean(parsed.winnerAnnounced);
+        base.activeGameAccordion = (typeof parsed.activeGameAccordion === 'number' && parsed.activeGameAccordion >= 0 && parsed.activeGameAccordion <= 2)
+          ? parsed.activeGameAccordion
+          : null;
+        base.isMediaZoomed = Boolean(parsed.isMediaZoomed) && base.activeGameAccordion !== null;
+        base.isVideoMuted = Boolean(parsed.isVideoMuted);
+        if (Array.isArray(parsed.bgmTracks) && parsed.bgmTracks.length === 3) {
+          base.bgmTracks = parsed.bgmTracks.map((tr, i) => ({
+            label: tr?.label || base.bgmTracks[i].label,
+            url: tr?.url || ''
+          }));
+        }
+        base.activeBgmSlot = (typeof parsed.activeBgmSlot === 'number' && parsed.activeBgmSlot >= 0 && parsed.activeBgmSlot <= 2)
+          ? parsed.activeBgmSlot
+          : 0;
+        base.bgmPlaying = Boolean(parsed.bgmPlaying);
+        base.bgmVolume = typeof parsed.bgmVolume === 'number'
+          ? Math.max(0, Math.min(100, Math.round(parsed.bgmVolume)))
+          : 45;
+        base.bgmMuted = Boolean(parsed.bgmMuted);
+        base.timer = normalizeTimer(parsed.timer, prevTimer);
+        return base;
+      }
+
       // Load State safely from LocalStorage (migrates from older keys if available)
       function loadState() {
         try {
@@ -1345,64 +1524,7 @@
             localStorage.getItem('vox_freshy_marketing_scoreboard_v5') ||
             localStorage.getItem('vox_freshy_marketing_scoreboard_v4');
           if (!raw) return cloneDefaultState();
-          const parsed = JSON.parse(raw);
-          if (!parsed || !Array.isArray(parsed.teams) || parsed.teams.length !== 3) {
-            return cloneDefaultState();
-          }
-          const base = cloneDefaultState();
-          base.eventTitle = parsed.eventTitle || base.eventTitle;
-          base.eventSubtitle = parsed.eventSubtitle || base.eventSubtitle;
-          if (Array.isArray(parsed.games) && parsed.games.length === 3) {
-            base.games = parsed.games.map((g, i) => g || base.games[i]);
-          }
-          if (Array.isArray(parsed.gameMedia) && parsed.gameMedia.length === 3) {
-            base.gameMedia = parsed.gameMedia.map(m => ({
-              description: m?.description || '',
-              youtubeUrl: m?.youtubeUrl || '',
-              imageData: m?.imageData || '',
-              activeMediaType: m?.activeMediaType === 'image' ? 'image' : 'video'
-            }));
-          }
-          base.teams = parsed.teams.map((t, i) => ({
-            id: t.id || base.teams[i].id,
-            name: t.name || base.teams[i].name,
-            color: t.color || base.teams[i].color,
-            textColor: t.textColor || base.teams[i].textColor,
-            scores: Array.isArray(t.scores) && t.scores.length === 3
-              ? t.scores.map(s => Number(s) || 0)
-              : [0, 0, 0]
-          }));
-          base.winnerAnnounced = Boolean(parsed.winnerAnnounced);
-          base.activeGameAccordion = (typeof parsed.activeGameAccordion === 'number' && parsed.activeGameAccordion >= 0 && parsed.activeGameAccordion <= 2)
-            ? parsed.activeGameAccordion
-            : null;
-          base.isMediaZoomed = Boolean(parsed.isMediaZoomed) && base.activeGameAccordion !== null;
-          base.isVideoMuted = Boolean(parsed.isVideoMuted);
-          if (Array.isArray(parsed.bgmTracks) && parsed.bgmTracks.length === 3) {
-            base.bgmTracks = parsed.bgmTracks.map((tr, i) => ({
-              label: tr?.label || base.bgmTracks[i].label,
-              url: tr?.url || ''
-            }));
-          }
-          base.activeBgmSlot = (typeof parsed.activeBgmSlot === 'number' && parsed.activeBgmSlot >= 0 && parsed.activeBgmSlot <= 2)
-            ? parsed.activeBgmSlot
-            : 0;
-          base.bgmPlaying = Boolean(parsed.bgmPlaying);
-          base.bgmVolume = typeof parsed.bgmVolume === 'number'
-            ? Math.max(0, Math.min(100, Math.round(parsed.bgmVolume)))
-            : 45;
-          base.bgmMuted = Boolean(parsed.bgmMuted);
-          if (parsed.timer && typeof parsed.timer === 'object') {
-            base.timer = {
-              durationSec: Math.max(10, Number(parsed.timer.durationSec) || 180),
-              remainingSec: Math.max(0, Number(parsed.timer.remainingSec ?? parsed.timer.durationSec ?? 180)),
-              running: Boolean(parsed.timer.running),
-              endAt: parsed.timer.running && parsed.timer.endAt ? Number(parsed.timer.endAt) : null,
-              visible: Boolean(parsed.timer.visible),
-              timerVersion: Number(parsed.timer.timerVersion) || 0
-            };
-          }
-          return base;
+          return normalizeState(JSON.parse(raw), null);
         } catch (err) {
           console.warn('Recovering default state due to storage read error:', err);
           return cloneDefaultState();
@@ -1464,6 +1586,28 @@
         }
       }
 
+      // Authoritative Stage Reducer for Concurrent Multi-User Score Actions
+      function applyAtomicAction(msg) {
+        if (!msg || typeof msg.op !== 'string') return;
+        const team = state.teams.find(t => t.id === msg.teamId);
+        if (msg.op === 'ADJUST_SCORE' && team) {
+          const gIdx = Number(msg.gameIdx);
+          if (gIdx >= 0 && gIdx <= 2) {
+            team.scores[gIdx] = Math.max(0, (Number(team.scores[gIdx]) || 0) + (Number(msg.delta) || 0));
+          }
+        } else if (msg.op === 'SET_SCORE' && team) {
+          const gIdx = Number(msg.gameIdx);
+          if (gIdx >= 0 && gIdx <= 2) {
+            team.scores[gIdx] = Math.max(0, Number(msg.value) || 0);
+          }
+        }
+        saveAndBroadcast();
+        if (currentRole === 'stage') {
+          renderLeaderboard(true);
+          renderDrawerControls();
+        }
+      }
+
       function applyIncomingState(incomingState, triggerConfettiIfNewWinner = true) {
         if (!incomingState || !Array.isArray(incomingState.teams)) return;
         const wasWinner = state.winnerAnnounced;
@@ -1471,42 +1615,7 @@
         const prevZoom = state.isMediaZoomed;
         const prevMediaJson = JSON.stringify(state.gameMedia);
 
-        state = {
-          ...cloneDefaultState(),
-          ...incomingState,
-          gameMedia: (incomingState.gameMedia || defaultState.gameMedia).map(m => ({
-            description: m?.description || '',
-            youtubeUrl: m?.youtubeUrl || '',
-            imageData: m?.imageData || '',
-            activeMediaType: m?.activeMediaType === 'image' ? 'image' : 'video'
-          })),
-          bgmTracks: (incomingState.bgmTracks || defaultState.bgmTracks).map((tr, i) => ({
-            label: tr?.label || defaultState.bgmTracks[i].label,
-            url: tr?.url || ''
-          })),
-          timer: (() => {
-            const incT = incomingState.timer;
-            if (!incT) return { ...defaultState.timer };
-            const incVer = Number(incT.timerVersion) || 0;
-            const prevVer = Number(state.timer?.timerVersion) || 0;
-            const rem = Math.max(0, Number(incT.remainingSec ?? 180));
-            const isRun = Boolean(incT.running);
-            let nextEndAt = null;
-            if (isRun) {
-              nextEndAt = (incVer !== prevVer || !state.timer?.endAt)
-                ? Date.now() + rem * 1000
-                : state.timer.endAt;
-            }
-            return {
-              durationSec: Math.max(10, Number(incT.durationSec) || 180),
-              remainingSec: rem,
-              running: isRun,
-              endAt: nextEndAt,
-              visible: Boolean(incT.visible),
-              timerVersion: incVer
-            };
-          })()
-        };
+        state = normalizeState(incomingState, state.timer);
 
         if (state.activeGameAccordion === null) {
           state.isMediaZoomed = false;
@@ -1546,6 +1655,8 @@
         bc.onmessage = (event) => {
           if (event.data?.type === 'SYNC_STATE' && event.data.state) {
             applyIncomingState(event.data.state, true);
+          } else if (event.data?.type === 'ACTION' && currentRole === 'stage') {
+            applyAtomicAction(event.data);
           } else if (event.data?.type === 'VIDEO_COMMAND' && currentRole === 'stage') {
             handleStageVideoCommand(event.data.action, event.data.gameIdx);
           } else if (event.data?.type === 'BGM_COMMAND' && currentRole === 'stage') {
@@ -1622,6 +1733,8 @@
                     try { other.send({ type: 'SYNC_STATE', state }); } catch (_) {}
                   }
                 });
+              } else if (msg?.type === 'ACTION') {
+                applyAtomicAction(msg);
               } else if (msg?.type === 'VIDEO_COMMAND') {
                 handleStageVideoCommand(msg.action, msg.gameIdx);
               } else if (msg?.type === 'BGM_COMMAND') {
@@ -1660,7 +1773,7 @@
 
         const dotEl = document.getElementById('admin-conn-dot');
         const textEl = document.getElementById('admin-conn-text');
-        if (dotEl) dotEl.className = 'w-3.5 h-3.5 rounded-full bg-amber-400 border border-white shrink-0 animate-pulse';
+        if (dotEl) dotEl.className = 'w-3.5 h-3.5 rounded-sm bg-[#F4D03F] border border-white shrink-0 animate-pulse';
         if (textEl) textEl.textContent = `กำลังเชื่อมต่อห้อง ${roomCode}...`;
 
         if (typeof Peer === 'undefined') {
@@ -1680,6 +1793,12 @@
           }
           if (!peerInstance || peerInstance.destroyed) {
             peerInstance = new Peer();
+            peerInstance.on('error', () => {
+              const d = document.getElementById('admin-conn-dot');
+              const t = document.getElementById('admin-conn-text');
+              if (d) d.className = 'w-3.5 h-3.5 rounded-sm bg-[#E74C3C] border border-white shrink-0';
+              if (t) t.textContent = `ไม่พบห้อง ${roomCode} กรุณาตรวจสอบรหัสบนจอหลัก`;
+            });
           }
 
           const startConnect = () => {
@@ -1688,7 +1807,7 @@
             adminConnection = conn;
 
             conn.on('open', () => {
-              if (dotEl) dotEl.className = 'w-3.5 h-3.5 rounded-full bg-emerald-400 border border-white shrink-0';
+              if (dotEl) dotEl.className = 'w-3.5 h-3.5 rounded-sm bg-[#2980B9] border border-white shrink-0';
               if (textEl) textEl.textContent = `เชื่อมต่อจอหลักสำเร็จ (ห้อง ${roomCode})`;
               conn.send({ type: 'REQUEST_STATE' });
             });
@@ -1700,12 +1819,12 @@
             });
 
             conn.on('close', () => {
-              if (dotEl) dotEl.className = 'w-3.5 h-3.5 rounded-full bg-red-500 border border-white shrink-0';
+              if (dotEl) dotEl.className = 'w-3.5 h-3.5 rounded-sm bg-[#E74C3C] border border-white shrink-0';
               if (textEl) textEl.textContent = `หลุดการเชื่อมต่อจากห้อง ${roomCode} — กดเชื่อมต่อใหม่`;
             });
 
             conn.on('error', () => {
-              if (dotEl) dotEl.className = 'w-3.5 h-3.5 rounded-full bg-red-500 border border-white shrink-0';
+              if (dotEl) dotEl.className = 'w-3.5 h-3.5 rounded-sm bg-[#E74C3C] border border-white shrink-0';
               if (textEl) textEl.textContent = `ไม่พบจอหลักรหัส ${roomCode} (ตรวจสอบรหัสบนหน้าจอหลัก)`;
             });
           };
@@ -1714,10 +1833,6 @@
             startConnect();
           } else {
             peerInstance.once('open', startConnect);
-            peerInstance.on('error', () => {
-              if (dotEl) dotEl.className = 'w-3.5 h-3.5 rounded-full bg-red-500 border border-white shrink-0';
-              if (textEl) textEl.textContent = `ไม่พบห้อง ${roomCode} กรุณาตรวจสอบรหัสบนจอหลัก`;
-            });
           }
         } catch (err) {
           if (textEl) textEl.textContent = 'เชื่อมต่อผ่านเบราว์เซอร์เดียวกัน (Offline)';
@@ -1920,12 +2035,36 @@
         return Math.max(0, Math.floor(t.remainingSec ?? t.durationSec ?? 180));
       }
 
-      function playTimerChime() {
+      let lastTickSec = -1;
+
+      function withAudioContext(closeDelayMs, fn) {
         try {
           const AudioCtx = window.AudioContext || window.webkitAudioContext;
           if (!AudioCtx) return;
           const ctxAudio = new AudioCtx();
-          const now = ctxAudio.currentTime;
+          fn(ctxAudio, ctxAudio.currentTime);
+          setTimeout(() => { ctxAudio.close().catch(() => {}); }, closeDelayMs);
+        } catch (_) {}
+      }
+
+      function playTimerTick() {
+        withAudioContext(250, (ctxAudio, now) => {
+          const osc = ctxAudio.createOscillator();
+          const gain = ctxAudio.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(660, now);
+          gain.gain.setValueAtTime(0.001, now);
+          gain.gain.exponentialRampToValueAtTime(0.16, now + 0.01);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+          osc.connect(gain);
+          gain.connect(ctxAudio.destination);
+          osc.start(now);
+          osc.stop(now + 0.1);
+        });
+      }
+
+      function playTimerChime() {
+        withAudioContext(1000, (ctxAudio, now) => {
           [880, 1174.66].forEach((freq, i) => {
             const osc = ctxAudio.createOscillator();
             const gain = ctxAudio.createGain();
@@ -1939,8 +2078,7 @@
             osc.start(now + i * 0.16);
             osc.stop(now + i * 0.16 + 0.6);
           });
-          setTimeout(() => { ctxAudio.close().catch(() => {}); }, 1000);
-        } catch (_) {}
+        });
       }
 
       function renderTimerUI() {
@@ -1950,6 +2088,15 @@
 
         if (t.running && sec > 0) {
           timerChimePlayed = false;
+        }
+
+        // Final 5-second tick cue + digit pop on Stage
+        const secondChanged = sec !== lastTickSec;
+        if (secondChanged) {
+          lastTickSec = sec;
+          if (currentRole === 'stage' && t.running && sec > 0 && sec <= 5) {
+            playTimerTick();
+          }
         }
 
         // Auto-stop when countdown hits 0
@@ -1964,15 +2111,16 @@
           }
         }
 
-        // Stage Timer Pill
+        // Stage Corner Timer Pill (hidden when Center-Stage mode is active)
         const stagePill = document.getElementById('stage-timer-pill');
         const stageDisplay = document.getElementById('stage-timer-display');
         const stageDot = document.getElementById('stage-timer-dot');
         const stageLabel = document.getElementById('stage-timer-label');
+        const showCorner = Boolean(t.visible && t.mode !== 'center');
         if (stagePill && stageDisplay) {
-          stagePill.classList.toggle('hidden', !t.visible);
+          stagePill.classList.toggle('hidden', !showCorner);
           stageDisplay.textContent = formatted;
-          const isUrgent = t.visible && sec <= 10;
+          const isUrgent = showCorner && sec <= 10;
           stagePill.classList.toggle('bg-[#E74C3C]', isUrgent);
           stagePill.classList.toggle('text-white', isUrgent);
           stagePill.classList.toggle('bg-[#FFFFFF]', !isUrgent);
@@ -1987,6 +2135,45 @@
           }
         }
 
+        // Center-Stage Vox Countdown Overlay
+        const centerOverlay = document.getElementById('center-timer-overlay');
+        const centerCard = document.getElementById('center-timer-card');
+        const centerDigits = document.getElementById('center-timer-digits');
+        const centerBar = document.getElementById('center-timer-bar');
+        const centerStatusText = document.getElementById('center-timer-status-text');
+        const centerTimesUp = document.getElementById('center-timer-timesup-badge');
+        const showCenter = Boolean(currentRole === 'stage' && t.visible && t.mode === 'center');
+        if (centerOverlay && centerCard && centerDigits && centerBar) {
+          centerOverlay.classList.toggle('is-open', showCenter);
+          centerDigits.textContent = formatted;
+
+          if (secondChanged && showCenter && t.running && sec > 0 && sec <= 5) {
+            centerDigits.classList.remove('timer-digit-pop');
+            void centerDigits.offsetWidth;
+            centerDigits.classList.add('timer-digit-pop');
+          }
+
+          const totalDur = Math.max(1, Number(t.durationSec) || 180);
+          const pct = Math.max(0, Math.min(100, (sec / totalDur) * 100));
+          centerBar.style.width = `${pct}%`;
+
+          const isCritical = sec <= 5;
+          const isWarn = sec > 5 && sec <= 15;
+          centerCard.classList.toggle('bg-[#E74C3C]', isCritical);
+          centerCard.classList.toggle('text-white', isCritical);
+          centerCard.classList.toggle('bg-[#FFFBEB]', isWarn);
+          centerCard.classList.toggle('bg-[#FFFFFF]', !isCritical && !isWarn);
+          centerCard.classList.toggle('text-[#111111]', !isCritical);
+
+          centerBar.style.backgroundColor = isCritical ? '#F4D03F' : (isWarn ? '#E74C3C' : '#F4D03F');
+          if (centerStatusText) {
+            centerStatusText.textContent = sec === 0 ? "TIME'S UP!" : (t.running ? 'GAME COUNTDOWN • LIVE' : 'GAME COUNTDOWN • PAUSED');
+          }
+          if (centerTimesUp) {
+            centerTimesUp.classList.toggle('hidden', sec > 0);
+          }
+        }
+
         // Admin Timer Card Controls
         const adminDisplay = document.getElementById('admin-timer-display');
         const toggleBtn = document.getElementById('admin-timer-toggle-btn');
@@ -1995,6 +2182,9 @@
         const visBtn = document.getElementById('admin-timer-visibility-btn');
         const visIcon = document.getElementById('admin-timer-vis-icon');
         const visLabel = document.getElementById('admin-timer-vis-label');
+        const modeBtn = document.getElementById('admin-timer-mode-btn');
+        const modeIcon = document.getElementById('admin-timer-mode-icon');
+        const modeLabel = document.getElementById('admin-timer-mode-label');
 
         if (adminDisplay) {
           adminDisplay.textContent = formatted;
@@ -2019,10 +2209,19 @@
           visBtn.classList.toggle('bg-white', !t.visible);
           visBtn.classList.toggle('text-[#111111]', !t.visible);
         }
+        if (modeBtn && modeIcon && modeLabel) {
+          const isCenter = t.mode === 'center';
+          modeIcon.textContent = isCenter ? '🗗' : '📺';
+          modeLabel.textContent = isCenter ? 'มุมจอ' : 'กลางจอ';
+          modeBtn.classList.toggle('bg-[#111111]', isCenter);
+          modeBtn.classList.toggle('text-[#F4D03F]', isCenter);
+          modeBtn.classList.toggle('bg-white', !isCenter);
+          modeBtn.classList.toggle('text-[#111111]', !isCenter);
+        }
       }
 
       setInterval(() => {
-        if (state.timer?.running || state.timer?.visible) {
+        if (state.timer?.running) {
           renderTimerUI();
         }
       }, 250);
@@ -2237,9 +2436,10 @@
                 <img
                   src="${imgSrc}"
                   alt="${escapeHtml(state.games[gameIdx])}"
-                  onerror="this.onerror=null; this.src='https://placehold.co/960x540/F8F6F0/111111?text=ไม่สามารถโหลดรูปภาพหรือ GIF ได้';"
+                  onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');"
                   class="${maxHeightClass} w-auto max-w-full rounded-lg object-contain transition-all duration-300"
                 />
+                <span class="hidden thai-safe font-display font-bold text-sm text-[#E74C3C] py-8">ไม่สามารถโหลดรูปภาพหรือ GIF ได้</span>
               </div>
             `;
             const imgBox = document.getElementById('stage-zoomable-image-box');
@@ -2333,6 +2533,7 @@
           theaterZoomOverlayEl.classList.add('is-zoomed');
         } else {
           theaterZoomOverlayEl.classList.remove('is-zoomed');
+          if (centerTimerOverlayEl) centerTimerOverlayEl.classList.remove('is-open');
           mediaZoomBtnIcon.textContent = '🔍';
           mediaZoomBtnLabel.textContent = 'ขยาย';
 
@@ -2470,6 +2671,7 @@
           if (state.isMediaZoomed) {
             state.isMediaZoomed = false;
             theaterZoomOverlayEl.classList.remove('is-zoomed');
+          if (centerTimerOverlayEl) centerTimerOverlayEl.classList.remove('is-open');
           }
           mediaAccordionEl.classList.remove('is-open');
           mediaAccordionEl.setAttribute('aria-hidden', 'true');
@@ -2666,8 +2868,22 @@
       // ========================================================================
       // DRAWER EMBEDDED QR CLIPBOARD COPY & ROLE SWITCH
       // ========================================================================
-      function copyAdminUrlToClipboard(buttonEl) {
+      async function copyAdminUrlToClipboard(buttonEl) {
         const url = buildAdminUrl(roomCode);
+        const showCopiedFeedback = () => {
+          const origText = buttonEl.textContent;
+          buttonEl.textContent = '✓ คัดลอกลิงก์แล้ว!';
+          setTimeout(() => { buttonEl.textContent = origText; }, 2200);
+        };
+
+        if (navigator.clipboard?.writeText) {
+          try {
+            await navigator.clipboard.writeText(url);
+            showCopiedFeedback();
+            return;
+          } catch (_) {}
+        }
+
         const tempInput = document.createElement('textarea');
         tempInput.value = url;
         tempInput.style.position = 'fixed';
@@ -2675,10 +2891,7 @@
         document.body.appendChild(tempInput);
         tempInput.select();
         try {
-          document.execCommand('copy');
-          const origText = buttonEl.textContent;
-          buttonEl.textContent = '✓ คัดลอกลิงก์แล้ว!';
-          setTimeout(() => { buttonEl.textContent = origText; }, 2200);
+          if (document.execCommand('copy')) showCopiedFeedback();
         } catch (_) {}
         document.body.removeChild(tempInput);
       }
@@ -2690,6 +2903,19 @@
         drawerOpenAdminBtn.addEventListener('click', () => {
           setDrawerOpen(false);
           switchRoleView('admin');
+        });
+      }
+
+      const drawerNewRoomBtn = document.getElementById('drawer-new-room-btn');
+      if (drawerNewRoomBtn) {
+        drawerNewRoomBtn.addEventListener('click', () => {
+          roomCode = generateRoomCode();
+          try { localStorage.setItem(ROOM_STORAGE_KEY, roomCode); } catch (_) {}
+          const adminRoomInp = document.getElementById('admin-room-input');
+          if (adminRoomInp) adminRoomInp.value = roomCode;
+          stageConnections.clear();
+          updateDrawerPairingUI();
+          initStagePeerHost();
         });
       }
 
@@ -2980,11 +3206,14 @@
         const team = state.teams.find(t => t.id === teamId);
         if (!team) return;
         team.scores[gameIdx] = Math.max(0, (Number(team.scores[gameIdx]) || 0) + delta);
-        saveAndBroadcast();
         if (currentRole === 'stage') {
+          saveAndBroadcast();
           renderLeaderboard(true);
           renderDrawerControls();
         } else {
+          // Send atomic delta so concurrent mobile controllers never overwrite each other
+          broadcastPayload({ type: 'ACTION', op: 'ADJUST_SCORE', teamId, gameIdx, delta });
+          if (!adminConnection?.open) saveAndBroadcast({ broadcast: false });
           renderAdminUI();
         }
       }
@@ -2992,22 +3221,25 @@
       function setTeamGameScore(teamId, gameIdx, exactVal) {
         const team = state.teams.find(t => t.id === teamId);
         if (!team) return;
-        team.scores[gameIdx] = Math.max(0, Number(exactVal) || 0);
-        saveAndBroadcast();
+        const value = Math.max(0, Number(exactVal) || 0);
+        team.scores[gameIdx] = value;
         if (currentRole === 'stage') {
+          saveAndBroadcast();
           renderLeaderboard(true);
           renderDrawerControls();
         } else {
+          broadcastPayload({ type: 'ACTION', op: 'SET_SCORE', teamId, gameIdx, value });
+          if (!adminConnection?.open) saveAndBroadcast({ broadcast: false });
           renderAdminUI();
         }
       }
 
       // ========================================================================
-      // LOCAL OPERATOR CONTROL DRAWER (STAGE BOTTOM DRAWER)
+      // SHARED SCORE CONTROL CARD RENDERER & TWO-STEP SAFE RESET HELPER
       // ========================================================================
-      function renderDrawerControls() {
-        if (!drawerTeamsGrid) return;
-        drawerTeamsGrid.innerHTML = state.teams.map(team => {
+      function renderScoreControlCards(containerEl, attrPrefix, showUnitSuffix = false) {
+        if (!containerEl) return;
+        containerEl.innerHTML = state.teams.map(team => {
           const total = getTeamTotal(team);
           return `
             <div class="vox-card bg-white p-4 flex flex-col gap-3">
@@ -3017,7 +3249,7 @@
                   <h3 class="thai-safe-tight font-display font-extrabold text-base sm:text-lg text-[#111111] truncate">${escapeHtml(team.name)}</h3>
                 </div>
                 <span class="font-display font-black text-lg bg-[#F8F6F0] border-2 border-[#111111] px-2.5 py-0.5 rounded-lg shrink-0">
-                  ${total} คะแนน
+                  ${total}${showUnitSuffix ? ' คะแนน' : ''}
                 </span>
               </div>
 
@@ -3032,16 +3264,16 @@
                       type="number"
                       min="0"
                       value="${team.scores[gIdx]}"
-                      data-drawer-input="${team.id}:${gIdx}"
+                      data-${attrPrefix}-input="${team.id}:${gIdx}"
                       aria-label="คะแนน ${escapeHtml(team.name)} ${escapeHtml(state.games[gIdx])}"
                       class="w-16 text-center font-display font-extrabold text-base bg-white border-2 border-[#111111] rounded-lg py-0.5 text-[#111111]"
                     />
                   </div>
                   <div class="grid grid-cols-4 gap-1.5">
-                    <button type="button" data-drawer-delta="${team.id}:${gIdx}:-5" class="btn-vox bg-white hover:bg-red-50 text-[#E74C3C] font-display font-extrabold text-xs py-1.5 rounded-lg cursor-pointer">-5</button>
-                    <button type="button" data-drawer-delta="${team.id}:${gIdx}:5" class="btn-vox bg-white hover:bg-yellow-100 text-[#111111] font-display font-extrabold text-xs py-1.5 rounded-lg cursor-pointer">+5</button>
-                    <button type="button" data-drawer-delta="${team.id}:${gIdx}:10" class="btn-vox bg-white hover:bg-yellow-100 text-[#111111] font-display font-extrabold text-xs py-1.5 rounded-lg cursor-pointer">+10</button>
-                    <button type="button" data-drawer-delta="${team.id}:${gIdx}:15" class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-extrabold text-xs py-1.5 rounded-lg cursor-pointer">+15</button>
+                    <button type="button" data-${attrPrefix}-delta="${team.id}:${gIdx}:-5" class="btn-vox bg-white hover:bg-red-50 text-[#E74C3C] font-display font-extrabold text-xs sm:text-sm py-1.5 rounded-lg cursor-pointer">-5</button>
+                    <button type="button" data-${attrPrefix}-delta="${team.id}:${gIdx}:5" class="btn-vox bg-white hover:bg-yellow-100 text-[#111111] font-display font-extrabold text-xs sm:text-sm py-1.5 rounded-lg cursor-pointer">+5</button>
+                    <button type="button" data-${attrPrefix}-delta="${team.id}:${gIdx}:10" class="btn-vox bg-white hover:bg-yellow-100 text-[#111111] font-display font-extrabold text-xs sm:text-sm py-1.5 rounded-lg cursor-pointer">+10</button>
+                    <button type="button" data-${attrPrefix}-delta="${team.id}:${gIdx}:15" class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-extrabold text-xs sm:text-sm py-1.5 rounded-lg cursor-pointer">+15</button>
                   </div>
                 </div>
               `).join('')}
@@ -3049,19 +3281,48 @@
           `;
         }).join('');
 
-        drawerTeamsGrid.querySelectorAll('[data-drawer-delta]').forEach(btn => {
+        containerEl.querySelectorAll(`[data-${attrPrefix}-delta]`).forEach(btn => {
           btn.addEventListener('click', () => {
-            const [teamId, gIdx, delta] = btn.dataset.drawerDelta.split(':');
+            const [teamId, gIdx, delta] = btn.getAttribute(`data-${attrPrefix}-delta`).split(':');
             adjustTeamGameScore(teamId, Number(gIdx), Number(delta));
           });
         });
 
-        drawerTeamsGrid.querySelectorAll('[data-drawer-input]').forEach(inp => {
+        containerEl.querySelectorAll(`[data-${attrPrefix}-input]`).forEach(inp => {
           inp.addEventListener('change', () => {
-            const [teamId, gIdx] = inp.dataset.drawerInput.split(':');
+            const [teamId, gIdx] = inp.getAttribute(`data-${attrPrefix}-input`).split(':');
             setTeamGameScore(teamId, Number(gIdx), inp.value);
           });
         });
+      }
+
+      function bindTwoStepReset(buttonEl, idleLabel, armedLabel, onConfirm) {
+        if (!buttonEl) return;
+        let armed = false;
+        let timer = null;
+        const disarm = () => {
+          armed = false;
+          buttonEl.textContent = idleLabel;
+          buttonEl.classList.remove('bg-[#E74C3C]', 'text-white');
+          buttonEl.classList.add('bg-white', 'text-[#E74C3C]');
+        };
+        buttonEl.addEventListener('click', () => {
+          if (!armed) {
+            armed = true;
+            buttonEl.textContent = armedLabel;
+            buttonEl.classList.add('bg-[#E74C3C]', 'text-white');
+            buttonEl.classList.remove('bg-white', 'text-[#E74C3C]');
+            timer = setTimeout(disarm, 3200);
+            return;
+          }
+          clearTimeout(timer);
+          disarm();
+          onConfirm();
+        });
+      }
+
+      function renderDrawerControls() {
+        renderScoreControlCards(drawerTeamsGrid, 'drawer', true);
       }
 
       let isDrawerOpen = false;
@@ -3075,39 +3336,14 @@
       drawerToggleBtn.addEventListener('click', () => setDrawerOpen(!isDrawerOpen));
       btnCloseDrawer.addEventListener('click', () => setDrawerOpen(false));
 
-      // Winner / Victory Toggle + Confetti
       btnWinner.addEventListener('click', () => {
         state.winnerAnnounced = !state.winnerAnnounced;
         saveAndBroadcast();
         renderLeaderboard(true);
-        if (state.winnerAnnounced) {
-          launchConfetti();
-        }
+        if (state.winnerAnnounced) launchConfetti();
       });
 
-      // Two-step Safe Reset
-      let resetConfirmArmed = false;
-      let resetConfirmTimer = null;
-      btnReset.addEventListener('click', () => {
-        if (!resetConfirmArmed) {
-          resetConfirmArmed = true;
-          btnReset.textContent = 'กดอีกครั้งเพื่อยืนยันรีเซ็ต';
-          btnReset.classList.add('bg-[#E74C3C]', 'text-white');
-          btnReset.classList.remove('bg-white', 'text-[#E74C3C]');
-          resetConfirmTimer = setTimeout(() => {
-            resetConfirmArmed = false;
-            btnReset.textContent = 'รีเซ็ตคะแนน';
-            btnReset.classList.remove('bg-[#E74C3C]', 'text-white');
-            btnReset.classList.add('bg-white', 'text-[#E74C3C]');
-          }, 3200);
-          return;
-        }
-        clearTimeout(resetConfirmTimer);
-        resetConfirmArmed = false;
-        btnReset.textContent = 'รีเซ็ตคะแนน';
-        btnReset.classList.remove('bg-[#E74C3C]', 'text-white');
-        btnReset.classList.add('bg-white', 'text-[#E74C3C]');
-
+      bindTwoStepReset(btnReset, 'รีเซ็ตคะแนน', 'กดอีกครั้งเพื่อยืนยันรีเซ็ต', () => {
         state.teams.forEach(t => { t.scores = [0, 0, 0]; });
         state.winnerAnnounced = false;
         saveAndBroadcast();
@@ -3121,6 +3357,13 @@
         const isTyping = document.activeElement?.isContentEditable || tag === 'INPUT' || tag === 'TEXTAREA';
 
         if (e.key === 'Escape') {
+          if (state.timer?.visible && state.timer?.mode === 'center') {
+            state.timer.mode = 'corner';
+            state.timer.timerVersion = Date.now();
+            saveAndBroadcast();
+            renderTimerUI();
+            return;
+          }
           if (state.isMediaZoomed) {
             setTheaterZoom(false);
             return;
@@ -3190,61 +3433,8 @@
       }
 
       function renderAdminUI() {
-        // Tab 1: Teams Scoring Cards
-        const adminTeamsEl = document.getElementById('admin-teams-container');
-        if (adminTeamsEl) {
-          adminTeamsEl.innerHTML = state.teams.map(team => {
-            const total = getTeamTotal(team);
-            return `
-              <div class="vox-card bg-white p-4 flex flex-col gap-3">
-                <div class="flex items-center justify-between gap-2 pb-2 border-b-2 border-[#111111]">
-                  <div class="flex items-center gap-2 min-w-0">
-                    <span class="w-4 h-4 rounded-full border-2 border-[#111111] shrink-0" style="background:${team.color}"></span>
-                    <h3 class="thai-safe-tight font-display font-extrabold text-lg text-[#111111] truncate">${escapeHtml(team.name)}</h3>
-                  </div>
-                  <span class="font-display font-black text-xl bg-[#F8F6F0] border-2 border-[#111111] px-3 py-0.5 rounded-xl shrink-0">
-                    ${total}
-                  </span>
-                </div>
-
-                ${[0, 1, 2].map(gIdx => `
-                  <div class="bg-[#F8F6F0] border-2 border-[#111111] rounded-xl p-2.5 flex flex-col gap-2">
-                    <div class="flex items-center justify-between gap-2">
-                      <span class="thai-safe-tight text-xs font-bold text-[#111111] truncate">${escapeHtml(state.games[gIdx])}</span>
-                      <input
-                        type="number"
-                        min="0"
-                        value="${team.scores[gIdx]}"
-                        data-admin-input="${team.id}:${gIdx}"
-                        class="w-16 text-center font-display font-extrabold text-base bg-white border-2 border-[#111111] rounded-lg py-0.5 text-[#111111]"
-                      />
-                    </div>
-                    <div class="grid grid-cols-4 gap-1.5">
-                      <button type="button" data-admin-delta="${team.id}:${gIdx}:-5" class="btn-vox bg-white text-[#E74C3C] font-display font-extrabold text-sm py-2 rounded-lg cursor-pointer">-5</button>
-                      <button type="button" data-admin-delta="${team.id}:${gIdx}:5" class="btn-vox bg-white text-[#111111] font-display font-extrabold text-sm py-2 rounded-lg cursor-pointer">+5</button>
-                      <button type="button" data-admin-delta="${team.id}:${gIdx}:10" class="btn-vox bg-white text-[#111111] font-display font-extrabold text-sm py-2 rounded-lg cursor-pointer">+10</button>
-                      <button type="button" data-admin-delta="${team.id}:${gIdx}:15" class="btn-vox bg-[#F4D03F] text-[#111111] font-display font-extrabold text-sm py-2 rounded-lg cursor-pointer">+15</button>
-                    </div>
-                  </div>
-                `).join('')}
-              </div>
-            `;
-          }).join('');
-
-          adminTeamsEl.querySelectorAll('[data-admin-delta]').forEach(btn => {
-            btn.addEventListener('click', () => {
-              const [teamId, gIdx, delta] = btn.dataset.adminDelta.split(':');
-              adjustTeamGameScore(teamId, Number(gIdx), Number(delta));
-            });
-          });
-
-          adminTeamsEl.querySelectorAll('[data-admin-input]').forEach(inp => {
-            inp.addEventListener('change', () => {
-              const [teamId, gIdx] = inp.dataset.adminInput.split(':');
-              setTeamGameScore(teamId, Number(gIdx), inp.value);
-            });
-          });
-        }
+        // Tab 1: Teams Scoring Cards (reuses shared renderer)
+        renderScoreControlCards(document.getElementById('admin-teams-container'), 'admin', false);
 
         // Tab 2: Remote Accordion Open/Close, Video<->Image/GIF Switch, Theater Zoom & Video Playback
         const accBtnsEl = document.getElementById('admin-remote-accordion-btns');
@@ -3361,9 +3551,9 @@
           muteBtnEl.classList.toggle('text-[#111111]', !state.isVideoMuted);
         }
 
-        // Tab 2: Background Music (BGM) 3-Slot Controller
+        // Tab 2: Background Music (BGM) 3-Slot Controller (focus-safe)
         const bgmSlotsEl = document.getElementById('admin-bgm-slots-container');
-        if (bgmSlotsEl) {
+        if (bgmSlotsEl && !bgmSlotsEl.contains(document.activeElement)) {
           bgmSlotsEl.innerHTML = [0, 1, 2].map(idx => {
             const tr = state.bgmTracks[idx] || { label: `เพลงที่ ${idx + 1}`, url: '' };
             const isActive = state.activeBgmSlot === idx;
@@ -3458,7 +3648,7 @@
         if (bgmVolVal) bgmVolVal.textContent = `${state.bgmVolume}%`;
 
         const mediaEditorsEl = document.getElementById('admin-media-editors');
-        if (mediaEditorsEl) {
+        if (mediaEditorsEl && !mediaEditorsEl.contains(document.activeElement)) {
           mediaEditorsEl.innerHTML = [0, 1, 2].map(idx => {
             const m = state.gameMedia[idx] || { description: '', youtubeUrl: '', imageData: '', activeMediaType: 'video' };
             return `
@@ -3548,7 +3738,7 @@
         }
 
         const teamInputsWrap = document.getElementById('admin-team-names-inputs');
-        if (teamInputsWrap) {
+        if (teamInputsWrap && !teamInputsWrap.contains(document.activeElement)) {
           teamInputsWrap.innerHTML = state.teams.map((t, idx) => `
             <div class="flex items-center gap-2">
               <span class="w-4 h-4 rounded-full border-2 border-[#111111] shrink-0" style="background:${t.color}"></span>
@@ -3566,7 +3756,7 @@
         }
 
         const gameInputsWrap = document.getElementById('admin-game-titles-inputs');
-        if (gameInputsWrap) {
+        if (gameInputsWrap && !gameInputsWrap.contains(document.activeElement)) {
           gameInputsWrap.innerHTML = state.games.map((g, idx) => `
             <div class="flex items-center gap-2">
               <span class="w-4 h-4 rounded-full border-2 border-[#111111] shrink-0" style="background:${GAME_COLORS[idx]}"></span>
@@ -3587,164 +3777,133 @@
       }
 
       // Admin Static Event Listeners (Timer, Video/Image Switch, Zoom & Playback Controls)
+      const onClick = (id, handler) => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('click', handler);
+        return el;
+      };
+
+      const updateTimerState = (mutator) => {
+        mutator(state.timer);
+        state.timer.timerVersion = Date.now();
+        saveAndBroadcast();
+        renderTimerUI();
+      };
+
       document.querySelectorAll('[data-timer-preset]').forEach(btn => {
         btn.addEventListener('click', () => {
           const sec = Math.max(10, Number(btn.dataset.timerPreset) || 180);
-          state.timer.durationSec = sec;
-          state.timer.remainingSec = sec;
-          state.timer.running = false;
-          state.timer.endAt = null;
-          state.timer.timerVersion = Date.now();
-          saveAndBroadcast();
-          renderTimerUI();
+          updateTimerState(t => {
+            t.durationSec = sec;
+            t.remainingSec = sec;
+            t.running = false;
+            t.endAt = null;
+          });
         });
       });
 
-      const adminTimerMinus30 = document.getElementById('admin-timer-minus30');
-      if (adminTimerMinus30) {
-        adminTimerMinus30.addEventListener('click', () => {
-          const cur = getLiveRemainingSec();
-          const next = Math.max(0, cur - 30);
-          state.timer.remainingSec = next;
-          if (!state.timer.running) state.timer.durationSec = Math.max(10, next);
-          else if (next > 0) state.timer.endAt = Date.now() + next * 1000;
-          else { state.timer.running = false; state.timer.endAt = null; }
-          state.timer.timerVersion = Date.now();
-          saveAndBroadcast();
-          renderTimerUI();
+      onClick('admin-timer-minus30', () => {
+        const next = Math.max(0, getLiveRemainingSec() - 30);
+        updateTimerState(t => {
+          t.remainingSec = next;
+          if (!t.running) t.durationSec = Math.max(10, next);
+          else if (next > 0) t.endAt = Date.now() + next * 1000;
+          else { t.running = false; t.endAt = null; }
         });
-      }
+      });
 
-      const adminTimerPlus30 = document.getElementById('admin-timer-plus30');
-      if (adminTimerPlus30) {
-        adminTimerPlus30.addEventListener('click', () => {
-          const cur = getLiveRemainingSec();
-          const next = cur + 30;
-          state.timer.remainingSec = next;
-          if (!state.timer.running) state.timer.durationSec = next;
-          else state.timer.endAt = Date.now() + next * 1000;
-          state.timer.timerVersion = Date.now();
-          saveAndBroadcast();
-          renderTimerUI();
+      onClick('admin-timer-plus30', () => {
+        const next = getLiveRemainingSec() + 30;
+        updateTimerState(t => {
+          t.remainingSec = next;
+          if (!t.running) t.durationSec = next;
+          else t.endAt = Date.now() + next * 1000;
         });
-      }
+      });
 
-      const adminTimerToggleBtn = document.getElementById('admin-timer-toggle-btn');
-      if (adminTimerToggleBtn) {
-        adminTimerToggleBtn.addEventListener('click', () => {
-          if (state.timer.running) {
-            state.timer.remainingSec = getLiveRemainingSec();
-            state.timer.running = false;
-            state.timer.endAt = null;
+      onClick('admin-timer-toggle-btn', () => {
+        updateTimerState(t => {
+          if (t.running) {
+            t.remainingSec = getLiveRemainingSec();
+            t.running = false;
+            t.endAt = null;
           } else {
             let rem = getLiveRemainingSec();
-            if (rem <= 0) rem = state.timer.durationSec || 180;
-            state.timer.remainingSec = rem;
-            state.timer.running = true;
-            state.timer.endAt = Date.now() + rem * 1000;
-            state.timer.visible = true;
-          }
-          state.timer.timerVersion = Date.now();
-          saveAndBroadcast();
-          renderTimerUI();
-        });
-      }
-
-      const adminTimerResetBtn = document.getElementById('admin-timer-reset-btn');
-      if (adminTimerResetBtn) {
-        adminTimerResetBtn.addEventListener('click', () => {
-          state.timer.running = false;
-          state.timer.endAt = null;
-          state.timer.remainingSec = state.timer.durationSec || 180;
-          state.timer.timerVersion = Date.now();
-          saveAndBroadcast();
-          renderTimerUI();
-        });
-      }
-
-      const adminTimerVisibilityBtn = document.getElementById('admin-timer-visibility-btn');
-      if (adminTimerVisibilityBtn) {
-        adminTimerVisibilityBtn.addEventListener('click', () => {
-          state.timer.visible = !state.timer.visible;
-          state.timer.timerVersion = Date.now();
-          saveAndBroadcast();
-          renderTimerUI();
-        });
-      }
-      const adminSwitchVideoBtn = document.getElementById('admin-switch-video-btn');
-      if (adminSwitchVideoBtn) {
-        adminSwitchVideoBtn.addEventListener('click', () => {
-          if (state.activeGameAccordion !== null) {
-            setActiveMediaType(state.activeGameAccordion, 'video');
+            if (rem <= 0) rem = t.durationSec || 180;
+            t.remainingSec = rem;
+            t.running = true;
+            t.endAt = Date.now() + rem * 1000;
+            t.visible = true;
           }
         });
-      }
+      });
 
-      const adminSwitchImageBtn = document.getElementById('admin-switch-image-btn');
-      if (adminSwitchImageBtn) {
-        adminSwitchImageBtn.addEventListener('click', () => {
-          if (state.activeGameAccordion !== null) {
-            setActiveMediaType(state.activeGameAccordion, 'image');
-          }
+      onClick('admin-timer-reset-btn', () => {
+        updateTimerState(t => {
+          t.running = false;
+          t.endAt = null;
+          t.remainingSec = t.durationSec || 180;
+        });
+      });
+
+      onClick('admin-timer-visibility-btn', () => {
+        updateTimerState(t => { t.visible = !t.visible; });
+      });
+
+      onClick('admin-timer-mode-btn', () => {
+        updateTimerState(t => {
+          t.mode = t.mode === 'center' ? 'corner' : 'center';
+          if (t.mode === 'center') t.visible = true;
+        });
+      });
+
+      const minimizeCenterTimer = () => updateTimerState(t => { t.mode = 'corner'; });
+      onClick('center-timer-minimize-btn', minimizeCenterTimer);
+
+      const centerTimerOverlayEl = document.getElementById('center-timer-overlay');
+      if (centerTimerOverlayEl) {
+        centerTimerOverlayEl.addEventListener('click', (e) => {
+          if (e.target === centerTimerOverlayEl) minimizeCenterTimer();
         });
       }
 
-      const adminToggleZoomBtn = document.getElementById('admin-toggle-zoom-btn');
-      if (adminToggleZoomBtn) {
-        adminToggleZoomBtn.addEventListener('click', () => {
-          if (state.activeGameAccordion !== null) {
-            setTheaterZoom(!state.isMediaZoomed);
-          }
-        });
-      }
+      onClick('admin-switch-video-btn', () => {
+        if (state.activeGameAccordion !== null) setActiveMediaType(state.activeGameAccordion, 'video');
+      });
 
-      const adminVideoPlayBtn = document.getElementById('admin-video-play-btn');
-      if (adminVideoPlayBtn) {
-        adminVideoPlayBtn.addEventListener('click', () => sendAdminVideoCommand('play'));
-      }
+      onClick('admin-switch-image-btn', () => {
+        if (state.activeGameAccordion !== null) setActiveMediaType(state.activeGameAccordion, 'image');
+      });
 
-      const adminVideoPauseBtn = document.getElementById('admin-video-pause-btn');
-      if (adminVideoPauseBtn) {
-        adminVideoPauseBtn.addEventListener('click', () => sendAdminVideoCommand('pause'));
-      }
+      onClick('admin-toggle-zoom-btn', () => {
+        if (state.activeGameAccordion !== null) setTheaterZoom(!state.isMediaZoomed);
+      });
 
-      const adminVideoRestartBtn = document.getElementById('admin-video-restart-btn');
-      if (adminVideoRestartBtn) {
-        adminVideoRestartBtn.addEventListener('click', () => sendAdminVideoCommand('restart'));
-      }
+      onClick('admin-video-play-btn', () => sendAdminVideoCommand('play'));
+      onClick('admin-video-pause-btn', () => sendAdminVideoCommand('pause'));
+      onClick('admin-video-restart-btn', () => sendAdminVideoCommand('restart'));
+      onClick('admin-video-mute-btn', () => {
+        state.isVideoMuted = !state.isVideoMuted;
+        saveAndBroadcast();
+        renderAdminUI();
+        sendAdminVideoCommand(state.isVideoMuted ? 'mute' : 'unmute');
+      });
 
-      const adminVideoMuteBtn = document.getElementById('admin-video-mute-btn');
-      if (adminVideoMuteBtn) {
-        adminVideoMuteBtn.addEventListener('click', () => {
-          state.isVideoMuted = !state.isVideoMuted;
-          saveAndBroadcast();
-          renderAdminUI();
-          sendAdminVideoCommand(state.isVideoMuted ? 'mute' : 'unmute');
-        });
-      }
+      onClick('admin-bgm-toggle-play-btn', () => {
+        const activeUrl = (state.bgmTracks[state.activeBgmSlot]?.url || '').trim();
+        if (!activeUrl) return;
+        state.bgmPlaying = !state.bgmPlaying;
+        saveAndBroadcast();
+        broadcastPayload({ type: 'BGM_COMMAND', bgmPlaying: state.bgmPlaying });
+        renderAdminUI();
+      });
 
-      // Admin BGM Controls (Play/Pause, Mute, Live Volume Slider)
-      const adminBgmPlayBtn = document.getElementById('admin-bgm-toggle-play-btn');
-      if (adminBgmPlayBtn) {
-        adminBgmPlayBtn.addEventListener('click', () => {
-          const activeUrl = (state.bgmTracks[state.activeBgmSlot]?.url || '').trim();
-          if (!activeUrl) return;
-          state.bgmPlaying = !state.bgmPlaying;
-          saveAndBroadcast();
-          broadcastPayload({ type: 'BGM_COMMAND', bgmPlaying: state.bgmPlaying });
-          renderAdminUI();
-        });
-      }
-
-      const adminBgmMuteBtn = document.getElementById('admin-bgm-mute-btn');
-      if (adminBgmMuteBtn) {
-        adminBgmMuteBtn.addEventListener('click', () => {
-          state.bgmMuted = !state.bgmMuted;
-          saveAndBroadcast();
-          broadcastPayload({ type: 'BGM_COMMAND', bgmMuted: state.bgmMuted });
-          renderAdminUI();
-        });
-      }
+      onClick('admin-bgm-mute-btn', () => {
+        state.bgmMuted = !state.bgmMuted;
+        saveAndBroadcast();
+        broadcastPayload({ type: 'BGM_COMMAND', bgmMuted: state.bgmMuted });
+        renderAdminUI();
+      });
 
       const adminBgmVolSlider = document.getElementById('admin-bgm-volume-slider');
       const adminBgmVolVal = document.getElementById('admin-bgm-volume-value');
@@ -3785,36 +3944,12 @@
         });
       }
 
-      const adminResetBtn = document.getElementById('admin-btn-reset');
-      let adminResetArmed = false;
-      let adminResetTimer = null;
-      if (adminResetBtn) {
-        adminResetBtn.addEventListener('click', () => {
-          if (!adminResetArmed) {
-            adminResetArmed = true;
-            adminResetBtn.textContent = 'กดอีกครั้งเพื่อยืนยัน';
-            adminResetBtn.classList.add('bg-[#E74C3C]', 'text-white');
-            adminResetBtn.classList.remove('bg-white', 'text-[#E74C3C]');
-            adminResetTimer = setTimeout(() => {
-              adminResetArmed = false;
-              adminResetBtn.textContent = 'รีเซ็ตคะแนน';
-              adminResetBtn.classList.remove('bg-[#E74C3C]', 'text-white');
-              adminResetBtn.classList.add('bg-white', 'text-[#E74C3C]');
-            }, 3000);
-            return;
-          }
-          clearTimeout(adminResetTimer);
-          adminResetArmed = false;
-          adminResetBtn.textContent = 'รีเซ็ตคะแนน';
-          adminResetBtn.classList.remove('bg-[#E74C3C]', 'text-white');
-          adminResetBtn.classList.add('bg-white', 'text-[#E74C3C]');
-
-          state.teams.forEach(t => { t.scores = [0, 0, 0]; });
-          state.winnerAnnounced = false;
-          saveAndBroadcast();
-          renderAdminUI();
-        });
-      }
+      bindTwoStepReset(document.getElementById('admin-btn-reset'), 'รีเซ็ตคะแนน', 'กดอีกครั้งเพื่อยืนยัน', () => {
+        state.teams.forEach(t => { t.scores = [0, 0, 0]; });
+        state.winnerAnnounced = false;
+        saveAndBroadcast();
+        renderAdminUI();
+      });
 
       const adminRoomInput = document.getElementById('admin-room-input');
       const adminConnectBtn = document.getElementById('admin-connect-btn');
@@ -3841,6 +3976,7 @@
           drawerToggleBtn.classList.add('hidden');
           drawerEl.classList.add('hidden');
           theaterZoomOverlayEl.classList.remove('is-zoomed');
+          if (centerTimerOverlayEl) centerTimerOverlayEl.classList.remove('is-open');
           mobileAdminViewEl.classList.remove('hidden');
           mobileAdminViewEl.classList.add('flex');
           renderAdminUI();
@@ -3931,14 +4067,9 @@
       }
 
       // ========================================================================
-      // INITIALIZE IMMEDIATELY + ON WINDOW LOAD
+      // INITIALIZE IMMEDIATELY
       // ========================================================================
       switchRoleView(initialRole);
-      window.addEventListener('load', () => {
-        if (currentRole === 'stage') {
-          renderLeaderboard(false);
-        }
-      });
     })();
   </script>
 </body>
