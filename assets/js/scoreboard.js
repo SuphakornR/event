@@ -224,24 +224,38 @@
 
       // Load State safely: logged-in or locally-saved users restore their data; guests start fresh
       function loadState() {
+        let st;
         try {
-          if (!isAccountSignedIn() && !isLocallySaved()) return cloneDefaultState();
-          const raw = localStorage.getItem(STORAGE_KEY);
-          if (!raw) return cloneDefaultState();
-          const st = normalizeState(JSON.parse(raw), null);
-          if (st.timer) {
-            if (!st.timer.running) {
+          if (!isAccountSignedIn() && !isLocallySaved()) {
+            st = cloneDefaultState();
+          } else {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            st = raw ? normalizeState(JSON.parse(raw), null) : cloneDefaultState();
+            if (st.timer && !st.timer.running) {
               st.timer.visible = false;
               st.timer.mode = 'corner';
               st.timer.remainingSec = st.timer.durationSec || 180;
               st.timer.endAt = null;
             }
           }
-          return st;
         } catch (err) {
           console.warn('Recovering default state due to storage read error:', err);
-          return cloneDefaultState();
+          st = cloneDefaultState();
         }
+        try {
+          const pendingRaw = localStorage.getItem('vox_pending_ocr_rules_v1');
+          if (pendingRaw) {
+            localStorage.removeItem('vox_pending_ocr_rules_v1');
+            const pending = JSON.parse(pendingRaw);
+            const gIdx = Math.max(0, Math.min(st.games.length - 1, Number(pending?.gameIdx) || 0));
+            if (pending?.text && st.gameMedia[gIdx]) {
+              st.gameMedia[gIdx].description = String(pending.text).slice(0, 4000);
+              st.activeGameAccordion = gIdx;
+              hasUnsavedGuestChanges = !isAccountSignedIn() && !isLocallySaved();
+            }
+          }
+        } catch (_) {}
+        return st;
       }
 
       let state = loadState();
@@ -307,6 +321,37 @@
         }
       }
 
+      function syncStageSyncPill() {
+        const pill = document.getElementById('stage-sync-pill');
+        if (!pill) return;
+        const signedIn = isAccountSignedIn();
+        const savedLocal = isLocallySaved();
+        if (signedIn) {
+          const slot = window.VoxCloudSync?.getSlot?.() || 1;
+          pill.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span><span>ซิงค์บัญชี (งาน ${slot})</span>`;
+          pill.className = 'inline-flex items-center gap-1.5 bg-[#10B981]/15 hover:bg-[#10B981]/25 text-[#111111] border-2 border-[#111111] px-2 py-0.5 rounded-md font-display font-bold text-[10px] shadow-[2px_2px_0px_#111111] transition-colors cursor-pointer';
+          pill.title = 'ข้อมูลซิงค์กับบัญชีของคุณอัตโนมัติ (คลิกเพื่อสลับงาน)';
+        } else if (savedLocal) {
+          pill.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-[#F4D03F] border border-[#111111]"></span><span>บันทึกในเครื่อง</span>`;
+          pill.className = 'inline-flex items-center gap-1.5 bg-[#F4D03F]/45 hover:bg-[#F4D03F] text-[#111111] border-2 border-[#111111] px-2 py-0.5 rounded-md font-display font-bold text-[10px] shadow-[2px_2px_0px_#111111] transition-colors cursor-pointer';
+          pill.title = 'บันทึกไว้ในเบราว์เซอร์นี้แล้ว (เข้าสู่ระบบเพื่อซิงค์ข้ามเครื่อง)';
+        } else {
+          pill.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-[#E74C3C]"></span><span>${hasUnsavedGuestChanges ? 'ยังไม่บันทึก (Guest)' : 'Guest Mode'}</span>`;
+          pill.className = `inline-flex items-center gap-1.5 ${hasUnsavedGuestChanges ? 'bg-[#FFE8E6]' : 'bg-white'} hover:bg-[#F4D03F] text-[#111111] border-2 border-[#111111] px-2 py-0.5 rounded-md font-display font-bold text-[10px] shadow-[2px_2px_0px_#111111] transition-colors cursor-pointer`;
+          pill.title = 'คลิกเพื่อเข้าสู่ระบบและซิงค์ข้อมูล';
+        }
+      }
+
+      document.getElementById('stage-sync-pill')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (isAccountSignedIn()) {
+          const r = e.currentTarget.getBoundingClientRect();
+          window.VoxContextMenu?.openForTarget?.(document.body, r.left, r.bottom + 6);
+        } else if (window.HelpDaiAuth?.openLogin) {
+          window.HelpDaiAuth.openLogin();
+        }
+      });
+
       function saveAndBroadcast(options = { broadcast: true }) {
         state.updatedAt = Date.now();
         if (isAccountSignedIn() || isLocallySaved()) {
@@ -315,6 +360,7 @@
         } else {
           hasUnsavedGuestChanges = true;
         }
+        syncStageSyncPill();
 
         if (options.broadcast) {
           broadcastPayload({ type: 'SYNC_STATE', state });
@@ -326,6 +372,13 @@
           hasUnsavedGuestChanges = false;
           persistStateToStorage();
         }
+        syncStageSyncPill();
+      });
+
+      window.addEventListener('helpdai-slot-change', () => {
+        state = cloneDefaultState();
+        switchRoleView(currentRole);
+        syncStageSyncPill();
       });
 
       // Authoritative Stage Reducer for Concurrent Multi-User Score Actions
@@ -3730,6 +3783,7 @@
           try { localStorage.setItem(LOCAL_SAVED_KEY, '1'); } catch (_) {}
           hasUnsavedGuestChanges = false;
           persistStateToStorage();
+          syncStageSyncPill();
         },
         isSaved: () => isAccountSignedIn() || isLocallySaved()
       };
@@ -3799,6 +3853,7 @@
       // INITIALIZE IMMEDIATELY
       // ========================================================================
       switchRoleView(initialRole);
+      syncStageSyncPill();
       window.__voxStageReady = true;
       window.dispatchEvent(new Event('vox-stage-ready'));
     })();

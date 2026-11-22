@@ -414,8 +414,19 @@
       return;
     }
 
-    // 4. General Stage Background (Quick Templates + Backup/Restore + Reset)
+    // 4. General Stage Background (Quick Templates + Account Slots + Backup/Restore + Reset)
+    const isSignedIn = Boolean(window.HelpDaiAuth?.getSession?.()?.user?.id);
+    const curSlot = window.VoxCloudSync?.getSlot?.() || 1;
+    const slotHtml = isSignedIn ? `
+      <div class="px-1 py-1 border-b border-[#111111]/15 mb-0.5">
+        <div class="text-[10px] font-bold text-[#111111]/60 mb-1">สลับงานที่บันทึก (Account Slots)</div>
+        <div class="grid grid-cols-3 gap-1">
+          ${[1, 2, 3].map(n => `<button type="button" data-cm-slot="${n}" class="btn-vox ${curSlot === n ? 'bg-[#111111] text-[#F4D03F]' : 'bg-white hover:bg-[#F4D03F] text-[#111111]'} font-display font-bold text-[10px] py-1 rounded-lg cursor-pointer">งาน ${n}</button>`).join('')}
+        </div>
+      </div>
+    ` : '';
     const items = `
+      ${slotHtml}
       <div class="px-1 py-1 border-b border-[#111111]/15 mb-0.5">
         <div class="text-[10px] font-bold text-[#111111]/60 mb-1">เทมเพลตเริ่มไว (1-Click)</div>
         <div class="grid grid-cols-3 gap-1">
@@ -430,6 +441,9 @@
       ${menuBtn('reset-scores', CM_ICONS.reset, 'รีเซ็ตคะแนนทั้งหมด', true)}
     `;
     showMenuAt(x, y, 'Stage Menu', items, (m) => {
+      m.querySelectorAll('[data-cm-slot]').forEach(btn => {
+        btn.addEventListener('click', () => { closeMenu(); window.VoxCloudSync?.setSlot?.(Number(btn.dataset.cmSlot)); });
+      });
       m.querySelectorAll('[data-cm-tpl]').forEach(btn => {
         btn.addEventListener('click', () => { closeMenu(); api.applyTemplate(btn.dataset.cmTpl); });
       });

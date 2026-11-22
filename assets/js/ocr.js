@@ -28,6 +28,8 @@
   const lineCountEl = document.getElementById('ocr-line-count');
   const copyBtn = document.getElementById('ocr-copy-btn');
   const downloadBtn = document.getElementById('ocr-download-btn');
+  const sendGameSel = document.getElementById('ocr-send-game');
+  const sendSbBtn = document.getElementById('ocr-send-sb-btn');
 
   let detSession = null;
   let recSession = null;
@@ -547,6 +549,19 @@
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
+  });
+
+  sendSbBtn?.addEventListener('click', () => {
+    const text = (outputEl.value || '').trim();
+    if (!text) {
+      showError('ยังไม่มีข้อความสำหรับส่งไป Scoreboard');
+      return;
+    }
+    const gameIdx = Number(sendGameSel?.value || 0);
+    try {
+      localStorage.setItem('vox_pending_ocr_rules_v1', JSON.stringify({ gameIdx, text }));
+    } catch (_) {}
+    window.location.href = 'scoreboard.html';
   });
 
   syncModelStatusUI();

@@ -45,16 +45,26 @@
   }
 
   const cfg = window.HELPDAI_CONFIG || {};
+  const SLOT_KEY = 'helpdai_event_slot_v1';
   const explicitRoom = new URLSearchParams(window.location.search).get('room') || '';
+  const getSlot = () => {
+    try {
+      const n = Number(localStorage.getItem(SLOT_KEY) || '1');
+      return (n >= 1 && n <= 3) ? n : 1;
+    } catch (_) { return 1; }
+  };
   const getScopedRoomId = () => {
     if (explicitRoom) return explicitRoom;
     let uid = window.HelpDaiAuth?.getSession()?.user?.id;
     if (!uid) {
       try { uid = JSON.parse(localStorage.getItem('helpdai_auth_v1') || 'null')?.user?.id; } catch (_) {}
     }
-    return uid ? `u-${uid.slice(0, 12)}` : null;
+    if (!uid) return null;
+    const slot = getSlot();
+    return slot === 1 ? `u-${uid.slice(0, 12)}` : `u-${uid.slice(0, 12)}-s${slot}`;
   };
   let roomId = getScopedRoomId();
+  let onSlotSwitchHook = null;
   const defaultApiBase = (!location.hostname.endsWith('github.io') && location.protocol.startsWith('http')) ? location.origin : '';
   const apiBase = (cfg.apiBase || defaultApiBase).replace(/\/$/, '');
 
@@ -134,6 +144,17 @@
       }
     });
 
+    onSlotSwitchHook = () => {
+      const nextRoom = getScopedRoomId();
+      if (nextRoom !== roomId) {
+        roomId = nextRoom;
+        lastServerRaw = '';
+        lastLocalRaw = '';
+        try { localStorage.removeItem(STATE_KEY); } catch (_) {}
+        pullFromServer();
+      }
+    };
+
     checkAndStart();
   } else if (cfg.supabaseUrl && cfg.supabaseAnonKey) {
     // 2. Fallback: Optional Supabase Cloud Sync
@@ -178,6 +199,13 @@
 
   window.VoxCloudSync = Object.freeze({
     exportEventJson,
-    importEventJson
+    importEventJson,
+    getSlot,
+    setSlot: (n) => {
+      const next = (Number(n) >= 1 && Number(n) <= 3) ? Number(n) : 1;
+      try { localStorage.setItem(SLOT_KEY, String(next)); } catch (_) {}
+      if (onSlotSwitchHook) onSlotSwitchHook();
+      window.dispatchEvent(new CustomEvent('helpdai-slot-change', { detail: next }));
+    }
   });
 })();

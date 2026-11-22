@@ -325,7 +325,11 @@ const server = http.createServer(async (req, res) => {
   }
 
   // API Routes
-  if (pathname === '/api/health' && req.method === 'GET') {
+  if (pathname === '/api/health' && (req.method === 'GET' || req.method === 'HEAD')) {
+    if (req.method === 'HEAD') {
+      res.writeHead(200, { ...SEC_HEADERS, 'Content-Type': 'application/json' });
+      return res.end();
+    }
     return sendJson(res, 200, { ok: true, service: 'helpdai-backend', db: useSupabase ? 'supabase' : 'sqlite' });
   }
 

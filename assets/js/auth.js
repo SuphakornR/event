@@ -145,6 +145,10 @@
 
           <!-- Signed-In Account View -->
           <div id="auth-account-view" class="hidden flex-col gap-3">
+            <div class="inline-flex items-center gap-1.5 self-start bg-[#111111] text-[#F4D03F] px-2.5 py-0.5 rounded-md font-display font-extrabold text-[10px] tracking-wider">
+              <span class="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span>
+              <span>ยินดีต้อนรับกลับมา!</span>
+            </div>
             <div class="bg-white border-2 border-[#111111] rounded-xl p-3 flex items-center gap-3 shadow-[2px_2px_0px_#111111]">
               <div class="w-9 h-9 rounded-lg bg-[#F4D03F] border-2 border-[#111111] flex items-center justify-center font-display font-black text-sm text-[#111111] shrink-0" id="auth-avatar-letter">U</div>
               <div class="min-w-0 flex-1">
@@ -317,13 +321,52 @@
       btn.addEventListener('click', openAuthModal);
     }
 
+    const escHtml = (v) => String(v || '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+    const showWelcomeBackToast = (user) => {
+      if (!user?.id || !user?.email) return;
+      try {
+        if (sessionStorage.getItem('helpdai_welcomed_v1') === user.id) return;
+        sessionStorage.setItem('helpdai_welcomed_v1', user.id);
+      } catch (_) {}
+      document.getElementById('helpdai-welcome-toast')?.remove();
+      const shortName = escHtml(user.email.split('@')[0]);
+      const initial = escHtml(shortName.charAt(0).toUpperCase() || 'U');
+      const toast = document.createElement('div');
+      toast.id = 'helpdai-welcome-toast';
+      toast.className = 'vox-panel-enter fixed bottom-4 right-4 z-[170] max-w-xs vox-card bg-[#FFFDF5] px-3.5 py-2.5 flex items-center gap-2.5 border-2 border-[#111111] shadow-[4px_4px_0px_#111111]';
+      toast.innerHTML = `
+        <div class="w-8 h-8 rounded-lg bg-[#F4D03F] border-2 border-[#111111] flex items-center justify-center font-display font-black text-sm text-[#111111] shrink-0">${initial}</div>
+        <div class="min-w-0 flex-1">
+          <div class="font-display font-black text-xs text-[#111111] truncate">ยินดีต้อนรับกลับมา, ${shortName}!</div>
+          <div class="text-[10px] font-bold text-[#059669] flex items-center gap-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span>
+            <span>ซิงค์ข้อมูลออนไลน์พร้อมใช้งาน</span>
+          </div>
+        </div>
+        <button type="button" aria-label="ปิด" class="w-5 h-5 rounded hover:bg-[#111111]/10 text-[10px] font-black flex items-center justify-center cursor-pointer">✕</button>
+      `;
+      document.body.appendChild(toast);
+      const dismiss = () => {
+        toast.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(8px)';
+        setTimeout(() => toast.remove(), 260);
+      };
+      toast.querySelector('button')?.addEventListener('click', dismiss);
+      setTimeout(dismiss, 3800);
+    };
+
     const syncLabel = () => {
       const s = readSession();
       if (s?.user?.email) {
+        const shortName = escHtml(s.user.email.split('@')[0]);
+        const initial = escHtml(shortName.charAt(0).toUpperCase() || 'U');
         btn.classList.add('bg-[#F4D03F]', 'text-[#111111]', 'hover:bg-[#f2c61d]');
         btn.classList.remove('bg-white', 'hover:bg-[#F4D03F]');
-        btn.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-[#10B981] border border-[#111111] shrink-0"></span><span class="max-w-[110px] truncate">${s.user.email.split('@')[0]}</span>`;
-        btn.title = `บัญชี: ${s.user.email}`;
+        btn.innerHTML = `<span class="w-4 h-4 rounded bg-[#111111] text-[#F4D03F] text-[9px] font-black inline-flex items-center justify-center shrink-0">${initial}</span><span class="max-w-[120px] truncate">สวัสดี, ${shortName}</span>`;
+        btn.title = `ยินดีต้อนรับกลับมา: ${s.user.email}`;
+        showWelcomeBackToast(s.user);
       } else {
         btn.classList.remove('bg-[#F4D03F]', 'hover:bg-[#f2c61d]');
         btn.classList.add('bg-white', 'text-[#111111]', 'hover:bg-[#F4D03F]');
