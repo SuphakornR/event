@@ -210,12 +210,24 @@
         return base;
       }
 
-      // Load State safely from LocalStorage
+      // Load State safely from LocalStorage (clean up stale expired/fullscreen timers on page entry)
       function loadState() {
         try {
           const raw = localStorage.getItem(STORAGE_KEY);
           if (!raw) return cloneDefaultState();
-          return normalizeState(JSON.parse(raw), null);
+          const st = normalizeState(JSON.parse(raw), null);
+          if (st.timer) {
+            if (st.timer.running && st.timer.endAt && st.timer.endAt <= Date.now()) {
+              st.timer.running = false;
+              st.timer.visible = false;
+              st.timer.mode = 'corner';
+              st.timer.remainingSec = st.timer.durationSec;
+              st.timer.endAt = null;
+            } else if (!st.timer.running && st.timer.mode === 'center') {
+              st.timer.mode = 'corner';
+            }
+          }
+          return st;
         } catch (err) {
           console.warn('Recovering default state due to storage read error:', err);
           return cloneDefaultState();

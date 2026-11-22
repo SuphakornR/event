@@ -17,8 +17,35 @@
     window.dispatchEvent(new CustomEvent('helpdai-auth-change', { detail: s }));
   };
 
+  async function consumeHashSession() {
+    const hash = window.location.hash || '';
+    if (!hash.includes('access_token=')) return;
+    const params = new URLSearchParams(hash.slice(1));
+    const accessToken = params.get('access_token');
+    const refreshToken = params.get('refresh_token') || '';
+    if (!accessToken) return;
+    try {
+      const res = await fetch(`${sbUrl}/auth/v1/user`, {
+        headers: { apikey: sbKey, Authorization: `Bearer ${accessToken}` }
+      });
+      if (res.ok) {
+        const user = await res.json();
+        if (user?.id && user?.email) {
+          writeSession({ accessToken, refreshToken, user: { id: user.id, email: user.email } });
+        }
+      }
+    } catch (_) {}
+    try {
+      history.replaceState(null, '', window.location.pathname + window.location.search);
+    } catch (_) {}
+  }
+
   async function authReq(path, body) {
-    const res = await fetch(`${sbUrl}/auth/v1/${path}`, {
+    const sep = path.includes('?') ? '&' : '?';
+    const url = path.startsWith('signup')
+      ? `${sbUrl}/auth/v1/${path}${sep}redirect_to=${encodeURIComponent(window.location.origin)}`
+      : `${sbUrl}/auth/v1/${path}`;
+    const res = await fetch(url, {
       method: 'POST',
       headers: { apikey: sbKey, 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
@@ -143,6 +170,8 @@
     openLogin: openAuthModal,
     signOut: () => writeSession(null)
   });
+
+  consumeHashSession();
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', mountAuthBadge, { once: true });

@@ -102,16 +102,26 @@
     pop.id = 'tb-popover';
     pop.className = 'fixed top-1/2 -translate-y-1/2 z-40 hidden w-64 vox-card bg-[#F8F6F0] p-3.5 flex-col gap-2.5 vox-panel-enter';
 
+    let customPopPos = null;
     const positionPopover = () => {
-      pop.classList.remove('left-16', 'right-16');
-      pop.classList.add(side === 'left' ? 'left-16' : 'right-16');
+      if (customPopPos) {
+        pop.classList.remove('left-16', 'right-16', 'top-1/2', '-translate-y-1/2');
+        pop.style.left = `${customPopPos.left}px`;
+        pop.style.top = `${customPopPos.top}px`;
+      } else {
+        pop.style.left = '';
+        pop.style.top = '';
+        pop.classList.add('top-1/2', '-translate-y-1/2');
+        pop.classList.remove('left-16', 'right-16');
+        pop.classList.add(side === 'left' ? 'left-16' : 'right-16');
+      }
     };
     positionPopover();
 
     document.body.appendChild(bar);
     document.body.appendChild(pop);
 
-    // Persistent YouTube Embed Host (stays alive in DOM so music keeps playing when popover closes)
+    // Persistent YouTube Embed Host (stays alive in DOM so music keeps playing uninterrupted)
     let currentTrackId = '';
     let musicMuted = false;
 
@@ -140,6 +150,39 @@
       pop.classList.remove('flex');
     };
 
+    const makePopoverDraggable = (handleEl) => {
+      if (!handleEl) return;
+      handleEl.style.cursor = 'grab';
+      handleEl.addEventListener('pointerdown', (e) => {
+        if (e.target.closest('button')) return;
+        e.preventDefault();
+        handleEl.style.cursor = 'grabbing';
+        const rect = pop.getBoundingClientRect();
+        const offsetX = e.clientX - rect.left;
+        const offsetY = e.clientY - rect.top;
+        pop.classList.remove('top-1/2', '-translate-y-1/2', 'left-16', 'right-16');
+        pop.style.left = `${rect.left}px`;
+        pop.style.top = `${rect.top}px`;
+
+        const onMove = (ev) => {
+          const maxL = Math.max(8, window.innerWidth - pop.offsetWidth - 8);
+          const maxT = Math.max(8, window.innerHeight - pop.offsetHeight - 8);
+          const nextL = Math.max(8, Math.min(maxL, ev.clientX - offsetX));
+          const nextT = Math.max(8, Math.min(maxT, ev.clientY - offsetY));
+          customPopPos = { left: nextL, top: nextT };
+          pop.style.left = `${nextL}px`;
+          pop.style.top = `${nextT}px`;
+        };
+        const onUp = () => {
+          handleEl.style.cursor = 'grab';
+          window.removeEventListener('pointermove', onMove);
+          window.removeEventListener('pointerup', onUp);
+        };
+        window.addEventListener('pointermove', onMove);
+        window.addEventListener('pointerup', onUp);
+      });
+    };
+
     const openPop = (toolName, html, bind) => {
       if (activeTool === toolName) return closePop();
       if (timerPollId) {
@@ -152,9 +195,9 @@
       pop.classList.toggle('w-72', toolName.includes('YouTube'));
       pop.classList.toggle('w-64', !toolName.includes('YouTube'));
       pop.innerHTML = `
-        <div class="flex items-center justify-between pb-2 border-b-2 border-[#111111]">
+        <div id="tb-pop-drag" title="กดค้างเพื่อลากย้ายตำแหน่ง" class="flex items-center justify-between pb-2 border-b-2 border-[#111111] select-none">
           <span class="font-display font-extrabold text-xs uppercase tracking-wider text-[#111111]">${toolName}</span>
-          <button type="button" id="tb-pop-close" class="text-xs font-bold cursor-pointer">✕</button>
+          <button type="button" id="tb-pop-close" class="w-6 h-6 rounded-md hover:bg-[#E74C3C] hover:text-white text-xs font-black flex items-center justify-center cursor-pointer transition-colors">✕</button>
         </div>
         ${html}
       `;
@@ -163,12 +206,9 @@
       void pop.offsetWidth;
       pop.classList.add('vox-panel-enter');
       document.getElementById('tb-pop-close')?.addEventListener('click', closePop);
+      makePopoverDraggable(document.getElementById('tb-pop-drag'));
       if (bind) bind();
     };
-
-    document.addEventListener('click', (e) => {
-      if (!pop.contains(e.target) && !bar.contains(e.target)) closePop();
-    });
 
     // 1. Random Picker (Dramatic decelerating roulette + Web Audio ticks + card spotlight)
     document.getElementById('tb-random-btn').addEventListener('click', () => {
@@ -570,6 +610,7 @@
     document.getElementById('tb-flip-btn').addEventListener('click', () => {
       const first = bar.getBoundingClientRect();
       side = side === 'left' ? 'right' : 'left';
+      customPopPos = null;
       try { localStorage.setItem(SIDE_KEY, side); } catch (_) {}
       applySide();
       positionPopover();
