@@ -45,6 +45,7 @@
     const votedKey = `helpdai_voted_${votePollId}`;
     let hasVoted = false;
     try { hasVoted = localStorage.getItem(votedKey) !== null; } catch (_) {}
+    let lastVoterRenderKey = '';
 
     const renderVoter = async () => {
       if (!apiBase) {
@@ -56,9 +57,14 @@
         if (!res.ok) {
           qEl.textContent = 'ไม่พบโพลนี้ หรือโพลถูกปิดไปแล้ว';
           choicesEl.innerHTML = '';
+          lastVoterRenderKey = '';
           return;
         }
         const data = await res.json();
+        const renderKey = JSON.stringify({ q: data.question, opts: data.options, counts: data.counts, open: data.isOpen, voted: hasVoted });
+        if (renderKey === lastVoterRenderKey) return;
+        lastVoterRenderKey = renderKey;
+
         qEl.textContent = data.question;
         totalBadge.textContent = `${data.totalVotes} โหวต`;
 
@@ -154,6 +160,14 @@
     qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(voteUrl)}`;
   }
 
+  function syncInputsFromDom() {
+    hostCfg.question = inQ.value;
+    const curInputs = Array.from(inOptsWrap.querySelectorAll('[data-poll-opt]'));
+    if (curInputs.length) {
+      hostCfg.options = curInputs.map(el => el.value);
+    }
+  }
+
   function renderOptionInputs() {
     inQ.value = hostCfg.question;
     inOptsWrap.innerHTML = hostCfg.options.map((opt, i) => `
@@ -166,6 +180,7 @@
 
     inOptsWrap.querySelectorAll('[data-poll-del]').forEach(b => {
       b.addEventListener('click', () => {
+        syncInputsFromDom();
         hostCfg.options.splice(Number(b.dataset.pollDel), 1);
         renderOptionInputs();
       });
@@ -173,11 +188,9 @@
   }
 
   async function pushPollToServer() {
-    hostCfg.question = inQ.value.trim() || 'คำถามโหวต';
-    hostCfg.options = Array.from(inOptsWrap.querySelectorAll('[data-poll-opt]'))
-      .map(el => el.value.trim())
-      .filter(Boolean)
-      .slice(0, 6);
+    syncInputsFromDom();
+    hostCfg.question = (hostCfg.question || '').trim() || 'คำถามโหวต';
+    hostCfg.options = hostCfg.options.map(v => v.trim()).filter(Boolean).slice(0, 6);
     if (hostCfg.options.length < 2) hostCfg.options = ['ตัวเลือก A', 'ตัวเลือก B'];
     saveHostCfg();
     renderOptionInputs();
@@ -191,6 +204,8 @@
     pullResults();
   }
 
+  let lastHostRenderKey = '';
+
   async function pullResults() {
     hostQEl.textContent = hostCfg.question;
     if (!apiBase) {
@@ -201,20 +216,40 @@
       const res = await fetch(`${apiBase}/api/polls/${encodeURIComponent(hostCfg.pollId)}`);
       if (!res.ok) return;
       const data = await res.json();
+      const renderKey = JSON.stringify({ q: data.question, opts: data.options, counts: data.counts });
+      if (renderKey === lastHostRenderKey) return;
+      lastHostRenderKey = renderKey;
+
       totalBadge.textContent = `${data.totalVotes} โหวต`;
       const total = Math.max(1, data.totalVotes);
+      const existingBars = hostBarsEl.querySelectorAll('[data-poll-bar]');
+      if (existingBars.length === data.options.length) {
+        data.options.forEach((opt, idx) => {
+          const cnt = data.counts[idx] || 0;
+          const pct = Math.round((cnt / total) * 100);
+          const row = existingBars[idx];
+          const lbl = row.querySelector('[data-poll-lbl]');
+          const stat = row.querySelector('[data-poll-stat]');
+          const fill = row.querySelector('[data-poll-fill]');
+          if (lbl) lbl.textContent = opt;
+          if (stat) stat.textContent = `${pct}% (${cnt})`;
+          if (fill) fill.style.width = `${pct}%`;
+        });
+        return;
+      }
+
       hostBarsEl.innerHTML = data.options.map((opt, idx) => {
         const cnt = data.counts[idx] || 0;
         const pct = Math.round((cnt / total) * 100);
         const color = BAR_COLORS[idx % BAR_COLORS.length];
         return `
-          <div class="flex flex-col gap-1">
+          <div data-poll-bar="${idx}" class="flex flex-col gap-1">
             <div class="flex items-center justify-between gap-2 font-display font-extrabold text-sm sm:text-base text-[#111111]">
-              <span>${esc(opt)}</span>
-              <span class="tabular-nums">${pct}% (${cnt})</span>
+              <span data-poll-lbl>${esc(opt)}</span>
+              <span data-poll-stat class="tabular-nums">${pct}% (${cnt})</span>
             </div>
             <div class="w-full h-6 bg-[#F0EDE4] border-2 border-[#111111] rounded-lg overflow-hidden p-[3px]">
-              <div class="infographic-bar-fill h-full rounded-[4px]" style="width:${pct}%; background-color:${color};"></div>
+              <div data-poll-fill class="infographic-bar-fill h-full rounded-[4px]" style="width:${pct}%; background-color:${color};"></div>
             </div>
           </div>
         `;
@@ -223,6 +258,7 @@
   }
 
   document.getElementById('poll-add-opt')?.addEventListener('click', () => {
+    syncInputsFromDom();
     if (hostCfg.options.length >= 6) return;
     hostCfg.options.push(`ตัวเลือก ${hostCfg.options.length + 1}`);
     renderOptionInputs();
