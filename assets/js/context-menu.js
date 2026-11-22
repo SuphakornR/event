@@ -14,7 +14,7 @@
     if (menuEl) return menuEl;
     menuEl = document.createElement('div');
     menuEl.id = 'vox-context-menu';
-    menuEl.className = 'fixed z-[160] hidden flex-col gap-1 w-60 vox-card bg-[#F8F6F0] p-2 vox-panel-enter';
+    menuEl.className = 'fixed z-[160] hidden flex-col gap-1 w-60 max-h-[85vh] overflow-y-auto vox-card bg-[#F8F6F0] p-2 vox-panel-enter';
     menuEl.setAttribute('role', 'menu');
     document.body.appendChild(menuEl);
 
@@ -357,6 +357,48 @@
       return;
     }
 
+    // 2.5 Corner Timer Pill (#stage-timer-pill)
+    const timerPill = target.closest('#stage-timer-pill');
+    if (timerPill && api.updateTimer) {
+      const t = st.timer || {};
+      const items = `
+        ${menuBtn('timer-toggle', CM_ICONS.eye, t.running ? 'หยุดเวลาชั่วคราว' : 'เริ่มนับเวลา')}
+        ${menuBtn('timer-center', CM_ICONS.expand, 'ขยายกลางจอ')}
+        ${menuBtn('timer-reset', CM_ICONS.reset, 'รีเซ็ตเวลา')}
+        ${menuBtn('timer-hide', '✕', 'ซ่อนตัวจับเวลา', true)}
+      `;
+      showMenuAt(x, y, 'ตัวจับเวลา (Timer)', items, (m) => {
+        m.querySelector('[data-cm-action="timer-toggle"]')?.addEventListener('click', () => {
+          closeMenu();
+          api.updateTimer(tm => {
+            if (tm.running) {
+              tm.remainingSec = tm.endAt ? Math.max(0, Math.ceil((tm.endAt - Date.now()) / 1000)) : (tm.remainingSec || 0);
+              tm.running = false;
+              tm.endAt = null;
+            } else {
+              const rem = tm.remainingSec > 0 ? tm.remainingSec : (tm.durationSec || 180);
+              tm.remainingSec = rem;
+              tm.running = true;
+              tm.endAt = Date.now() + rem * 1000;
+            }
+          });
+        });
+        m.querySelector('[data-cm-action="timer-center"]')?.addEventListener('click', () => {
+          closeMenu();
+          api.updateTimer(tm => { tm.mode = 'center'; tm.visible = true; });
+        });
+        m.querySelector('[data-cm-action="timer-reset"]')?.addEventListener('click', () => {
+          closeMenu();
+          api.updateTimer(tm => { tm.remainingSec = tm.durationSec || 180; tm.running = false; tm.endAt = null; });
+        });
+        m.querySelector('[data-cm-action="timer-hide"]')?.addEventListener('click', () => {
+          closeMenu();
+          api.updateTimer(tm => { tm.visible = false; tm.running = false; tm.endAt = null; });
+        });
+      });
+      return;
+    }
+
     // 3. Header / Masthead (Direct quick-edit for event title & subtitle)
     const headerEl = target.closest('header');
     if (headerEl) {
@@ -424,8 +466,9 @@
 
   const stage = document.getElementById('stage-container');
   if (stage) {
-    // Right-click anywhere on stage
-    stage.addEventListener('contextmenu', (e) => {
+    // Right-click anywhere on the scoreboard page (excluding inputs, modals, and floating toolbox windows)
+    document.addEventListener('contextmenu', (e) => {
+      if (e.target.closest('input, textarea, [contenteditable="true"], #vox-context-menu, #vox-quick-edit-modal, [id^="tb-win-"], #vox-toolbox, #center-timer-overlay, #theater-zoom-overlay')) return;
       e.preventDefault();
       openForTarget(e.target, e.clientX, e.clientY);
     });

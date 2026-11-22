@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; connect-src 'self' https:; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https: data: blob:;" />
+  <title>HelpDai — OpenThai OCR Scanner</title>
+  <meta name="description" content="สแกนข้อความไทย-อังกฤษจากรูปภาพด้วย OpenThai2.1-OCR" />
+  <meta name="theme-color" content="#F4D03F" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath d='M9 9 H35 V35 H9 Z' transform='translate(3.5 3.5)' fill='%23111111'/%3E%3Cpath d='M9 9 H35 V35 H9 Z' fill='%23F4D03F' stroke='%23111111' stroke-width='3' stroke-linejoin='round'/%3E%3Ccircle cx='18' cy='21' r='2.3' fill='%23111111'/%3E%3Ccircle cx='28' cy='21' r='2.3' fill='%23111111'/%3E%3C/svg%3E" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Prompt:wght@600;700;800;900&display=swap" rel="stylesheet" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="assets/css/vox.css" />
+</head>
+<body class="min-h-screen flex flex-col selection:bg-yellow-300 selection:text-black">
+  <script src="assets/js/loader.js"></script>
+
+  <main class="w-full max-w-6xl mx-auto px-4 sm:px-6 py-4 flex-1 flex flex-col gap-4">
+    <!-- Header -->
+    <header class="border-b-[3px] border-[#111111] pb-2.5 flex flex-wrap items-center justify-between gap-2">
+      <div class="flex items-center gap-2.5 min-w-0">
+        <a href="index.html" class="btn-vox bg-white hover:bg-[#F4D03F] text-[#111111] font-display font-bold text-xs px-2.5 py-1 rounded-lg shrink-0">← เมนูหลัก</a>
+        <div class="inline-flex items-center gap-1.5 bg-[#111111] text-[#F4D03F] px-2.5 py-0.5 rounded-md font-display font-extrabold text-[11px] tracking-wider shrink-0">
+          <span class="w-2 h-2 rounded-full bg-[#F4D03F]"></span>
+          <span>OPENTHAI 2.1 OCR</span>
+        </div>
+        <h1 class="thai-safe-tight font-display font-black text-xl sm:text-2xl text-[#111111] truncate">สแกนข้อความจากภาพ (ไทย / Eng)</h1>
+      </div>
+
+      <span id="ocr-status-badge" class="bg-white border-2 border-[#111111] px-3 py-1 rounded-xl font-display font-extrabold text-xs shadow-[2px_2px_0px_#111111]">กำลังตรวจสอบ...</span>
+    </header>
+
+    <!-- Workspace Grid -->
+    <section class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+      <!-- Left: Image Upload / Paste / Preview -->
+      <div class="lg:col-span-5 flex flex-col gap-3">
+        <div id="ocr-dropzone" class="vox-card bg-white p-4 flex-1 flex flex-col gap-3">
+          <div class="flex items-center justify-between border-b-2 border-[#111111]/15 pb-2">
+            <span class="font-display font-extrabold text-xs uppercase tracking-wider text-[#111111]">เลือกรูปภาพ / วางภาพ (Ctrl+V)</span>
+            <label class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-extrabold text-xs px-3 py-1 rounded-lg cursor-pointer">
+              อัปโหลดรูป
+              <input id="ocr-file-input" type="file" accept="image/*" class="hidden" />
+            </label>
+          </div>
+
+          <div id="ocr-preview-box" class="flex-1 min-h-[240px] rounded-xl border-2 border-dashed border-[#111111]/35 bg-[#F8F6F0] flex flex-col items-center justify-center p-3 text-center overflow-hidden">
+            <p id="ocr-empty-hint" class="text-xs font-semibold text-[#111111]/60 leading-relaxed">ลากไฟล์รูปมาวางที่นี่, กด "อัปโหลดรูป"<br/>หรือกด <kbd class="px-1.5 py-0.5 rounded border border-[#111111] bg-white font-display font-bold text-[10px]">Ctrl+V</kbd> เพื่อวางภาพจากคลิปบอร์ด</p>
+            <img id="ocr-preview-img" src="" alt="ตัวอย่างภาพ" class="hidden max-h-[46vh] w-auto max-w-full rounded-lg border-2 border-[#111111] object-contain" />
+          </div>
+
+          <button type="button" id="ocr-scan-btn" disabled class="btn-vox w-full bg-[#111111] text-[#F4D03F] hover:bg-[#222222] disabled:opacity-40 disabled:cursor-not-allowed font-display font-extrabold text-sm py-2.5 rounded-xl cursor-pointer transition-all">
+            สแกนข้อความด้วย OpenThai OCR
+          </button>
+          <div id="ocr-error-box" class="hidden text-xs font-bold rounded-lg px-3 py-2 border-2 border-[#111111] bg-[#FFE8E6] text-[#E74C3C]"></div>
+        </div>
+      </div>
+
+      <!-- Right: Extracted Text Output -->
+      <div class="lg:col-span-7 flex flex-col">
+        <div class="vox-card bg-white p-4 sm:p-5 flex-1 flex flex-col gap-3">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b-2 border-[#111111]/15 pb-2">
+            <span id="ocr-line-count" class="font-display font-extrabold text-xs uppercase tracking-wider text-[#111111]">ผลลัพธ์ข้อความ (0 บรรทัด)</span>
+            <div class="flex items-center gap-1.5">
+              <button type="button" id="ocr-copy-btn" class="btn-vox bg-[#F8F6F0] hover:bg-[#F4D03F] text-[#111111] font-display font-bold text-xs px-3 py-1 rounded-lg cursor-pointer">คัดลอกข้อความ</button>
+              <button type="button" id="ocr-download-btn" class="btn-vox bg-white hover:bg-[#F4D03F] text-[#111111] font-display font-bold text-xs px-3 py-1 rounded-lg cursor-pointer">ดาวน์โหลด .txt</button>
+            </div>
+          </div>
+
+          <textarea id="ocr-output" rows="12" placeholder="ข้อความที่สแกนได้จะแสดงที่นี่ สามารถแก้ไขเพิ่มเติมได้ทันที..." class="thai-safe flex-1 w-full bg-[#F8F6F0] border-2 border-[#111111] rounded-xl p-3.5 text-sm sm:text-base font-medium leading-relaxed resize-none focus:outline-none focus:bg-white"></textarea>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="assets/js/config.js" defer></script>
+  <script src="assets/js/tos.js" defer></script>
+  <script src="assets/js/ocr.js" defer></script>
+</body>
+</html>
