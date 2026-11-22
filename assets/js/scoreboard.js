@@ -3588,7 +3588,7 @@
 
       function triggerVictorySequence() {
         hideVictorySpotlight();
-        const STEP1_MS = 1050;
+        const STEP1_MS = 1150;
         const DRUMROLL_MS = 2120;
         const TOTAL_MS = STEP1_MS + DRUMROLL_MS;
 
@@ -3598,22 +3598,40 @@
         drumOverlay.innerHTML = `
           <div class="pointer-events-none fixed inset-0 opacity-25" style="background: radial-gradient(circle at 50% 50%, rgba(244,208,63,0.38) 0%, transparent 65%);"></div>
           <div id="victory-suspense-stage" class="relative z-10 text-center flex flex-col items-center gap-3">
-            <p class="victory-card-slam thai-safe font-display font-black text-5xl sm:text-7xl text-[#F4D03F] tracking-tight drop-shadow-[0_6px_0_#111111]">และ...</p>
-            <span class="font-display font-extrabold text-sm sm:text-base uppercase tracking-[0.28em] text-white/60">AND...</span>
+            <p class="victory-card-slam thai-safe font-display font-black text-5xl sm:text-7xl text-[#F4D03F] tracking-tight drop-shadow-[0_6px_0_#111111]">และ<span id="v-s1-dots"></span></p>
+            <span class="font-display font-extrabold text-sm sm:text-base uppercase tracking-[0.28em] text-white/60">AND<span id="v-s1-en-dots"></span></span>
           </div>
         `;
         document.body.appendChild(drumOverlay);
 
-        // Step 2: Play drumroll + switch big headline to "ผู้ชนะคือ...." / "THE WINNER IS...."
+        // Timed dots one-by-one for "และ..."
+        [240, 520, 800].forEach((delay) => {
+          victoryTimers.push(setTimeout(() => {
+            const dTh = document.getElementById('v-s1-dots');
+            const dEn = document.getElementById('v-s1-en-dots');
+            if (dTh) dTh.textContent += '.';
+            if (dEn) dEn.textContent += '.';
+          }, delay));
+        });
+
+        // Step 2: Play drumroll + switch big headline to "ผู้ชนะคือ...." with timed dots one by one
         victoryTimers.push(setTimeout(() => {
           if (!state.winnerAnnounced) return;
           playDrumroll(DRUMROLL_MS);
           const stageBox = document.getElementById('victory-suspense-stage');
           if (stageBox) {
             stageBox.innerHTML = `
-              <p class="victory-card-slam victory-drum-shake thai-safe font-display font-black text-5xl sm:text-7xl text-white tracking-tight drop-shadow-[0_6px_0_#111111]">ผู้ชนะคือ<span class="text-[#F4D03F]">....</span></p>
-              <span class="font-display font-extrabold text-sm sm:text-base uppercase tracking-[0.28em] text-[#F4D03F]">THE WINNER IS....</span>
+              <p class="victory-card-slam victory-drum-shake thai-safe font-display font-black text-5xl sm:text-7xl text-white tracking-tight drop-shadow-[0_6px_0_#111111]">ผู้ชนะคือ<span id="v-s2-dots" class="text-[#F4D03F]"></span></p>
+              <span class="font-display font-extrabold text-sm sm:text-base uppercase tracking-[0.28em] text-[#F4D03F]">THE WINNER IS<span id="v-s2-en-dots"></span></span>
             `;
+            [380, 820, 1260, 1700].forEach((dDelay) => {
+              victoryTimers.push(setTimeout(() => {
+                const dTh2 = document.getElementById('v-s2-dots');
+                const dEn2 = document.getElementById('v-s2-en-dots');
+                if (dTh2) dTh2.textContent += '.';
+                if (dEn2) dEn2.textContent += '.';
+              }, dDelay));
+            });
           }
         }, STEP1_MS));
 
@@ -3656,23 +3674,19 @@
             style="background: repeating-conic-gradient(from 0deg, #F4D03F 0deg 10deg, transparent 10deg 20deg);"></div>
           <div class="pointer-events-none fixed inset-0" style="background: radial-gradient(circle at 50% 45%, rgba(244,208,63,0.28) 0%, transparent 62%);"></div>
 
-          <div class="victory-card-slam relative z-10 w-full max-w-xl vox-card bg-[#F8F6F0] p-6 sm:p-8 text-center flex flex-col items-center gap-4 border-4 border-[#111111] shadow-[14px_14px_0px_#F4D03F]">
+          <div class="victory-card-slam relative z-10 w-full max-w-xl vox-card bg-[#F8F6F0] p-6 sm:p-8 text-center flex flex-col items-center gap-5 border-4 border-[#111111] shadow-[14px_14px_0px_#F4D03F]">
             <button type="button" id="victory-overlay-close" aria-label="ปิดหน้าต่างฉลองชัยชนะ"
-              class="absolute top-3 right-3 w-8 h-8 rounded-lg border-2 border-[#111111] bg-white hover:bg-[#E74C3C] hover:text-white font-display font-black text-sm flex items-center justify-center shadow-[2px_2px_0px_#111111] cursor-pointer transition-colors">✕</button>
+              class="btn-vox absolute top-3.5 right-3.5 w-9 h-9 rounded-xl bg-white hover:bg-[#E74C3C] hover:text-white text-[#111111] flex items-center justify-center cursor-pointer transition-colors">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
 
-            <div class="inline-flex items-center gap-2 bg-[#111111] border-2 border-[#111111] px-4 py-1.5 rounded-full shadow-[4px_4px_0px_#F4D03F] font-display font-black text-xs sm:text-sm tracking-widest uppercase text-[#F4D03F]">
-              ${getVoxCrownSvg('w-5 h-5')}
-              <span>GRAND CHAMPION • CONGRATULATIONS!</span>
-            </div>
-
-            <div class="relative flex flex-col items-center justify-center my-1">
-              ${getVoxCrownSvg('w-16 h-14 -mb-2.5 z-10 animate-bounce')}
-              <div class="w-32 h-32 sm:w-36 sm:h-36 rounded-3xl border-4 border-[#111111] shadow-[8px_8px_0px_#111111] flex items-center justify-center mascot-float" style="background:${champ.color}">
+            <div class="relative flex flex-col items-center justify-center pt-2">
+              <div class="victory-mascot-jump w-32 h-32 sm:w-36 sm:h-36 rounded-3xl border-4 border-[#111111] shadow-[8px_8px_0px_#111111] flex items-center justify-center" style="background:${champ.color}">
                 ${getTeamMascotSvg(champ.originalIndex, champ.color, 'w-28 h-28 sm:w-32 sm:h-32')}
               </div>
             </div>
 
-            <div class="space-y-1.5">
+            <div class="space-y-2">
               <h2 class="thai-safe font-display font-black text-4xl sm:text-5xl text-[#111111] tracking-tight">${champ.name}</h2>
               <div class="inline-flex items-baseline gap-2 bg-[#111111] text-[#F4D03F] px-6 py-2.5 rounded-2xl border-2 border-[#111111] shadow-[5px_5px_0px_#F4D03F]">
                 <span class="font-display font-black text-4xl sm:text-5xl tabular-nums leading-none">${champ.total}</span>
@@ -3681,7 +3695,7 @@
             </div>
 
             ${runnersUp.length ? `
-              <div class="w-full pt-3 mt-1 border-t-2 border-dashed border-[#111111]/25 grid grid-cols-2 gap-2.5">
+              <div class="w-full pt-3.5 mt-1 border-t-2 border-dashed border-[#111111]/25 grid grid-cols-2 gap-2.5">
                 ${runnersUp.map((r, i) => `
                   <div class="bg-white border-2 border-[#111111] rounded-xl px-3 py-2 flex items-center justify-between gap-2 shadow-[3px_3px_0px_#111111]">
                     <span class="font-display font-black text-xs px-1.5 py-0.5 rounded bg-[#F8F6F0] border border-[#111111]">#${i + 2}</span>
