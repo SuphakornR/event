@@ -73,14 +73,14 @@
       </aside>
     </header>
 
-    <!-- Tool cards (rendered from the TOOLS list below: add one entry to add a tool) -->
-    <section id="tool-grid" class="grid grid-cols-1 gap-5" aria-label="เครื่องมือทั้งหมด"></section>
+    <!-- Tool cards (2-column balanced Vox Editorial Grid) -->
+    <section id="tool-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6" aria-label="เครื่องมือทั้งหมด"></section>
+
+    <!-- Bottom-Center Compact Music Player Card -->
+    <section id="hub-bgm-slot" aria-label="เครื่องเล่นเพลงพื้นหลัง" class="relative w-full max-w-sm mx-auto mt-1"></section>
 
     <footer class="mt-auto pt-3.5 border-t-2 border-[#111111]/15 flex flex-wrap items-center justify-between gap-3 text-xs font-semibold text-[#111111]/55">
       <span class="shrink-0">HelpDaiCha • Interactive Event Toolkit</span>
-
-      <!-- Bottom-Center Persistent Compact YouTube Music Player (same level as Suggestion Box / ToS) -->
-      <div id="hub-bgm-slot" aria-label="เครื่องเล่นเพลงพื้นหลัง" class="relative flex-1 min-w-[17rem] max-w-md mx-auto"></div>
 
       <div class="flex flex-wrap items-center gap-2.5 shrink-0">
         <button type="button" id="open-sugg-btn" class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-bold text-xs px-3 py-1 rounded-lg inline-flex items-center gap-1.5 cursor-pointer">
@@ -126,7 +126,7 @@
   </div>
 
   <script src="assets/js/config.js?v=20261122f" defer></script>
-  <script src="assets/js/bgm-dock.js?v=20261122f" defer></script>
+  <script src="assets/js/bgm-dock.js?v=20261123a" defer></script>
   <script src="assets/js/auth.js?v=20261122e" defer></script>
   <script src="assets/js/tos.js?v=20261122b" defer></script>
   <script src="assets/js/mascots.js?v=20261122b"></script>
@@ -144,6 +144,14 @@
           actions: [
             { label: 'เปิดใช้งาน', href: 'scoreboard.html', primary: true }
           ]
+        },
+        {
+          id: 'coming-soon',
+          status: 'soon',
+          shape: 2,
+          title: 'Live Quiz & Buzzer',
+          desc: 'เกมตอบคำถามชิงไหวพริบ กดปุ่ม Buzzer แย่งตอบสดจากมือถือ พร้อมระบบคำนวณคะแนนอัตโนมัติบนเวที',
+          actions: []
         }
       ];
 

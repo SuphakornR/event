@@ -339,6 +339,20 @@
     }, 2000);
   };
 
+  const shareBc = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('helpdai_screenshare_bc') : null;
+  if (shareBc) {
+    shareBc.addEventListener('message', (ev) => {
+      const d = ev.data;
+      if (!d || d.code !== shareCode) return;
+      if (d.type === 'sync_state' && d.raw && isDisplayViewer) {
+        applyRemoteRaw(d.raw);
+      } else if (d.type === 'request_state' && !isDisplayViewer) {
+        const cur = localStorage.getItem(STATE_KEY);
+        if (cur) shareBc.postMessage({ type: 'sync_state', code: shareCode, raw: cur });
+      }
+    });
+  }
+
   // Push immediately whenever local state changes on Host
   const origSetItem = localStorage.setItem.bind(localStorage);
   localStorage.setItem = function(key, val) {
@@ -346,8 +360,15 @@
     if (key === STATE_KEY && !isDisplayViewer && val !== lastLocalRaw) {
       lastLocalRaw = String(val);
       sendRealtimeEvent('sync_state', { raw: lastLocalRaw });
+      try { shareBc?.postMessage({ type: 'sync_state', code: shareCode, raw: lastLocalRaw }); } catch (_) {}
     }
   };
+
+  if (isDisplayViewer && shareBc) {
+    setTimeout(() => {
+      try { shareBc.postMessage({ type: 'request_state', code: shareCode }); } catch (_) {}
+    }, 150);
+  }
 
   window.addEventListener('pagehide', () => {
     const curRaw = localStorage.getItem(STATE_KEY) || '';
@@ -384,6 +405,10 @@
   function setupDisplayModeUI() {
     if (!isDisplayViewer) return;
     document.body.classList.add('is-bigroom-display');
+    ['header-screenshare-btn', 'stage-sync-pill', 'view-settings-btn'].forEach(id => {
+      document.getElementById(id)?.classList.add('hidden');
+    });
+    document.querySelectorAll('[data-start-tutorial]').forEach(el => el.classList.add('hidden'));
 
     const badge = document.createElement('div');
     badge.id = 'bigroom-display-hud';

@@ -1061,7 +1061,6 @@
                   <div class="md:col-span-8 flex flex-col gap-3.5">
                     <h2 id="cp-question" class="thai-safe font-display font-black text-2xl sm:text-3xl text-[#111111]"></h2>
                     <div id="cp-bars" class="flex flex-col gap-2.5"></div>
-                    <p class="text-[11px] font-semibold text-[#111111]/55">💡 คลิกที่แถบตัวเลือกบนหน้าจอเพื่อบวกคะแนนโหวต (+1) ได้ทันที</p>
                   </div>
                 </div>
               </div>
@@ -1130,7 +1129,7 @@
                 const isLeader = showLeader && cnt === maxCnt;
                 const statText = hostCfg.hideResults ? '••% (ซ่อนผล)' : `${pct}% (${cnt})`;
                 return `
-                  <button type="button" data-cp-vote="${idx}" class="w-full text-left bg-[#F8F6F0] hover:bg-white border-2 border-[#111111] rounded-xl p-3 flex flex-col gap-1.5 shadow-[3px_3px_0px_#111111] transition-all cursor-pointer">
+                  <div class="w-full text-left bg-[#F8F6F0] border-2 border-[#111111] rounded-xl p-3 flex flex-col gap-1.5 shadow-[3px_3px_0px_#111111]">
                     <div class="flex items-center justify-between gap-2 font-display font-extrabold text-sm sm:text-base text-[#111111]">
                       <span class="flex items-center gap-2 min-w-0">
                         <span class="w-6 h-6 rounded-lg border-2 border-[#111111] font-display font-black text-xs flex items-center justify-center shrink-0" style="background:${color}; color:${color === '#F4D03F' ? '#111111' : '#FFFFFF'}">${String.fromCharCode(65 + idx)}</span>
@@ -1142,12 +1141,9 @@
                     <div class="w-full h-4 bg-white border-2 border-[#111111] rounded-lg overflow-hidden p-0.5">
                       <div class="h-full rounded-[3px] transition-all duration-500" style="width:${pct}%; background:${color};"></div>
                     </div>
-                  </button>
+                  </div>
                 `;
               }).join('');
-              barsEl.querySelectorAll('[data-cp-vote]').forEach(b => {
-                b.addEventListener('click', () => addManualVote(Number(b.dataset.cpVote)));
-              });
             }
           };
 
@@ -1268,14 +1264,24 @@
         winEl.querySelector('#tb-share-native-cast')?.addEventListener('click', async () => {
           if (!navigator.mediaDevices?.getDisplayMedia) return;
           try {
-            const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+            let stream;
+            try {
+              stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+            } catch (_) {
+              stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+            }
             const w = window.open('', 'HelpDaiLiveMirror', 'width=1280,height=720,menubar=no,toolbar=no');
             if (w) {
-              w.document.write('<!DOCTYPE html><html><head><title>HelpDaiCha — Live Screen Mirror</title><style>html,body{margin:0;background:#000;height:100%;overflow:hidden;display:flex;align-items:center;justify-content:center}video{width:100%;height:100%;object-fit:contain}</style></head><body><video id="v" autoplay playsinline></video></body></html>');
+              w.document.write('<!DOCTYPE html><html><head><title>HelpDaiCha — Live Screen Mirror</title><style>html,body{margin:0;background:#000;height:100%;overflow:hidden;display:flex;align-items:center;justify-content:center}video{width:100%;height:100%;object-fit:contain}</style></head><body><video id="v" autoplay playsinline muted></video></body></html>');
               w.document.close();
               const v = w.document.getElementById('v');
-              if (v) v.srcObject = stream;
+              if (v) {
+                v.srcObject = stream;
+                v.play?.().catch(() => {});
+              }
               w.addEventListener('beforeunload', () => stream.getTracks().forEach(t => t.stop()));
+            } else {
+              stream.getTracks().forEach(t => t.stop());
             }
           } catch (_) {}
         });

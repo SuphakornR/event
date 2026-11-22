@@ -854,6 +854,11 @@
       100% { transform: translate3d(-50%, 0, 0); }
     }
 
+    @keyframes timerWaveSlideBack {
+      0% { transform: translate3d(-50%, 0, 0); }
+      100% { transform: translate3d(0, 0, 0); }
+    }
+
     .timer-circle-mask {
       isolation: isolate;
       -webkit-mask-image: -webkit-radial-gradient(white, black);
@@ -882,11 +887,22 @@
     .timer-liquid-wave {
       position: absolute;
       left: 0;
-      bottom: calc(100% - 15px);
+      bottom: calc(100% - 16px);
       width: 200%;
-      height: 58px;
+      height: 60px;
       display: block;
       animation: timerWaveSlide 1.65s linear infinite;
+      pointer-events: none;
+    }
+
+    .timer-liquid-wave-back {
+      position: absolute;
+      left: 0;
+      bottom: calc(100% - 16px);
+      width: 200%;
+      height: 64px;
+      display: block;
+      animation: timerWaveSlideBack 2.7s linear infinite;
       pointer-events: none;
     }
 

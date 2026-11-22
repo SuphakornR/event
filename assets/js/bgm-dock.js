@@ -1,4 +1,4 @@
-/* HelpDaiCha Cross-Page Persistent YouTube BGM Engine + Footer Compact Player */
+/* HelpDaiCha Cross-Page YouTube BGM State + Compact Main-Menu Card */
 (() => {
   const BGM_KEY = 'helpdai_bgm_player_v1';
 
@@ -9,29 +9,6 @@
     const m = s.match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
     return m ? m[1] : '';
   };
-
-  // If running inside the seamless cross-page shell iframe, delegate to window.parent.HelpDaiBgm
-  try {
-    if (window.parent && window.parent !== window && window.parent.HelpDaiBgm) {
-      const parentBgm = window.parent.HelpDaiBgm;
-      parentBgm.registerChildWindow?.(window);
-      window.HelpDaiBgm = parentBgm;
-
-      document.addEventListener('click', (e) => {
-        const a = e.target.closest?.('a[href]');
-        if (!a || a.target === '_blank' || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-        const href = (a.getAttribute('href') || '').trim();
-        if (href === 'index.html' || href === './index.html' || href === '/') {
-          e.preventDefault();
-          parentBgm.parkOverlay?.();
-          parentBgm.closeShell?.('index.html');
-        }
-      });
-      return;
-    }
-  } catch (_) {}
-
-  const childWindows = new Set();
 
   const readBgm = () => {
     try {
@@ -55,26 +32,13 @@
     return { videoId: '', title: '', playing: false, elapsedSec: 0, startedAt: 0 };
   };
 
-  const broadcastBgm = (next) => {
-    window.dispatchEvent(new CustomEvent('helpdai-bgm-change', { detail: next }));
-    childWindows.forEach((w) => {
-      try {
-        if (w && !w.closed) {
-          w.dispatchEvent(new w.CustomEvent('helpdai-bgm-change', { detail: next }));
-        } else {
-          childWindows.delete(w);
-        }
-      } catch (_) {
-        childWindows.delete(w);
-      }
-    });
-  };
-
   const writeBgm = (next, emit = true) => {
     try {
       localStorage.setItem(BGM_KEY, JSON.stringify(next));
     } catch (_) {}
-    if (emit) broadcastBgm(next);
+    if (emit) {
+      window.dispatchEvent(new CustomEvent('helpdai-bgm-change', { detail: next }));
+    }
   };
 
   async function fetchTrackTitle(videoId) {
@@ -90,7 +54,7 @@
     return `YouTube (${videoId})`;
   }
 
-  // Single persistent YouTube host in window.top (never destroyed across index.html <-> scoreboard.html)
+  // Persistent YouTube host on current page (never reparented inside DOM)
   const ytFrameHost = document.createElement('div');
   ytFrameHost.id = 'helpdai-top-yt-host';
   ytFrameHost.className = 'fixed w-64 aspect-video rounded-lg overflow-hidden';
@@ -164,7 +128,7 @@
     }
   };
 
-  // Listen for YouTube embed currentTime telemetry so hard refreshes resume at the exact second
+  // Track exact YouTube currentTime so cross-page navigation resumes seamlessly
   window.addEventListener('message', (e) => {
     if (!e.origin.includes('youtube.com')) return;
     try {
@@ -183,79 +147,11 @@
     } catch (_) {}
   });
 
-  // Seamless cross-page shell so switching index.html <-> scoreboard.html never unloads the YouTube iframe
-  let shellFrame = null;
-  let shellOpen = false;
-  const initialPage = location.pathname.endsWith('scoreboard.html') ? 'scoreboard.html' : 'index.html';
-
-  const openShell = (targetHref, pushHistory = true) => {
-    parkOverlay();
-    if (!shellFrame) {
-      shellFrame = document.createElement('iframe');
-      shellFrame.id = 'helpdai-page-shell';
-      shellFrame.src = targetHref;
-      shellFrame.title = 'HelpDaiCha Stage';
-      shellFrame.className = 'fixed inset-0 w-full h-full border-0 z-[200] bg-[#F8F6F0]';
-      shellFrame.setAttribute('allow', 'autoplay; fullscreen; clipboard-write');
-      document.body.appendChild(shellFrame);
-    } else {
-      shellFrame.classList.remove('hidden');
-    }
-    shellOpen = true;
-    if (pushHistory) {
-      try {
-        history.pushState({ helpdaiShell: targetHref }, '', targetHref);
-      } catch (_) {}
-    }
-  };
-
-  const closeShell = (backHref = initialPage, pushHistory = true) => {
-    parkOverlay();
-    if (shellFrame) {
-      shellFrame.classList.add('hidden');
-    }
-    shellOpen = false;
-    if (pushHistory) {
-      try {
-        history.pushState({ helpdaiShell: null }, '', backHref);
-      } catch (_) {}
-    }
-    broadcastBgm(readBgm());
-  };
-
-  window.addEventListener('popstate', () => {
-    const onScoreboard = location.pathname.endsWith('scoreboard.html');
-    const targetPage = onScoreboard ? 'scoreboard.html' : 'index.html';
-    if (targetPage !== initialPage) {
-      openShell(targetPage, false);
-    } else if (shellOpen) {
-      closeShell(initialPage, false);
-    }
-  });
-
-  document.addEventListener('click', (e) => {
-    const a = e.target.closest?.('a[href]');
-    if (!a || a.target === '_blank' || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-    const href = (a.getAttribute('href') || '').trim();
-    if (initialPage === 'index.html' && (href === 'scoreboard.html' || href === './scoreboard.html')) {
-      e.preventDefault();
-      openShell('scoreboard.html', true);
-    } else if (initialPage === 'scoreboard.html' && (href === 'index.html' || href === './index.html')) {
-      e.preventDefault();
-      openShell('index.html', true);
-    }
-  });
-
   window.HelpDaiBgm = Object.freeze({
     getState: readBgm,
     extractYoutubeId,
-    registerChildWindow(win) {
-      if (win) childWindows.add(win);
-    },
     mountOverlay,
     parkOverlay,
-    openShell,
-    closeShell,
     async setTrack(videoId, title = '', playing = true) {
       const cleanId = extractYoutubeId(videoId);
       if (!cleanId) return;
@@ -299,34 +195,37 @@
     let searchOpen = false;
 
     slot.innerHTML = `
-      <!-- Upward Popover for YouTube Link / Search so footer stays on the same horizontal level -->
-      <div id="hub-bgm-input-row" class="hidden absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 w-80 sm:w-96 z-50 vox-card bg-white p-2.5 flex-col gap-2 vox-panel-enter">
-        <div class="flex items-center justify-between gap-2 pb-1 border-b border-[#111111]/15">
-          <span class="font-display font-extrabold text-[11px] text-[#111111]">♪ เลือกเพลงพื้นหลัง YouTube</span>
-          <button type="button" id="hub-bgm-pop-close" class="w-5 h-5 rounded hover:bg-red-100 text-[#111111] hover:text-[#E74C3C] font-black text-[11px] flex items-center justify-center cursor-pointer">✕</button>
+      <!-- Upward Popover for YouTube Link / Search -->
+      <div id="hub-bgm-input-row" class="hidden absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 w-80 sm:w-96 z-50 vox-card bg-white p-3 flex-col gap-2 vox-panel-enter">
+        <div class="flex items-center justify-between gap-2 pb-1.5 border-b-2 border-[#111111]/15">
+          <span class="font-display font-extrabold text-xs text-[#111111]">♪ เลือกเพลงพื้นหลัง YouTube</span>
+          <button type="button" id="hub-bgm-pop-close" class="w-5 h-5 rounded hover:bg-red-100 text-[#111111] hover:text-[#E74C3C] font-black text-xs flex items-center justify-center cursor-pointer">✕</button>
         </div>
         <div class="flex gap-1.5">
-          <input id="hub-bgm-input" type="text" placeholder="วางลิงก์ YouTube หรือพิมพ์ชื่อเพลง..." class="flex-1 min-w-0 bg-[#F8F6F0] border-2 border-[#111111] rounded-lg px-2.5 py-1 text-xs font-semibold text-[#111111] focus:outline-none focus:bg-white" />
+          <input id="hub-bgm-input" type="text" placeholder="วางลิงก์ YouTube หรือพิมพ์ชื่อเพลง..." class="flex-1 min-w-0 bg-[#F8F6F0] border-2 border-[#111111] rounded-lg px-2.5 py-1.5 text-xs font-semibold text-[#111111] focus:outline-none focus:bg-white" />
           <button type="button" id="hub-bgm-go" class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-extrabold text-xs px-3 py-1 rounded-lg cursor-pointer">เล่น</button>
         </div>
         <div id="hub-bgm-results" class="hidden flex-col gap-1 max-h-40 overflow-y-auto"></div>
       </div>
 
-      <!-- Compact Horizontal Footer Card (Same Level as Suggestion Box & ToS) -->
-      <div class="bg-white border-2 border-[#111111] rounded-xl shadow-[2px_2px_0px_#111111] px-2.5 py-1 flex items-center gap-2 w-full">
-        <div id="hub-bgm-thumb-wrap" class="w-8 h-6 rounded-md border border-[#111111] bg-[#F4D03F] flex items-center justify-center overflow-hidden shrink-0">
-          <svg class="w-3.5 h-3.5 text-[#111111]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+      <!-- Compact Vox Music Card (Bottom Center) -->
+      <div class="vox-card bg-white px-3 py-2.5 flex items-center gap-3 w-full max-w-sm mx-auto">
+        <div id="hub-bgm-thumb-wrap" class="w-11 h-11 rounded-xl border-2 border-[#111111] bg-[#F4D03F] flex items-center justify-center overflow-hidden shrink-0 shadow-[2px_2px_0px_#111111]">
+          <svg class="w-5 h-5 text-[#111111]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
         </div>
-        <div class="min-w-0 flex-1 flex items-center gap-1.5">
-          <span id="hub-bgm-dot" class="hidden w-2 h-2 rounded-full bg-[#10B981] shrink-0 animate-pulse"></span>
-          <p id="hub-bgm-title" class="thai-safe-tight font-display font-bold text-[11px] text-[#111111] truncate">ยังไม่ได้เปิดเพลงพื้นหลัง</p>
+        <div class="min-w-0 flex-1 flex flex-col">
+          <div class="flex items-center gap-1.5">
+            <span id="hub-bgm-dot" class="hidden w-2 h-2 rounded-full bg-[#10B981] shrink-0 animate-pulse"></span>
+            <p id="hub-bgm-title" class="thai-safe-tight font-display font-extrabold text-xs text-[#111111] truncate">ยังไม่ได้เลือกเพลงพื้นหลัง</p>
+          </div>
+          <p id="hub-bgm-sub" class="text-[10px] font-semibold text-[#111111]/60 truncate">เล่นต่อเนื่องเมื่อเข้าหน้าเวที</p>
         </div>
-        <div class="flex items-center gap-1 shrink-0">
-          <button type="button" id="hub-bgm-toggle" title="เล่น / พัก" aria-label="เล่นหรือพักเพลง" class="hidden btn-vox w-6 h-6 bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] rounded-md items-center justify-center cursor-pointer"></button>
-          <button type="button" id="hub-bgm-stop" title="ปิดเพลง" aria-label="ปิดเพลง" class="hidden btn-vox w-6 h-6 bg-white hover:bg-red-50 text-[#E74C3C] rounded-md items-center justify-center cursor-pointer">
-            <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
+        <div class="flex items-center gap-1.5 shrink-0">
+          <button type="button" id="hub-bgm-toggle" title="เล่น / พัก" aria-label="เล่นหรือพักเพลง" class="hidden btn-vox w-8 h-8 bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] rounded-lg items-center justify-center cursor-pointer"></button>
+          <button type="button" id="hub-bgm-stop" title="ปิดเพลง" aria-label="ปิดเพลง" class="hidden btn-vox w-8 h-8 bg-white hover:bg-red-50 text-[#E74C3C] rounded-lg items-center justify-center cursor-pointer">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
           </button>
-          <button type="button" id="hub-bgm-edit-btn" title="เลือกเพลง YouTube" aria-label="เลือกเพลง YouTube" class="btn-vox bg-[#111111] hover:bg-[#222222] text-[#F4D03F] font-display font-extrabold text-[10px] px-2 py-0.5 rounded-md cursor-pointer">♪ เพลง</button>
+          <button type="button" id="hub-bgm-edit-btn" title="เลือกเพลง YouTube" aria-label="เลือกเพลง YouTube" class="btn-vox bg-[#111111] hover:bg-[#222222] text-[#F4D03F] font-display font-extrabold text-[11px] px-2.5 py-1.5 rounded-lg cursor-pointer">♪ เพลง</button>
         </div>
       </div>
     `;
@@ -334,6 +233,7 @@
     const thumbWrap = document.getElementById('hub-bgm-thumb-wrap');
     const dotEl = document.getElementById('hub-bgm-dot');
     const titleEl = document.getElementById('hub-bgm-title');
+    const subEl = document.getElementById('hub-bgm-sub');
     const toggleBtn = document.getElementById('hub-bgm-toggle');
     const stopBtn = document.getElementById('hub-bgm-stop');
     const editBtn = document.getElementById('hub-bgm-edit-btn');
@@ -363,12 +263,14 @@
       if (hasTrack) {
         thumbWrap.innerHTML = `<img src="https://i.ytimg.com/vi/${st.videoId}/hqdefault.jpg" alt="" class="w-full h-full object-cover" />`;
         titleEl.textContent = st.title || `YouTube (${st.videoId})`;
+        if (subEl) subEl.textContent = st.playing ? 'กำลังเล่น • ต่อเนื่องข้ามหน้า' : 'หยุดชั่วคราว';
         toggleBtn.innerHTML = st.playing
-          ? '<svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>'
-          : '<svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l15 8-15 8V4z"/></svg>';
+          ? '<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>'
+          : '<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l15 8-15 8V4z"/></svg>';
       } else {
-        thumbWrap.innerHTML = '<svg class="w-3.5 h-3.5 text-[#111111]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>';
-        titleEl.textContent = 'ยังไม่ได้เปิดเพลงพื้นหลัง';
+        thumbWrap.innerHTML = '<svg class="w-5 h-5 text-[#111111]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>';
+        titleEl.textContent = 'ยังไม่ได้เลือกเพลงพื้นหลัง';
+        if (subEl) subEl.textContent = 'เล่นต่อเนื่องเมื่อเข้าหน้าเวที';
       }
     };
 

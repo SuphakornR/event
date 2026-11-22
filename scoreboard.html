@@ -19,7 +19,7 @@
   <style>html,body{cursor:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 26 26'%3E%3Cpath d='M4 3 L20 13 L12.5 15 L9.5 22 Z' transform='translate(2 2)' fill='%23111111'/%3E%3Cpath d='M4 3 L20 13 L12.5 15 L9.5 22 Z' fill='%23F4D03F' stroke='%23111111' stroke-width='2.2' stroke-linejoin='round'/%3E%3C/svg%3E") 4 3,auto}</style>
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <link rel="stylesheet" href="assets/css/vox.css?v=20261122g" />
+  <link rel="stylesheet" href="assets/css/vox.css?v=20261123a" />
 </head>
 <body class="flex flex-col justify-between selection:bg-yellow-300 selection:text-black">
   <script src="assets/js/loader.js?v=20261122d"></script>
@@ -336,9 +336,15 @@
         </div>
       </div>
 
-      <!-- Circular Liquid-Rise Vox Countdown (Single Pure Front Wave Color, Seamless Overlap) -->
+      <!-- Circular Liquid-Rise Vox Countdown (Dual Layered Waves: Darker Back Flow + Pure Front Wave) -->
       <div class="timer-circle-mask relative w-64 h-64 sm:w-80 sm:h-80 rounded-full border-[5px] border-[#111111] bg-[#F8F6F0] shadow-[8px_8px_0px_#111111] overflow-hidden flex items-center justify-center">
-        <!-- Pure Single-Color Wave Layer (deep solid base eliminates any horizontal seam) -->
+        <!-- Back Darker Wave Layer (Opposite Flow Speed & Phase, Zero Seam) -->
+        <div id="center-timer-bar-back" class="timer-liquid-fill" style="height: 0%; background-color: #1B5E8A;">
+          <svg class="timer-liquid-wave-back" viewBox="0 0 240 64" preserveAspectRatio="none" aria-hidden="true">
+            <path id="center-timer-wave-back-path" d="M0 24 Q 30 46 60 24 T 120 24 T 180 24 T 240 24 L 240 64 L 0 64 Z" fill="#1B5E8A"/>
+          </svg>
+        </div>
+        <!-- Front Brighter Wave Layer (Pure Solid Color, Zero Seam) -->
         <div id="center-timer-bar" class="timer-liquid-fill" style="height: 0%; background-color: #2980B9;">
           <svg class="timer-liquid-wave" viewBox="0 0 240 64" preserveAspectRatio="none" aria-hidden="true">
             <path id="center-timer-wave-path" d="M0 24 Q 30 2 60 24 T 120 24 T 180 24 T 240 24 L 240 64 L 0 64 Z" fill="#2980B9"/>
@@ -375,14 +381,14 @@
   <script src="assets/js/config.js?v=20261122b" defer></script>
   <script src="assets/js/security.js?v=20261122b" defer></script>
   <script src="assets/js/mascots.js?v=20261122b" defer></script>
-  <script src="assets/js/scoreboard.js?v=20261122g" defer></script>
+  <script src="assets/js/scoreboard.js?v=20261123a" defer></script>
   <script src="assets/js/auth.js?v=20261122b" defer></script>
-  <script src="assets/js/cloud-sync.js?v=20261122g" defer></script>
+  <script src="assets/js/cloud-sync.js?v=20261123a" defer></script>
   <script src="assets/js/tos.js?v=20261122b" defer></script>
   <script src="assets/js/tutorial.js?v=20261122b" defer></script>
   <script src="assets/js/context-menu.js?v=20261122e" defer></script>
-  <script src="assets/js/bgm-dock.js?v=20261122f" defer></script>
-  <script src="assets/js/toolbox.js?v=20261122g" defer></script>
+  <script src="assets/js/bgm-dock.js?v=20261123a" defer></script>
+  <script src="assets/js/toolbox.js?v=20261123a" defer></script>
   <script>
     (() => {
       const BANNER_KEY = 'helpdai_stage_custom_banner_v1';

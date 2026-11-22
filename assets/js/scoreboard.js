@@ -844,7 +844,40 @@
         } catch (_) {}
       }
 
-      function playTimerTick() {
+      const timerTickAudio = typeof Audio !== 'undefined' ? new Audio('assets/audio/timer-tick.mp3') : null;
+      const timerTimesUpAudio = typeof Audio !== 'undefined' ? new Audio('assets/audio/timer-timesup.mp3') : null;
+      if (timerTickAudio) timerTickAudio.preload = 'auto';
+      if (timerTimesUpAudio) timerTimesUpAudio.preload = 'auto';
+
+      function stopTimerTickAudio() {
+        try {
+          if (timerTickAudio && !timerTickAudio.paused) {
+            timerTickAudio.pause();
+            timerTickAudio.currentTime = 0;
+          }
+        } catch (_) {}
+      }
+
+      function syncTimerTickAudio(sec, running) {
+        if (!running || sec <= 0 || sec > 5) {
+          stopTimerTickAudio();
+          return;
+        }
+        if (timerTickAudio) {
+          try {
+            if (timerTickAudio.paused) {
+              timerTickAudio.currentTime = Math.max(0, Math.min(4.8, 5 - sec));
+              timerTickAudio.volume = 1;
+              const p = timerTickAudio.play();
+              if (p && typeof p.catch === 'function') p.catch(() => playSynthTimerTick());
+            }
+            return;
+          } catch (_) {}
+        }
+        playSynthTimerTick();
+      }
+
+      function playSynthTimerTick() {
         try {
           const ctxAudio = getAudioCtx();
           if (!ctxAudio) return;
@@ -865,7 +898,7 @@
         } catch (_) {}
       }
 
-      function playTimerChime() {
+      function playSynthTimerChime() {
         try {
           const ctxAudio = getAudioCtx();
           if (ctxAudio) {
@@ -888,6 +921,20 @@
         } catch (_) {}
       }
 
+      function playTimerChime() {
+        stopTimerTickAudio();
+        if (timerTimesUpAudio) {
+          try {
+            timerTimesUpAudio.currentTime = 0;
+            timerTimesUpAudio.volume = 1;
+            const p = timerTimesUpAudio.play();
+            if (p && typeof p.catch === 'function') p.catch(() => playSynthTimerChime());
+            return;
+          } catch (_) {}
+        }
+        playSynthTimerChime();
+      }
+
       let lastTimerRenderKey = '';
 
       function renderTimerUI() {
@@ -902,13 +949,15 @@
           timerChimePlayed = false;
         }
 
-        // Final 5-second tick cue + digit pop on Stage
+        // Synced final 5-second ticking cue + digit pop on Stage
         const secondChanged = sec !== lastTickSec;
         if (secondChanged) {
           lastTickSec = sec;
-          if (currentRole === 'stage' && t.running && sec > 0 && sec <= 5) {
-            playTimerTick();
-          }
+        }
+        if (currentRole === 'stage' && !window.VoxCloudSync?.isDisplayMode?.()) {
+          syncTimerTickAudio(sec, t.running);
+        } else {
+          stopTimerTickAudio();
         }
 
         // Auto-stop when countdown hits 0
@@ -922,7 +971,7 @@
             window.__voxLiquidRaf = null;
           }
           saveAndBroadcast();
-          if (currentRole === 'stage' && !timerChimePlayed) {
+          if (currentRole === 'stage' && !window.VoxCloudSync?.isDisplayMode?.() && !timerChimePlayed) {
             timerChimePlayed = true;
             playTimerChime();
           }
@@ -935,6 +984,7 @@
         const centerCard = document.getElementById('center-timer-card');
         const centerDigits = document.getElementById('center-timer-digits');
         const centerBar = document.getElementById('center-timer-bar');
+        const centerBarBack = document.getElementById('center-timer-bar-back');
         const centerStatusText = document.getElementById('center-timer-status-text');
         const centerTimesUp = document.getElementById('center-timer-timesup-badge');
         const showCenter = Boolean(currentRole === 'stage' && t.visible && t.mode === 'center');
@@ -953,8 +1003,13 @@
           const elapsedPct = Math.max(0, Math.min(100, ((totalDur * 1000 - remMs) / (totalDur * 1000)) * 100));
           const hasStarted = elapsedPct > 0.05;
           centerBar.classList.toggle('is-flowing', Boolean(t.running && showCenter));
+          if (centerBarBack) centerBarBack.classList.toggle('is-flowing', Boolean(t.running && showCenter));
           centerBar.style.opacity = hasStarted ? '1' : '0';
           centerBar.style.height = `${elapsedPct}%`;
+          if (centerBarBack) {
+            centerBarBack.style.opacity = hasStarted ? '1' : '0';
+            centerBarBack.style.height = `${Math.min(100, elapsedPct + (hasStarted && elapsedPct < 98 ? 2.4 : 0))}%`;
+          }
           if (t.running && showCenter && !window.__voxLiquidRaf) {
             const tickLiquid = () => {
               const cur = state.timer;
@@ -969,6 +1024,10 @@
               const started = pct > 0.05;
               centerBar.style.opacity = started ? '1' : '0';
               centerBar.style.height = `${pct}%`;
+              if (centerBarBack) {
+                centerBarBack.style.opacity = started ? '1' : '0';
+                centerBarBack.style.height = `${Math.min(100, pct + (started && pct < 98 ? 2.4 : 0))}%`;
+              }
               if (leftMs > 0) {
                 window.__voxLiquidRaf = requestAnimationFrame(tickLiquid);
               } else {
@@ -987,9 +1046,13 @@
           const isCritical = sec <= 5;
           const isWarn = sec > 5 && sec <= 15;
           const liquidColor = isCritical ? '#E74C3C' : (isWarn ? '#F4D03F' : '#2980B9');
+          const darkLiquidColor = isCritical ? '#A93226' : (isWarn ? '#B7950B' : '#1B5E8A');
           centerBar.style.backgroundColor = liquidColor;
+          if (centerBarBack) centerBarBack.style.backgroundColor = darkLiquidColor;
           const wavePath = document.getElementById('center-timer-wave-path');
           if (wavePath) wavePath.setAttribute('fill', liquidColor);
+          const waveBackPath = document.getElementById('center-timer-wave-back-path');
+          if (waveBackPath) waveBackPath.setAttribute('fill', darkLiquidColor);
 
           centerCard.classList.add('bg-[#FFFFFF]', 'text-[#111111]');
           centerCard.classList.remove('bg-[#FFE8E6]', 'bg-[#FFFDF5]');
