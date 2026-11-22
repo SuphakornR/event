@@ -3572,24 +3572,12 @@
       window.addEventListener('resize', resizeConfettiCanvas);
       resizeConfettiCanvas();
 
-      let drumrollTimerId = null;
-      let drumStartTimerId = null;
-      let spotlightRafId = null;
+      let victoryTimers = [];
       let confettiWaveTimers = [];
 
       function hideVictorySpotlight() {
-        if (drumrollTimerId) {
-          clearTimeout(drumrollTimerId);
-          drumrollTimerId = null;
-        }
-        if (drumStartTimerId) {
-          clearTimeout(drumStartTimerId);
-          drumStartTimerId = null;
-        }
-        if (spotlightRafId) {
-          cancelAnimationFrame(spotlightRafId);
-          spotlightRafId = null;
-        }
+        victoryTimers.forEach(id => clearTimeout(id));
+        victoryTimers = [];
         confettiWaveTimers.forEach(id => clearTimeout(id));
         confettiWaveTimers = [];
         stopVictoryAudio();
@@ -3600,112 +3588,37 @@
 
       function triggerVictorySequence() {
         hideVictorySpotlight();
-        const SEARCH_MS = 3200;
+        const STEP1_MS = 1050;
         const DRUMROLL_MS = 2120;
-        // Start drumroll so its final hit lands right as the slow spotlight locks on the Winner card
-        drumStartTimerId = setTimeout(() => {
-          drumStartTimerId = null;
-          if (state.winnerAnnounced && document.getElementById('victory-drumroll-overlay')) {
-            playDrumroll(DRUMROLL_MS);
-          }
-        }, Math.max(0, SEARCH_MS - DRUMROLL_MS));
-
-        // Determine ranked winner card coordinates + decoy spotlight stops
-        const ranked = state.teams
-          .map((t, idx) => ({ ...t, originalIndex: idx, total: getTeamTotal(t) }))
-          .sort((a, b) => b.total - a.total || a.originalIndex - b.originalIndex);
-        const champ = ranked[0];
-        const vw = window.innerWidth;
-        const vh = window.innerHeight;
-
-        const getCenterOfTeam = (teamId) => {
-          const row = teamId ? document.querySelector(`.team-row[data-team-id="${teamId}"]`) : null;
-          if (!row) return null;
-          const r = row.getBoundingClientRect();
-          if (r.width < 10 || r.height < 10) return null;
-          return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
-        };
-
-        const winnerPt = getCenterOfTeam(champ?.id) || { x: vw * 0.65, y: vh * 0.45 };
-        const rowPts = Array.from(document.querySelectorAll('.team-row'))
-          .map(el => {
-            const r = el.getBoundingClientRect();
-            return r.width > 10 ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : null;
-          })
-          .filter(Boolean);
-
-        const decoyPts = rowPts.filter(p => Math.hypot(p.x - winnerPt.x, p.y - winnerPt.y) > 45);
-        const pickRandomPt = () => decoyPts.length
-          ? decoyPts[Math.floor(Math.random() * decoyPts.length)]
-          : { x: vw * (0.22 + Math.random() * 0.56), y: vh * (0.24 + Math.random() * 0.52) };
-
-        const waypoints = [
-          { x: vw * 0.22, y: vh * 0.26 },
-          pickRandomPt(),
-          { x: vw * (0.28 + Math.random() * 0.44), y: vh * (0.34 + Math.random() * 0.34) },
-          pickRandomPt(),
-          winnerPt
-        ];
+        const TOTAL_MS = STEP1_MS + DRUMROLL_MS;
 
         const drumOverlay = document.createElement('div');
         drumOverlay.id = 'victory-drumroll-overlay';
-        drumOverlay.className = 'fixed inset-0 z-[76] pointer-events-auto overflow-hidden';
+        drumOverlay.className = 'fixed inset-0 z-[76] bg-[#050507]/95 backdrop-blur-md flex items-center justify-center p-6 overflow-hidden select-none';
         drumOverlay.innerHTML = `
-          <div id="victory-spotlight-mask" class="absolute inset-0" style="background: radial-gradient(circle 155px at 50% 50%, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.06) 54%, rgba(255,255,255,0.22) 68%, rgba(4,4,6,0.93) 82%, rgba(4,4,6,0.97) 100%);"></div>
-          <div id="victory-spotlight-ring" class="pointer-events-none fixed -translate-x-1/2 -translate-y-1/2 w-[310px] h-[310px] rounded-full border-2 border-white/70 shadow-[0_0_64px_20px_rgba(255,255,255,0.38),inset_0_0_36px_rgba(255,255,255,0.22)]"></div>
-          <div class="fixed top-5 left-1/2 -translate-x-1/2 z-10 inline-flex items-center gap-2 bg-[#111111]/90 text-white border-2 border-white/75 px-4 py-1.5 rounded-full shadow-[0_0_24px_rgba(255,255,255,0.25)] font-display font-black text-xs sm:text-sm tracking-wider">
-            <span class="w-2.5 h-2.5 rounded-full bg-white animate-ping"></span>
-            <span>กำลังค้นหาผู้ชนะ...</span>
+          <div class="pointer-events-none fixed inset-0 opacity-25" style="background: radial-gradient(circle at 50% 50%, rgba(244,208,63,0.38) 0%, transparent 65%);"></div>
+          <div id="victory-suspense-stage" class="relative z-10 text-center flex flex-col items-center gap-3">
+            <p class="victory-card-slam thai-safe font-display font-black text-5xl sm:text-7xl text-[#F4D03F] tracking-tight drop-shadow-[0_6px_0_#111111]">และ...</p>
+            <span class="font-display font-extrabold text-sm sm:text-base uppercase tracking-[0.28em] text-white/60">AND...</span>
           </div>
         `;
         document.body.appendChild(drumOverlay);
 
-        const maskEl = document.getElementById('victory-spotlight-mask');
-        const ringEl = document.getElementById('victory-spotlight-ring');
-        const startTime = performance.now();
-
-        const animateSpotlight = (now) => {
-          const elapsed = now - startTime;
-          const totalProgress = Math.min(1, elapsed / SEARCH_MS);
-          const segCount = waypoints.length - 1;
-          const segFloat = totalProgress * segCount;
-          const segIdx = Math.min(segCount - 1, Math.floor(segFloat));
-          const localT = segFloat - segIdx;
-          // Slower dramatic easeInOutQuart per segment (lingers slightly at each stop)
-          const easeT = localT < 0.5
-            ? 8 * localT * localT * localT * localT
-            : 1 - Math.pow(-2 * localT + 2, 4) / 2;
-
-          const p0 = waypoints[segIdx];
-          const p1 = waypoints[segIdx + 1];
-          const cx = p0.x + (p1.x - p0.x) * easeT;
-          const cy = p0.y + (p1.y - p0.y) * easeT;
-          const radius = Math.round(158 - (totalProgress > 0.78 ? (totalProgress - 0.78) * 115 : 0));
-
-          if (maskEl) {
-            maskEl.style.background = `radial-gradient(circle ${radius}px at ${Math.round(cx)}px ${Math.round(cy)}px, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.06) 54%, rgba(255,255,255,0.22) 68%, rgba(4,4,6,0.93) 82%, rgba(4,4,6,0.97) 100%)`;
+        // Step 2: Play drumroll + switch big headline to "ผู้ชนะคือ...." / "THE WINNER IS...."
+        victoryTimers.push(setTimeout(() => {
+          if (!state.winnerAnnounced) return;
+          playDrumroll(DRUMROLL_MS);
+          const stageBox = document.getElementById('victory-suspense-stage');
+          if (stageBox) {
+            stageBox.innerHTML = `
+              <p class="victory-card-slam victory-drum-shake thai-safe font-display font-black text-5xl sm:text-7xl text-white tracking-tight drop-shadow-[0_6px_0_#111111]">ผู้ชนะคือ<span class="text-[#F4D03F]">....</span></p>
+              <span class="font-display font-extrabold text-sm sm:text-base uppercase tracking-[0.28em] text-[#F4D03F]">THE WINNER IS....</span>
+            `;
           }
-          if (ringEl) {
-            ringEl.style.left = `${Math.round(cx)}px`;
-            ringEl.style.top = `${Math.round(cy)}px`;
-            ringEl.style.width = `${radius * 2}px`;
-            ringEl.style.height = `${radius * 2}px`;
-          }
+        }, STEP1_MS));
 
-          if (totalProgress < 1 && document.getElementById('victory-drumroll-overlay')) {
-            spotlightRafId = requestAnimationFrame(animateSpotlight);
-          } else {
-            spotlightRafId = null;
-          }
-        };
-        spotlightRafId = requestAnimationFrame(animateSpotlight);
-
-        drumrollTimerId = setTimeout(() => {
-          drumrollTimerId = null;
-          if (spotlightRafId) {
-            cancelAnimationFrame(spotlightRafId);
-            spotlightRafId = null;
-          }
+        // Step 3: Flash + reveal Winner group!
+        victoryTimers.push(setTimeout(() => {
           document.getElementById('victory-drumroll-overlay')?.remove();
           if (state.winnerAnnounced) {
             const flash = document.createElement('div');
@@ -3715,7 +3628,7 @@
             setTimeout(() => flash.remove(), 650);
             launchConfetti();
           }
-        }, SEARCH_MS);
+        }, TOTAL_MS));
       }
 
       function showVictorySpotlight() {

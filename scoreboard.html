@@ -22,7 +22,7 @@
   <link rel="stylesheet" href="assets/css/vox.css?v=20261123b" />
 </head>
 <body class="flex flex-col justify-between selection:bg-yellow-300 selection:text-black">
-  <script src="assets/js/loader.js?v=20261122d"></script>
+  <script src="assets/js/loader.js?v=20261123c"></script>
 
   <!-- Confetti Canvas -->
   <canvas id="confetti-canvas"></canvas>
@@ -128,7 +128,7 @@
 
         <div class="absolute top-2 right-2 z-20 flex items-center gap-1">
           <div id="stage-banner-dots" class="flex items-center gap-1 bg-[#111111]/75 backdrop-blur-sm px-1.5 py-1 rounded-md border border-white/20"></div>
-          <input type="file" id="stage-banner-file" accept="image/*" class="hidden" />
+          <input type="file" id="stage-banner-file" accept="image/*" multiple class="hidden" />
         </div>
       </aside>
     </header>
@@ -465,41 +465,59 @@
         }
       ];
 
+      const BANNERS_KEY = 'helpdai_stage_custom_banners_v1';
       let idx = 0;
       let timerId = null;
 
-      const getCustomImg = () => {
-        try { return localStorage.getItem(BANNER_KEY) || ''; } catch (_) { return ''; }
+      const getCustomImgs = () => {
+        try {
+          const arr = JSON.parse(localStorage.getItem(BANNERS_KEY) || 'null');
+          if (Array.isArray(arr) && arr.length) return arr.filter(Boolean);
+          const legacy = localStorage.getItem(BANNER_KEY);
+          if (legacy) {
+            localStorage.setItem(BANNERS_KEY, JSON.stringify([legacy]));
+            localStorage.removeItem(BANNER_KEY);
+            return [legacy];
+          }
+        } catch (_) {}
+        return [];
+      };
+      const saveCustomImgs = (arr) => {
+        try {
+          if (arr.length) localStorage.setItem(BANNERS_KEY, JSON.stringify(arr));
+          else localStorage.removeItem(BANNERS_KEY);
+        } catch (_) {}
+      };
+      const getCount = () => {
+        const c = getCustomImgs();
+        return c.length ? c.length : SLIDES.length;
       };
 
       const renderSlides = () => {
-        const customImg = getCustomImg();
-        resetBtn?.classList.toggle('hidden', !customImg);
-        if (customImg) {
-          clearInterval(timerId);
-          trackEl.style.transform = 'translateX(0%)';
-          trackEl.innerHTML = `<div class="w-full h-full shrink-0 relative"><img src="${customImg}" alt="Event Banner" class="w-full h-full object-cover" /></div>`;
-          dotsEl.innerHTML = '';
-          return;
-        }
-
-        trackEl.innerHTML = SLIDES.map(s => `
-          <div class="w-full h-full shrink-0 relative flex flex-col justify-end overflow-hidden">
-            <div class="absolute inset-0">${s.art}</div>
-            <div class="relative z-10 bg-gradient-to-t from-[#111111] via-[#111111]/85 to-transparent px-3 pt-4 pb-1.5 flex items-center gap-2">
-              <span class="text-[9px] font-display font-black px-1.5 py-0.5 rounded border border-[#111111] shrink-0" style="background:${s.accent}; color:${s.accent === '#F4D03F' ? '#111111' : '#FFFFFF'}">${s.tag}</span>
-              <span class="thai-safe-tight font-display font-bold text-[11px] sm:text-xs text-white truncate">${s.title}</span>
+        const customImgs = getCustomImgs();
+        idx = 0;
+        if (customImgs.length) {
+          trackEl.innerHTML = customImgs.map(src => `<div class="w-full h-full shrink-0 relative"><img src="${src}" alt="Event Banner" class="w-full h-full object-cover" /></div>`).join('');
+        } else {
+          trackEl.innerHTML = SLIDES.map(s => `
+            <div class="w-full h-full shrink-0 relative flex flex-col justify-end overflow-hidden">
+              <div class="absolute inset-0">${s.art}</div>
+              <div class="relative z-10 bg-gradient-to-t from-[#111111] via-[#111111]/85 to-transparent px-3 pt-4 pb-1.5 flex items-center gap-2">
+                <span class="text-[9px] font-display font-black px-1.5 py-0.5 rounded border border-[#111111] shrink-0" style="background:${s.accent}; color:${s.accent === '#F4D03F' ? '#111111' : '#FFFFFF'}">${s.tag}</span>
+                <span class="thai-safe-tight font-display font-bold text-[11px] sm:text-xs text-white truncate">${s.title}</span>
+              </div>
             </div>
-          </div>
-        `).join('');
+          `).join('');
+        }
         syncState();
         resetAuto();
       };
 
       const syncState = () => {
-        if (getCustomImg()) return;
+        const total = getCount();
         trackEl.style.transform = `translateX(-${idx * 100}%)`;
-        dotsEl.innerHTML = SLIDES.map((_, i) => `
+        dotsEl.classList.toggle('hidden', total <= 1);
+        dotsEl.innerHTML = Array.from({ length: total }, (_, i) => `
           <button type="button" data-sb-dot="${i}" aria-label="แบนเนอร์ ${i + 1}" class="h-1.5 rounded-full transition-all cursor-pointer ${i === idx ? 'w-4 bg-[#F4D03F]' : 'w-1.5 bg-white/60'}"></button>
         `).join('');
         dotsEl.querySelectorAll('[data-sb-dot]').forEach(b => {
@@ -508,15 +526,15 @@
       };
 
       const go = (next) => {
-        if (getCustomImg()) return;
-        idx = ((next % SLIDES.length) + SLIDES.length) % SLIDES.length;
+        const total = getCount();
+        idx = ((next % total) + total) % total;
         syncState();
         resetAuto();
       };
 
       const resetAuto = () => {
         clearInterval(timerId);
-        if (!getCustomImg()) {
+        if (getCount() > 1) {
           timerId = setInterval(() => go(idx + 1), 5000);
         }
       };
@@ -528,41 +546,49 @@
         if (!m) {
           m = document.createElement('div');
           m.id = 'stage-banner-ctx';
-          m.className = 'fixed z-[180] hidden flex-col gap-1 w-52 vox-card bg-[#F8F6F0] p-1.5 vox-panel-enter';
+          m.className = 'fixed z-[180] hidden flex-col gap-1 w-56 vox-card bg-[#F8F6F0] p-1.5 vox-panel-enter';
           document.body.appendChild(m);
           document.addEventListener('click', (ev) => { if (!m.contains(ev.target)) m.classList.add('hidden'); });
           window.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') m.classList.add('hidden'); });
         }
-        const hasCustom = Boolean(getCustomImg());
+        const customImgs = getCustomImgs();
         m.innerHTML = `
           <button type="button" data-sbc="upload" class="w-full text-left px-2.5 py-1.5 rounded-lg font-display font-bold text-xs text-[#111111] hover:bg-[#F4D03F] cursor-pointer flex items-center gap-2">
             <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2.5" y="3.5" width="19" height="17" rx="3" fill="#111111"/><circle cx="8" cy="9" r="2" fill="#F4D03F"/><path d="M5 17.5l4.5-4.5 3 3 3.5-4 3 5.5H5z" fill="#F8F6F0"/></svg>
-            <span>เปลี่ยนภาพแบนเนอร์</span>
+            <span>เพิ่ม / เปลี่ยนภาพแบนเนอร์</span>
           </button>
-          ${hasCustom ? `<button type="button" data-sbc="reset" class="w-full text-left px-2.5 py-1.5 rounded-lg font-display font-bold text-xs text-[#E74C3C] hover:bg-red-50 cursor-pointer flex items-center gap-2"><svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg><span>คืนค่าแบนเนอร์เริ่มต้น</span></button>` : ''}
+          ${customImgs.length > 1 ? `<button type="button" data-sbc="delone" class="w-full text-left px-2.5 py-1.5 rounded-lg font-display font-bold text-xs text-[#E74C3C] hover:bg-red-50 cursor-pointer flex items-center gap-2"><svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg><span>ลบภาพสไลด์นี้</span></button>` : ''}
+          ${customImgs.length ? `<button type="button" data-sbc="reset" class="w-full text-left px-2.5 py-1.5 rounded-lg font-display font-bold text-xs text-[#E74C3C] hover:bg-red-50 cursor-pointer flex items-center gap-2"><svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg><span>คืนค่าแบนเนอร์เริ่มต้น</span></button>` : ''}
         `;
         m.querySelector('[data-sbc="upload"]')?.addEventListener('click', () => { m.classList.add('hidden'); fileInp?.click(); });
-        m.querySelector('[data-sbc="next"]')?.addEventListener('click', () => { m.classList.add('hidden'); go(idx + 1); });
+        m.querySelector('[data-sbc="delone"]')?.addEventListener('click', () => {
+          m.classList.add('hidden');
+          saveCustomImgs(customImgs.filter((_, i) => i !== idx));
+          renderSlides();
+        });
         m.querySelector('[data-sbc="reset"]')?.addEventListener('click', () => {
           m.classList.add('hidden');
-          try { localStorage.removeItem(BANNER_KEY); } catch (_) {}
+          saveCustomImgs([]);
           renderSlides();
         });
         m.classList.remove('hidden');
         m.classList.add('flex');
-        m.style.left = `${Math.max(8, Math.min(e.clientX, window.innerWidth - 220))}px`;
-        m.style.top = `${Math.max(8, Math.min(e.clientY, window.innerHeight - 130))}px`;
+        m.style.left = `${Math.max(8, Math.min(e.clientX, window.innerWidth - 235))}px`;
+        m.style.top = `${Math.max(8, Math.min(e.clientY, window.innerHeight - 150))}px`;
       });
 
-      fileInp?.addEventListener('change', () => {
-        const f = fileInp.files?.[0];
-        if (!f) return;
-        const reader = new FileReader();
-        reader.onload = () => {
-          try { localStorage.setItem(BANNER_KEY, String(reader.result)); } catch (_) {}
-          renderSlides();
-        };
-        reader.readAsDataURL(f);
+      fileInp?.addEventListener('change', async () => {
+        const files = Array.from(fileInp.files || []);
+        if (!files.length) return;
+        const readAsData = (f) => new Promise((res) => {
+          const r = new FileReader();
+          r.onload = () => res(String(r.result || ''));
+          r.readAsDataURL(f);
+        });
+        const newUrls = (await Promise.all(files.map(readAsData))).filter(Boolean);
+        saveCustomImgs([...getCustomImgs(), ...newUrls]);
+        fileInp.value = '';
+        renderSlides();
       });
 
       const stageSizeBadge = document.getElementById('stage-banner-size-badge');

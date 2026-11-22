@@ -1,4 +1,4 @@
-/* Real-progress loading screen: tracks DOMContentLoaded, fonts.ready, and window.load with zero artificial delay. */
+/* Real-progress loading screen: tracks real DOMContentLoaded, fonts.ready, stage readiness, and window.load (no fake speedups). */
 (() => {
   const VOX_CURSOR_CSS = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 26 26'%3E%3Cpath d='M4 3 L20 13 L12.5 15 L9.5 22 Z' transform='translate(2 2)' fill='%23111111'/%3E%3Cpath d='M4 3 L20 13 L12.5 15 L9.5 22 Z' fill='%23F4D03F' stroke='%23111111' stroke-width='2.2' stroke-linejoin='round'/%3E%3C/svg%3E") 4 3, auto`;
   document.body.insertAdjacentHTML('afterbegin', `
@@ -24,21 +24,43 @@
       </div>
       <div class="flex flex-col items-center gap-2">
         <div class="loader-bar"><div id="loader-bar-fill" class="loader-bar-fill"></div></div>
-        <span id="loader-pct" class="font-display font-extrabold text-xs tracking-[0.2em] text-[#111111]">LOADING • 15%</span>
+        <span id="loader-pct" class="font-display font-extrabold text-xs tracking-[0.2em] text-[#111111]">LOADING • 0%</span>
       </div>
     </div>`);
 
   const loaderEl = document.getElementById('app-loader');
   const fillEl = document.getElementById('loader-bar-fill');
   const pctEl = document.getElementById('loader-pct');
-  let progress = 15;
+  let progress = 0;
   let finished = false;
 
   const setProgress = (next) => {
-    if (finished || next <= progress) return;
-    progress = Math.min(100, next);
+    if (finished) return;
+    const clamped = Math.max(0, Math.min(100, Math.round(next)));
+    if (clamped <= progress) return;
+    progress = clamped;
     if (fillEl) fillEl.style.width = `${progress}%`;
     if (pctEl) pctEl.textContent = progress >= 100 ? 'READY • 100%' : `LOADING • ${progress}%`;
+  };
+
+  let domDone = document.readyState === 'interactive' || document.readyState === 'complete';
+  let winLoadDone = document.readyState === 'complete';
+  let fontsDone = false;
+  const needsStageReady = () => Boolean(document.getElementById('stage-container'));
+  let stageDone = !needsStageReady() || Boolean(window.__voxStageReady);
+  let loadedResourcesCount = 0;
+
+  const computeRealProgress = () => {
+    // Real weighted progress from actual browser loading milestones + network resource entries
+    let p = 5;
+    if (domDone) p += 28;
+    if (fontsDone) p += 20;
+    if (stageDone) p += 22;
+    if (winLoadDone) p += 25;
+    if (!winLoadDone) {
+      p += Math.min(16, loadedResourcesCount * 2);
+    }
+    return Math.min(winLoadDone && domDone && fontsDone && stageDone ? 100 : 96, p);
   };
 
   const finish = () => {
@@ -49,50 +71,51 @@
     setTimeout(() => loaderEl.remove(), 320);
   };
 
-  if (document.readyState === 'interactive' || document.readyState === 'complete') {
-    setProgress(55);
-  } else {
-    document.addEventListener('DOMContentLoaded', () => setProgress(55), { once: true });
-  }
-
-  let fontsDone = false;
-  let domDone = document.readyState === 'interactive' || document.readyState === 'complete';
-  const needsStageReady = () => Boolean(document.getElementById('stage-container'));
-  let stageDone = !needsStageReady() || Boolean(window.__voxStageReady);
-
   const checkDone = () => {
-    if (fontsDone && domDone && stageDone) {
+    setProgress(computeRealProgress());
+    if (fontsDone && domDone && stageDone && winLoadDone) {
       requestAnimationFrame(() => requestAnimationFrame(finish));
     }
   };
 
+  // Track real loaded scripts, stylesheets, and images via PerformanceObserver
+  try {
+    loadedResourcesCount = performance.getEntriesByType('resource').length;
+    if (typeof PerformanceObserver !== 'undefined') {
+      const po = new PerformanceObserver((list) => {
+        loadedResourcesCount += list.getEntries().length;
+        if (!finished) setProgress(computeRealProgress());
+      });
+      po.observe({ type: 'resource', buffered: true });
+    }
+  } catch (_) {}
+
   if (!stageDone) {
     window.addEventListener('vox-stage-ready', () => {
       stageDone = true;
-      setProgress(90);
       checkDone();
     }, { once: true });
   }
 
-  if (domDone) {
-    if (!needsStageReady()) stageDone = true;
-    setProgress(75);
-  } else {
+  if (!domDone) {
     document.addEventListener('DOMContentLoaded', () => {
       domDone = true;
       if (!needsStageReady() || window.__voxStageReady) stageDone = true;
-      setProgress(stageDone ? 85 : 70);
+      checkDone();
+    }, { once: true });
+  }
+
+  if (!winLoadDone) {
+    window.addEventListener('load', () => {
+      winLoadDone = true;
+      if (!needsStageReady() || window.__voxStageReady) stageDone = true;
       checkDone();
     }, { once: true });
   }
 
   if (document.fonts?.ready) {
-    Promise.race([
-      document.fonts.ready,
-      new Promise((resolve) => setTimeout(resolve, 180))
-    ]).then(() => {
+    document.fonts.ready.then(() => {
       fontsDone = true;
-      setProgress(domDone ? 100 : 85);
       checkDone();
     }).catch(() => {
       fontsDone = true;
@@ -100,11 +123,12 @@
     });
   } else {
     fontsDone = true;
-    checkDone();
   }
 
-  // Safety timeout in case a slow external CDN/font hangs
-  setTimeout(finish, 750);
+  checkDone();
+
+  // Emergency fallback only if an external CDN hangs completely (> 12s)
+  setTimeout(finish, 12000);
 
   // Auto-hide custom Vox cursor after 2.8s of mouse inactivity
   let idleCursorTimer = null;
