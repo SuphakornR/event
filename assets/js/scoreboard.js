@@ -1678,8 +1678,7 @@
       function renderActivityList() {
         const row = document.getElementById('game-cards-row');
         if (!row) return;
-        const dense = state.games.length >= 5;
-        row.className = `flex-1 min-h-0 flex flex-col ${dense ? 'gap-1.5' : 'gap-2'} overflow-y-auto pr-0.5`;
+        row.className = 'flex-1 min-h-0 flex flex-col gap-2 overflow-y-auto pr-0.5';
         const nextSig = JSON.stringify(state.games.map((t, idx) => {
           const m = state.gameMedia[idx];
           return [
@@ -1697,8 +1696,12 @@
             card.setAttribute('aria-expanded', String(isOpen));
             const drawer = document.getElementById(`game-rules-${idx}`);
             if (drawer) {
+              const wasOpen = drawer.classList.contains('is-open');
               drawer.classList.toggle('is-open', isOpen);
               drawer.setAttribute('aria-hidden', String(!isOpen));
+              if (isOpen && !wasOpen) {
+                requestAnimationFrame(() => drawer.scrollIntoView({ block: 'nearest', behavior: 'smooth' }));
+              }
             }
           });
           return;
@@ -1716,18 +1719,18 @@
             (media?.imageData || '').trim()
           );
           return `
-            <div class="flex flex-col">
+            <div class="flex flex-col shrink-0">
               <div
                 id="game-card-${idx}"
                 data-game-index="${idx}"
                 role="button"
                 tabindex="0"
                 aria-expanded="${isOpen}"
-                class="game-pill-card ${dense ? 'px-2.5 py-1.5' : 'px-3 py-2'} flex items-center justify-between gap-2 ${isOpen ? 'is-active' : ''}"
+                class="game-pill-card px-3 py-2 flex items-center justify-between gap-2 ${isOpen ? 'is-active' : ''}"
               >
                 <div class="flex items-center gap-2 min-w-0 flex-1">
                   <span class="w-3 h-3 rounded-full border-[1.5px] border-[#111111] shrink-0" style="background:${color}"></span>
-                  <span class="thai-safe-tight font-semibold ${dense ? 'text-xs' : 'text-sm'} text-[#111111] truncate">${escapeHtml(title)}</span>
+                  <span class="thai-safe-tight font-semibold text-sm text-[#111111] truncate">${escapeHtml(title)}</span>
                 </div>
                 <div class="flex items-center gap-1.5 shrink-0">
                   <span class="${hasContent ? '' : 'hidden'} w-2 h-2 rounded-full bg-[#111111]" title="มีรายละเอียดหรือสื่อประกอบ"></span>
@@ -2274,20 +2277,39 @@
         const layoutMode = vm.layout || 'row';
         const hasActivity = state.activeGameAccordion !== null;
 
-        // Auto-fit teams into grid/columns with zero scrolling based on team count & stage state.
+        // Auto-adapt layout, grid columns, and card density to match team count & available stage space.
         // pb-2.5 pr-2.5 preserves hard-offset card shadows without clipping.
         const teamCount = state.teams.length;
-        const isDenseTeams = teamCount >= 5;
-        const stretchRows = !hasActivity && layoutMode !== 'grid' && teamCount <= 3;
+        const effectiveLayout = (layoutMode === 'grid' || teamCount > 3) ? 'grid' : 'row';
+        let effectiveDetail = detailMode;
+        if (hasActivity && teamCount >= 9) {
+          effectiveDetail = 'simple';
+        } else if ((hasActivity && teamCount >= 5) || (!hasActivity && teamCount >= 9)) {
+          if (effectiveDetail === 'full') effectiveDetail = 'compact';
+        }
+        if (!hasActivity && teamCount >= 13) {
+          effectiveDetail = 'simple';
+        }
+
+        const densityTier = teamCount >= 9 ? 'ultra' : (teamCount >= 5 ? 'dense' : 'normal');
+        const stretchRows = !hasActivity && effectiveLayout !== 'grid' && teamCount <= 3;
+
         if (!hasActivity) {
-          if (layoutMode === 'grid' || teamCount > 3) {
-            leaderboardListEl.className = `lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 auto-rows-fr ${isDenseTeams ? 'gap-2.5' : 'gap-3 sm:gap-3.5'} min-h-0 overflow-hidden pb-2.5 pr-2.5 bg-[#F8F6F0]/90`;
+          if (effectiveLayout === 'grid') {
+            const colsClass = teamCount >= 10
+              ? 'grid-cols-2 sm:grid-cols-3 xl:grid-cols-4'
+              : (teamCount >= 7 ? 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2');
+            const gapClass = densityTier === 'ultra' ? 'gap-2' : (densityTier === 'dense' ? 'gap-2.5' : 'gap-3 sm:gap-3.5');
+            const overflowClass = teamCount >= 9 ? 'overflow-y-auto' : 'overflow-hidden';
+            leaderboardListEl.className = `lg:col-span-8 grid ${colsClass} auto-rows-fr ${gapClass} min-h-0 ${overflowClass} pb-2.5 pr-2.5 bg-[#F8F6F0]/90`;
           } else {
             leaderboardListEl.className = 'lg:col-span-8 flex flex-col gap-3 sm:gap-3.5 min-h-0 overflow-hidden pb-2.5 pr-2.5 bg-[#F8F6F0]/90';
           }
-        } else if (layoutMode === 'grid') {
-          const colsClass = teamCount > 3 ? 'lg:grid-cols-4' : 'lg:grid-cols-3';
-          leaderboardListEl.className = `shrink-0 grid grid-cols-2 sm:grid-cols-3 ${colsClass} gap-2.5 pb-2 pr-2 bg-[#F8F6F0]/90`;
+        } else if (effectiveLayout === 'grid') {
+          const colsClass = teamCount >= 9
+            ? 'grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'
+            : (teamCount > 3 ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4' : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-3');
+          leaderboardListEl.className = `shrink-0 grid ${colsClass} gap-2 pb-2 pr-2 bg-[#F8F6F0]/90`;
         } else {
           leaderboardListEl.className = 'shrink-0 grid grid-cols-2 sm:grid-cols-3 lg:grid-flow-col lg:auto-cols-fr gap-2.5 sm:gap-3 pb-2 pr-2 bg-[#F8F6F0]/90';
         }
@@ -2324,7 +2346,7 @@
           const barPercent = team.total <= 0 ? 0 : Math.min(100, (team.total / scaleMax) * 100);
 
           let rowEl = leaderboardListEl.querySelector(`[data-team-id="${team.id}"]`);
-          const structureKey = `${detailMode}:${state.games.length}:${isDenseTeams ? 'dense' : 'normal'}:${stretchRows ? 'stretch' : 'fit'}`;
+          const structureKey = `${effectiveDetail}:${state.games.length}:${densityTier}:${stretchRows ? 'stretch' : 'fit'}`;
 
           if (!rowEl || rowEl.dataset.structureKey !== structureKey) {
             if (!rowEl) {
@@ -2332,26 +2354,32 @@
               rowEl.dataset.teamId = team.id;
             }
             rowEl.dataset.structureKey = structureKey;
-            rowEl.className = `team-row vox-card ${stretchRows ? 'flex-1' : ''} ${isDenseTeams ? 'p-2.5 gap-1.5' : 'p-3 sm:p-3.5 gap-2'} flex flex-col justify-center min-w-0`;
+            const padCls = densityTier === 'ultra' ? 'p-2 gap-1' : (densityTier === 'dense' ? 'p-2.5 gap-1.5' : 'p-3 sm:p-3.5 gap-2');
+            rowEl.className = `team-row vox-card ${stretchRows ? 'flex-1' : ''} ${padCls} flex flex-col justify-center min-w-0`;
 
-            if (detailMode === 'simple') {
+            const mascotCls = densityTier === 'ultra' ? 'w-7 h-7' : (effectiveDetail === 'full' ? 'w-10 h-10' : (densityTier === 'dense' ? 'w-8 h-8' : 'w-9 h-9'));
+            const rankCls = densityTier === 'ultra' ? 'w-6 h-6 text-xs' : 'w-8 h-8 text-sm';
+            const scoreCls = densityTier === 'ultra' ? 'text-base sm:text-lg' : (densityTier === 'dense' ? 'text-lg sm:text-xl' : 'text-xl sm:text-2xl');
+            const barCls = densityTier === 'ultra' ? 'h-3.5' : (densityTier === 'dense' ? 'h-4 sm:h-5' : 'h-5 sm:h-6');
+
+            if (effectiveDetail === 'simple') {
               rowEl.innerHTML = `
                 <div class="winner-crown-bg">${getVoxCrownSvg('w-full h-full')}</div>
                 <div class="relative z-10 flex items-center justify-between gap-2 min-w-0">
                   <div class="flex items-center gap-2 min-w-0 flex-1">
-                    ${getTeamMascotSvg(team.originalIndex, team.color, 'w-9 h-9')}
+                    ${getTeamMascotSvg(team.originalIndex, team.color, mascotCls)}
                     <div class="min-w-0 flex-1">
                       <span class="crown-badge items-center gap-1 bg-white border border-[#111111] px-1.5 py-0.5 rounded font-display font-black text-[9px] text-[#111111]">${getVoxCrownSvg('w-3 h-3')} WIN</span>
-                      <h2 class="team-name-el thai-safe font-display font-extrabold text-sm sm:text-base text-[#111111] truncate"></h2>
+                      <h2 class="team-name-el thai-safe font-display font-extrabold ${densityTier === 'ultra' ? 'text-xs sm:text-sm' : 'text-sm sm:text-base'} text-[#111111] truncate"></h2>
                     </div>
                   </div>
-                  <div class="total-score-box relative shrink-0 flex items-center justify-center bg-[#F8F6F0] border-2 border-[#111111] rounded-lg px-2.5 py-1 shadow-[2px_2px_0px_#111111] min-w-[3rem]">
-                    <div class="total-score-el tabular-nums font-display font-black text-lg sm:text-xl text-[#111111] leading-none">0</div>
+                  <div class="total-score-box relative shrink-0 flex items-center justify-center bg-[#F8F6F0] border-2 border-[#111111] rounded-lg ${densityTier === 'ultra' ? 'px-2 py-0.5 min-w-[2.5rem]' : 'px-2.5 py-1 min-w-[3rem]'} shadow-[2px_2px_0px_#111111]">
+                    <div class="total-score-el tabular-nums font-display font-black ${densityTier === 'ultra' ? 'text-base sm:text-lg' : 'text-lg sm:text-xl'} text-[#111111] leading-none">0</div>
                   </div>
                 </div>
               `;
             } else {
-              const chipsHtml = detailMode === 'full'
+              const chipsHtml = effectiveDetail === 'full'
                 ? `<div class="relative z-10 grid grid-cols-2 sm:grid-cols-3 gap-1 pt-0.5">
                     ${state.games.map((_, gIdx) => `
                       <div class="bg-[#F8F6F0] border border-[#111111] rounded-md px-1.5 py-0.5 flex items-center justify-between gap-1 text-[10px]">
@@ -2369,18 +2397,18 @@
                 <div class="winner-crown-bg">${getVoxCrownSvg('w-full h-full')}</div>
                 <div class="relative z-10 flex items-center justify-between gap-2 min-w-0">
                   <div class="flex items-center gap-2 min-w-0 flex-1">
-                    <div class="rank-badge w-8 h-8 rounded-lg border-2 border-[#111111] shadow-[2px_2px_0px_#111111] flex items-center justify-center font-display font-black text-sm shrink-0"></div>
-                    ${getTeamMascotSvg(team.originalIndex, team.color, detailMode === 'full' ? 'w-10 h-10' : 'w-9 h-9')}
+                    <div class="rank-badge ${rankCls} rounded-lg border-2 border-[#111111] shadow-[2px_2px_0px_#111111] flex items-center justify-center font-display font-black shrink-0"></div>
+                    ${getTeamMascotSvg(team.originalIndex, team.color, mascotCls)}
                     <div class="min-w-0 flex-1">
                       <span class="crown-badge items-center gap-1 bg-white border border-[#111111] px-1.5 py-0.5 rounded font-display font-black text-[9px] text-[#111111] tracking-wider">${getVoxCrownSvg('w-3 h-3')} WIN</span>
-                      <h2 class="team-name-el thai-safe font-display font-extrabold text-sm sm:text-base text-[#111111] truncate"></h2>
+                      <h2 class="team-name-el thai-safe font-display font-extrabold ${densityTier === 'ultra' ? 'text-xs sm:text-sm' : 'text-sm sm:text-base'} text-[#111111] truncate"></h2>
                     </div>
                   </div>
-                  <div class="total-score-box relative shrink-0 flex items-center justify-center bg-[#F8F6F0] border-2 border-[#111111] rounded-lg px-2.5 py-1 shadow-[2px_2px_0px_#111111] min-w-[3.25rem]">
-                    <div class="total-score-el tabular-nums font-display font-black text-xl sm:text-2xl text-[#111111] leading-none tracking-tight">0</div>
+                  <div class="total-score-box relative shrink-0 flex items-center justify-center bg-[#F8F6F0] border-2 border-[#111111] rounded-lg ${densityTier === 'ultra' ? 'px-2 py-0.5 min-w-[2.5rem]' : 'px-2.5 py-1 min-w-[3.25rem]'} shadow-[2px_2px_0px_#111111]">
+                    <div class="total-score-el tabular-nums font-display font-black ${scoreCls} text-[#111111] leading-none tracking-tight">0</div>
                   </div>
                 </div>
-                <div class="relative z-10 w-full h-5 sm:h-6 bg-[#F0EDE4] border-2 border-[#111111] rounded-lg overflow-hidden p-[3px]">
+                <div class="relative z-10 w-full ${barCls} bg-[#F0EDE4] border-2 border-[#111111] rounded-lg overflow-hidden p-[3px]">
                   <div class="infographic-bar-fill h-full rounded-[4px]"></div>
                 </div>
                 ${chipsHtml}
@@ -3700,7 +3728,7 @@
             </div>
 
             <div class="space-y-2">
-              <h2 class="thai-safe font-display font-black text-4xl sm:text-5xl text-[#111111] tracking-tight">${champ.name}</h2>
+              <h2 class="thai-safe font-display font-black text-4xl sm:text-5xl text-[#111111] tracking-tight">${escapeHtml(champ.name)}</h2>
               <div class="inline-flex items-baseline gap-2 bg-[#111111] text-[#F4D03F] px-6 py-2.5 rounded-2xl border-2 border-[#111111] shadow-[5px_5px_0px_#F4D03F]">
                 <span class="font-display font-black text-4xl sm:text-5xl tabular-nums leading-none">${champ.total}</span>
                 <span class="font-display font-bold text-sm uppercase tracking-wider text-white/80">PTS</span>

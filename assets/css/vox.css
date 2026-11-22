@@ -581,6 +581,7 @@
 
     .victory-sunburst {
       animation: victorySpin 18s linear infinite;
+      will-change: transform;
     }
 
     .victory-drum-shake {
@@ -602,6 +603,7 @@
     .victory-mascot-jump {
       animation: victoryMascotHappyJump 1.15s cubic-bezier(0.22, 1, 0.36, 1) infinite;
       transform-origin: 50% 100%;
+      will-change: transform;
     }
 
     @keyframes victoryMascotIdle {
@@ -614,6 +616,7 @@
     .victory-mascot-idle {
       animation: victoryMascotIdle 2.2s ease-in-out infinite;
       transform-origin: 50% 100%;
+      will-change: transform;
     }
 
     .victory-card-slam {
