@@ -29,3 +29,9 @@ create table if not exists helpdai_poll_votes (
   created_at timestamptz not null default now(),
   primary key (poll_id, voter_id)
 );
+
+-- Allow HelpDai backend / publishable key access (or use service_role key on Render)
+alter table helpdai_rooms disable row level security;
+alter table helpdai_suggestions disable row level security;
+alter table helpdai_polls disable row level security;
+alter table helpdai_poll_votes disable row level security;

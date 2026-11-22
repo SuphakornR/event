@@ -177,21 +177,23 @@ const storage = {
   },
   async putRoom(roomId, payload, now) {
     if (useSupabase) {
-      await sbFetch('helpdai_rooms', '?on_conflict=room_id', {
+      const r = await sbFetch('helpdai_rooms', '?on_conflict=room_id', {
         method: 'POST',
         headers: { Prefer: 'resolution=merge-duplicates' },
         body: JSON.stringify({ room_id: roomId, payload, updated_at: now })
       });
+      if (!r.ok) throw new Error(r.data?.message || `Supabase error ${r.status}`);
       return;
     }
     stmtPutRoom.run(roomId, JSON.stringify(payload), now);
   },
   async addSuggestion(category, message, now) {
     if (useSupabase) {
-      await sbFetch('helpdai_suggestions', '', {
+      const r = await sbFetch('helpdai_suggestions', '', {
         method: 'POST',
         body: JSON.stringify({ category, message, created_at: now })
       });
+      if (!r.ok) throw new Error(r.data?.message || `Supabase error ${r.status}`);
       return;
     }
     stmtAddSugg.run(category, message, now);
@@ -214,11 +216,12 @@ const storage = {
   },
   async upsertPoll(pollId, adminToken, question, options, isOpen, now) {
     if (useSupabase) {
-      await sbFetch('helpdai_polls', '?on_conflict=poll_id', {
+      const r = await sbFetch('helpdai_polls', '?on_conflict=poll_id', {
         method: 'POST',
         headers: { Prefer: 'resolution=merge-duplicates' },
         body: JSON.stringify({ poll_id: pollId, admin_token: adminToken, question, options, is_open: Boolean(isOpen), updated_at: now })
       });
+      if (!r.ok) throw new Error(r.data?.message || `Supabase error ${r.status}`);
       return;
     }
     stmtUpsertPoll.run(pollId, adminToken, question, JSON.stringify(options), isOpen ? 1 : 0, now);

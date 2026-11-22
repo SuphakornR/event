@@ -214,7 +214,26 @@
     }
     try {
       const res = await fetch(`${apiBase}/api/polls/${encodeURIComponent(hostCfg.pollId)}`);
-      if (!res.ok) return;
+      if (!res.ok) {
+        // Render local preview bars even if backend/RLS isn't ready yet
+        const previewCounts = hostCfg.options.map(() => 0);
+        const previewKey = JSON.stringify({ q: hostCfg.question, opts: hostCfg.options, counts: previewCounts });
+        if (previewKey !== lastHostRenderKey) {
+          lastHostRenderKey = previewKey;
+          hostBarsEl.innerHTML = hostCfg.options.map((opt, idx) => `
+            <div data-poll-bar="${idx}" class="flex flex-col gap-1">
+              <div class="flex items-center justify-between gap-2 font-display font-extrabold text-sm sm:text-base text-[#111111]">
+                <span data-poll-lbl>${esc(opt)}</span>
+                <span data-poll-stat class="tabular-nums">0% (0)</span>
+              </div>
+              <div class="w-full h-6 bg-[#F0EDE4] border-2 border-[#111111] rounded-lg overflow-hidden p-[3px]">
+                <div data-poll-fill class="infographic-bar-fill h-full rounded-[4px]" style="width:0%; background-color:${BAR_COLORS[idx % BAR_COLORS.length]};"></div>
+              </div>
+            </div>
+          `).join('');
+        }
+        return;
+      }
       const data = await res.json();
       const renderKey = JSON.stringify({ q: data.question, opts: data.options, counts: data.counts });
       if (renderKey === lastHostRenderKey) return;
@@ -264,7 +283,19 @@
     renderOptionInputs();
   });
 
-  document.getElementById('poll-save-btn')?.addEventListener('click', pushPollToServer);
+  document.getElementById('poll-save-btn')?.addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    await pushPollToServer();
+    btn.style.transition = 'background-color 0.28s ease, color 0.28s ease, transform 0.25s cubic-bezier(0.22,1,0.36,1)';
+    btn.classList.remove('bg-[#F4D03F]', 'text-[#111111]');
+    btn.classList.add('bg-[#10B981]', 'text-white', 'scale-105');
+    btn.textContent = '✓ อัปเดตโพลแล้ว!';
+    setTimeout(() => {
+      btn.classList.remove('bg-[#10B981]', 'text-white', 'scale-105');
+      btn.classList.add('bg-[#F4D03F]', 'text-[#111111]');
+      btn.textContent = 'อัปเดตโพล';
+    }, 1800);
+  });
   toggleOpenBtn?.addEventListener('click', () => {
     hostCfg.isOpen = !hostCfg.isOpen;
     toggleOpenBtn.textContent = hostCfg.isOpen ? 'กำลังเปิดโหวต' : 'ปิดรับโหวต';
@@ -283,11 +314,26 @@
   });
 
   document.getElementById('poll-copy-link')?.addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
     try {
       await navigator.clipboard.writeText(voteUrl);
-      e.currentTarget.textContent = '✓ คัดลอกลิงก์แล้ว!';
-      setTimeout(() => { e.currentTarget.textContent = 'คัดลอกลิงก์โหวต'; }, 1800);
-    } catch (_) {}
+    } catch (_) {
+      const tmp = document.createElement('input');
+      tmp.value = voteUrl;
+      document.body.appendChild(tmp);
+      tmp.select();
+      document.execCommand('copy');
+      tmp.remove();
+    }
+    btn.style.transition = 'background-color 0.3s ease, color 0.3s ease, transform 0.28s cubic-bezier(0.22,1,0.36,1)';
+    btn.classList.remove('bg-[#F8F6F0]', 'text-[#111111]');
+    btn.classList.add('bg-[#10B981]', 'text-white', 'scale-105');
+    btn.textContent = '✓ คัดลอกลิงก์แล้ว! ส่งให้ผู้โหวตได้เลย';
+    setTimeout(() => {
+      btn.classList.remove('bg-[#10B981]', 'text-white', 'scale-105');
+      btn.classList.add('bg-[#F8F6F0]', 'text-[#111111]');
+      btn.textContent = 'คัดลอกลิงก์โหวต';
+    }, 2200);
   });
 
   renderOptionInputs();
