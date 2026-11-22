@@ -543,8 +543,29 @@
       75% { transform: translate(-2px, 1px); }
     }
 
+    @keyframes victoryDrumShake {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      20% { transform: translate(-2px, 1px) scale(1.015); }
+      40% { transform: translate(2px, -1px) scale(1.02); }
+      60% { transform: translate(-2px, -1px) scale(1.015); }
+      80% { transform: translate(2px, 1px) scale(1.02); }
+    }
+
+    @keyframes victoryFlashBurst {
+      0% { opacity: 0.92; }
+      100% { opacity: 0; }
+    }
+
     .victory-sunburst {
       animation: victorySpin 18s linear infinite;
+    }
+
+    .victory-drum-shake {
+      animation: victoryDrumShake 0.24s ease-in-out infinite;
+    }
+
+    .victory-flash-burst {
+      animation: victoryFlashBurst 0.62s cubic-bezier(0.22, 1, 0.36, 1) forwards;
     }
 
     .victory-card-slam {
@@ -830,14 +851,7 @@
 
     @keyframes timerWaveSlide {
       0% { transform: translate3d(0, 0, 0); }
-      50% { transform: translate3d(-25%, -5px, 0); }
       100% { transform: translate3d(-50%, 0, 0); }
-    }
-
-    @keyframes timerWaveSlideBack {
-      0% { transform: translate3d(-50%, 0, 0); }
-      50% { transform: translate3d(-25%, 5px, 0); }
-      100% { transform: translate3d(0, 0, 0); }
     }
 
     .timer-circle-mask {
@@ -868,21 +882,11 @@
     .timer-liquid-wave {
       position: absolute;
       left: 0;
-      bottom: calc(100% - 3px);
+      bottom: calc(100% - 15px);
       width: 200%;
-      height: 44px;
+      height: 58px;
+      display: block;
       animation: timerWaveSlide 1.65s linear infinite;
-      pointer-events: none;
-    }
-
-    .timer-liquid-wave-back {
-      position: absolute;
-      left: 0;
-      bottom: calc(100% - 2px);
-      width: 200%;
-      height: 50px;
-      opacity: 0.68;
-      animation: timerWaveSlideBack 2.5s linear infinite;
       pointer-events: none;
     }
 

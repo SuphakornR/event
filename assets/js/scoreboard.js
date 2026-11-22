@@ -222,10 +222,11 @@
       };
       let hasUnsavedGuestChanges = false;
 
-      // Load State safely: logged-in or locally-saved users restore their data; guests start fresh
+      // Load State safely: logged-in, locally-saved, or shared display rooms restore their data
       function loadState() {
         try {
-          if (!isAccountSignedIn() && !isLocallySaved()) return cloneDefaultState();
+          const isSharedRoom = urlParams.get('display') === '1' || Boolean(urlParams.get('room'));
+          if (!isAccountSignedIn() && !isLocallySaved() && !isSharedRoom) return cloneDefaultState();
           const raw = localStorage.getItem(STORAGE_KEY);
           if (!raw) return cloneDefaultState();
           const st = normalizeState(JSON.parse(raw), null);
@@ -338,9 +339,9 @@
 
       function saveAndBroadcast(options = { broadcast: true }) {
         state.updatedAt = Date.now();
+        persistStateToStorage();
         if (isAccountSignedIn() || isLocallySaved()) {
           hasUnsavedGuestChanges = false;
-          persistStateToStorage();
         } else {
           hasUnsavedGuestChanges = true;
         }
@@ -951,15 +952,9 @@
           const remMs = (t.running && t.endAt) ? Math.max(0, t.endAt - Date.now()) : (sec * 1000);
           const elapsedPct = Math.max(0, Math.min(100, ((totalDur * 1000 - remMs) / (totalDur * 1000)) * 100));
           const hasStarted = elapsedPct > 0.05;
-          const centerBarBack = document.getElementById('center-timer-bar-back');
           centerBar.classList.toggle('is-flowing', Boolean(t.running && showCenter));
-          if (centerBarBack) centerBarBack.classList.toggle('is-flowing', Boolean(t.running && showCenter));
           centerBar.style.opacity = hasStarted ? '1' : '0';
           centerBar.style.height = `${elapsedPct}%`;
-          if (centerBarBack) {
-            centerBarBack.style.opacity = hasStarted ? '1' : '0';
-            centerBarBack.style.height = `${Math.min(100, elapsedPct + (hasStarted && elapsedPct < 98 ? 2.2 : 0))}%`;
-          }
           if (t.running && showCenter && !window.__voxLiquidRaf) {
             const tickLiquid = () => {
               const cur = state.timer;
@@ -974,10 +969,6 @@
               const started = pct > 0.05;
               centerBar.style.opacity = started ? '1' : '0';
               centerBar.style.height = `${pct}%`;
-              if (centerBarBack) {
-                centerBarBack.style.opacity = started ? '1' : '0';
-                centerBarBack.style.height = `${Math.min(100, pct + (started && pct < 98 ? 2.2 : 0))}%`;
-              }
               if (leftMs > 0) {
                 window.__voxLiquidRaf = requestAnimationFrame(tickLiquid);
               } else {
@@ -996,13 +987,9 @@
           const isCritical = sec <= 5;
           const isWarn = sec > 5 && sec <= 15;
           const liquidColor = isCritical ? '#E74C3C' : (isWarn ? '#F4D03F' : '#2980B9');
-          const darkLiquidColor = isCritical ? '#A93226' : (isWarn ? '#B7950B' : '#1B5E8A');
           centerBar.style.backgroundColor = liquidColor;
-          if (centerBarBack) centerBarBack.style.backgroundColor = darkLiquidColor;
           const wavePath = document.getElementById('center-timer-wave-path');
           if (wavePath) wavePath.setAttribute('fill', liquidColor);
-          const waveBackPath = document.getElementById('center-timer-wave-back-path');
-          if (waveBackPath) waveBackPath.setAttribute('fill', darkLiquidColor);
 
           centerCard.classList.add('bg-[#FFFFFF]', 'text-[#111111]');
           centerCard.classList.remove('bg-[#FFE8E6]', 'bg-[#FFFDF5]');
@@ -1818,7 +1805,20 @@
         } catch (_) {}
       }
 
-      function playDrumroll(durationMs = 1550) {
+      // Preloaded Victory & Drumroll Audio Tracks (with Web Audio synthesis fallback)
+      const drumrollAudio = typeof Audio !== 'undefined' ? new Audio('assets/audio/drum-roll.mp3') : null;
+      const victoryAudio = typeof Audio !== 'undefined' ? new Audio('assets/audio/victory-fanfare.mp3') : null;
+      if (drumrollAudio) drumrollAudio.preload = 'auto';
+      if (victoryAudio) victoryAudio.preload = 'auto';
+
+      function stopVictoryAudio() {
+        try {
+          if (drumrollAudio) { drumrollAudio.pause(); drumrollAudio.currentTime = 0; }
+          if (victoryAudio) { victoryAudio.pause(); victoryAudio.currentTime = 0; }
+        } catch (_) {}
+      }
+
+      function playSynthDrumroll(durationMs = 2120) {
         try {
           const ctx = getAudioCtx();
           if (!ctx) return;
@@ -1841,7 +1841,6 @@
             const hitTime = now + t;
             const vol = 0.04 + progress * 0.14;
 
-            // Snare noise burst
             const src = ctx.createBufferSource();
             src.buffer = noiseBuf;
             const filter = ctx.createBiquadFilter();
@@ -1856,7 +1855,6 @@
             nGain.connect(ctx.destination);
             src.start(hitTime);
 
-            // Drum body thump
             const osc = ctx.createOscillator();
             const oGain = ctx.createGain();
             osc.type = 'triangle';
@@ -1875,12 +1873,26 @@
         } catch (_) {}
       }
 
-      function playVictoryFanfare() {
+      function playDrumroll(durationMs = 2120) {
+        if (drumrollAudio) {
+          try {
+            drumrollAudio.currentTime = 0;
+            drumrollAudio.volume = 1;
+            const p = drumrollAudio.play();
+            if (p && typeof p.catch === 'function') {
+              p.catch(() => playSynthDrumroll(durationMs));
+            }
+            return;
+          } catch (_) {}
+        }
+        playSynthDrumroll(durationMs);
+      }
+
+      function playSynthVictoryFanfare() {
         try {
           const ctx = getAudioCtx();
           if (!ctx) return;
           const now = ctx.currentTime;
-          // Deep bass impact hit
           const bass = ctx.createOscillator();
           const bassGain = ctx.createGain();
           bass.type = 'sine';
@@ -1893,7 +1905,6 @@
           bass.start(now);
           bass.stop(now + 0.5);
 
-          // Dramatic ascending fanfare + triumphant final chord
           const seq = [
             { f: 523.25, t: 0.0, d: 0.22, v: 0.11 },
             { f: 659.25, t: 0.09, d: 0.22, v: 0.11 },
@@ -1917,6 +1928,24 @@
             osc.stop(t + n.d + 0.02);
           });
         } catch (_) {}
+      }
+
+      function playVictoryFanfare() {
+        try {
+          if (drumrollAudio) { drumrollAudio.pause(); drumrollAudio.currentTime = 0; }
+        } catch (_) {}
+        if (victoryAudio) {
+          try {
+            victoryAudio.currentTime = 0;
+            victoryAudio.volume = 1;
+            const p = victoryAudio.play();
+            if (p && typeof p.catch === 'function') {
+              p.catch(() => playSynthVictoryFanfare());
+            }
+            return;
+          } catch (_) {}
+        }
+        playSynthVictoryFanfare();
       }
 
       function spawnScoreDeltaPop(boxEl, delta) {
@@ -3311,27 +3340,37 @@
       resizeConfettiCanvas();
 
       let drumrollTimerId = null;
+      let confettiWaveTimers = [];
 
       function hideVictorySpotlight() {
         if (drumrollTimerId) {
           clearTimeout(drumrollTimerId);
           drumrollTimerId = null;
         }
+        confettiWaveTimers.forEach(id => clearTimeout(id));
+        confettiWaveTimers = [];
+        stopVictoryAudio();
         document.getElementById('victory-drumroll-overlay')?.remove();
         document.getElementById('victory-celebration-overlay')?.remove();
+        document.getElementById('victory-flash-burst')?.remove();
       }
 
       function triggerVictorySequence() {
         hideVictorySpotlight();
-        const DRUMROLL_MS = 1550;
+        const DRUMROLL_MS = 2120;
         playDrumroll(DRUMROLL_MS);
 
         const drumOverlay = document.createElement('div');
         drumOverlay.id = 'victory-drumroll-overlay';
-        drumOverlay.className = 'fixed inset-0 z-[76] flex items-center justify-center p-4 bg-[#111111]/80 backdrop-blur-sm';
+        drumOverlay.className = 'fixed inset-0 z-[76] flex items-center justify-center p-4 bg-[#0B0B0B]/90 backdrop-blur-md overflow-hidden';
         drumOverlay.innerHTML = `
-          <div class="vox-panel-enter w-full max-w-sm vox-card bg-[#F8F6F0] p-6 text-center flex flex-col items-center gap-3 border-4 border-[#111111] shadow-[10px_10px_0px_#F4D03F]">
-            <svg class="w-16 h-16 animate-bounce" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <div class="pointer-events-none fixed inset-0 opacity-35" style="background: radial-gradient(circle at 50% 50%, rgba(244,208,63,0.45) 0%, rgba(231,76,60,0.18) 38%, transparent 72%);"></div>
+          <div class="victory-drum-shake relative z-10 w-full max-w-md vox-card bg-[#F8F6F0] p-7 text-center flex flex-col items-center gap-4 border-4 border-[#111111] shadow-[12px_12px_0px_#F4D03F]">
+            <span class="inline-flex items-center gap-1.5 bg-[#111111] text-[#F4D03F] px-3 py-1 rounded-full font-display font-black text-xs tracking-widest uppercase">
+              <span class="w-2 h-2 rounded-full bg-[#E74C3C] animate-ping"></span>
+              <span>FINAL RESULT INCOMING</span>
+            </span>
+            <svg class="w-20 h-20 animate-bounce" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
               <path d="M12 12 L28 24 M52 12 L36 24" stroke="#111111" stroke-width="4" stroke-linecap="round"/>
               <circle cx="11" cy="11" r="3.5" fill="#E74C3C" stroke="#111111" stroke-width="2"/>
               <circle cx="53" cy="11" r="3.5" fill="#E74C3C" stroke="#111111" stroke-width="2"/>
@@ -3339,9 +3378,9 @@
               <ellipse cx="32" cy="25" rx="20" ry="6" fill="#FFFDF5" stroke="#111111" stroke-width="3.5"/>
               <path d="M18 31 L26 48 L34 31 L42 48 L48 34" stroke="#111111" stroke-width="3" stroke-linejoin="round"/>
             </svg>
-            <p class="font-display font-black text-xl sm:text-2xl text-[#111111] tracking-wide">กำลังประกาศผู้ชนะ...</p>
-            <div class="w-full h-5 bg-[#F0EDE4] border-2 border-[#111111] rounded-full overflow-hidden p-[3px]">
-              <div id="drumroll-tension-fill" class="h-full bg-[#E74C3C] rounded-full transition-all ease-out" style="width:0%; transition-duration:${DRUMROLL_MS}ms;"></div>
+            <p class="thai-safe-tight font-display font-black text-2xl sm:text-3xl text-[#111111] tracking-tight">จับตาดูให้ดี... ผู้ชนะคือ!</p>
+            <div class="w-full h-6 bg-[#F0EDE4] border-[3px] border-[#111111] rounded-full overflow-hidden p-[3px] shadow-[3px_3px_0px_#111111]">
+              <div id="drumroll-tension-fill" class="h-full rounded-full transition-all ease-in" style="width:0%; background: linear-gradient(90deg, #F4D03F 0%, #E74C3C 100%); transition-duration:${DRUMROLL_MS}ms;"></div>
             </div>
           </div>
         `;
@@ -3355,13 +3394,19 @@
           drumrollTimerId = null;
           document.getElementById('victory-drumroll-overlay')?.remove();
           if (state.winnerAnnounced) {
+            const flash = document.createElement('div');
+            flash.id = 'victory-flash-burst';
+            flash.className = 'victory-flash-burst fixed inset-0 z-[85] bg-white pointer-events-none';
+            document.body.appendChild(flash);
+            setTimeout(() => flash.remove(), 650);
             launchConfetti();
           }
         }, DRUMROLL_MS);
       }
 
       function showVictorySpotlight() {
-        hideVictorySpotlight();
+        document.getElementById('victory-drumroll-overlay')?.remove();
+        document.getElementById('victory-celebration-overlay')?.remove();
         const ranked = state.teams
           .map((t, idx) => ({ ...t, originalIndex: idx, total: getTeamTotal(t) }))
           .sort((a, b) => b.total - a.total || a.originalIndex - b.originalIndex);
@@ -3378,30 +3423,31 @@
         const runnersUp = ranked.slice(1, 3);
         const overlay = document.createElement('div');
         overlay.id = 'victory-celebration-overlay';
-        overlay.className = 'fixed inset-0 z-[75] flex items-center justify-center p-4 bg-[#111111]/75 backdrop-blur-sm overflow-hidden';
+        overlay.className = 'fixed inset-0 z-[75] flex items-center justify-center p-4 bg-[#0B0B0B]/85 backdrop-blur-md overflow-hidden';
         overlay.innerHTML = `
-          <div class="victory-sunburst pointer-events-none fixed left-1/2 top-1/2 w-[180vmax] h-[180vmax] opacity-25"
-            style="background: repeating-conic-gradient(from 0deg, #F4D03F 0deg 12deg, transparent 12deg 24deg);"></div>
+          <div class="victory-sunburst pointer-events-none fixed left-1/2 top-1/2 w-[190vmax] h-[190vmax] opacity-35"
+            style="background: repeating-conic-gradient(from 0deg, #F4D03F 0deg 10deg, transparent 10deg 20deg);"></div>
+          <div class="pointer-events-none fixed inset-0" style="background: radial-gradient(circle at 50% 45%, rgba(244,208,63,0.28) 0%, transparent 62%);"></div>
 
-          <div class="victory-card-slam relative z-10 w-full max-w-lg vox-card bg-[#F8F6F0] p-6 sm:p-8 text-center flex flex-col items-center gap-4 border-4 border-[#111111] shadow-[12px_12px_0px_#F4D03F]">
+          <div class="victory-card-slam relative z-10 w-full max-w-xl vox-card bg-[#F8F6F0] p-6 sm:p-8 text-center flex flex-col items-center gap-4 border-4 border-[#111111] shadow-[14px_14px_0px_#F4D03F]">
             <button type="button" id="victory-overlay-close" aria-label="ปิดหน้าต่างฉลองชัยชนะ"
               class="absolute top-3 right-3 w-8 h-8 rounded-lg border-2 border-[#111111] bg-white hover:bg-[#E74C3C] hover:text-white font-display font-black text-sm flex items-center justify-center shadow-[2px_2px_0px_#111111] cursor-pointer transition-colors">✕</button>
 
-            <div class="inline-flex items-center gap-2 bg-[#F4D03F] border-2 border-[#111111] px-4 py-1 rounded-full shadow-[3px_3px_0px_#111111] font-display font-black text-xs sm:text-sm tracking-widest uppercase text-[#111111]">
+            <div class="inline-flex items-center gap-2 bg-[#111111] border-2 border-[#111111] px-4 py-1.5 rounded-full shadow-[4px_4px_0px_#F4D03F] font-display font-black text-xs sm:text-sm tracking-widest uppercase text-[#F4D03F]">
               ${getVoxCrownSvg('w-5 h-5')}
-              <span>CONGRATULATION!</span>
+              <span>GRAND CHAMPION • CONGRATULATIONS!</span>
             </div>
 
             <div class="relative flex flex-col items-center justify-center my-1">
-              ${getVoxCrownSvg('w-14 h-12 -mb-2 z-10')}
-              <div class="w-28 h-28 sm:w-32 sm:h-32 rounded-3xl border-4 border-[#111111] shadow-[6px_6px_0px_#111111] flex items-center justify-center mascot-float" style="background:${champ.color}">
-                ${getTeamMascotSvg(champ.originalIndex, champ.color, 'w-24 h-24 sm:w-28 sm:h-28')}
+              ${getVoxCrownSvg('w-16 h-14 -mb-2.5 z-10 animate-bounce')}
+              <div class="w-32 h-32 sm:w-36 sm:h-36 rounded-3xl border-4 border-[#111111] shadow-[8px_8px_0px_#111111] flex items-center justify-center mascot-float" style="background:${champ.color}">
+                ${getTeamMascotSvg(champ.originalIndex, champ.color, 'w-28 h-28 sm:w-32 sm:h-32')}
               </div>
             </div>
 
-            <div class="space-y-1">
-              <h2 class="thai-safe font-display font-black text-3xl sm:text-5xl text-[#111111] tracking-tight">${champ.name}</h2>
-              <div class="inline-flex items-baseline gap-2 bg-[#111111] text-[#F4D03F] px-5 py-2 rounded-2xl border-2 border-[#111111] shadow-[4px_4px_0px_#F4D03F]">
+            <div class="space-y-1.5">
+              <h2 class="thai-safe font-display font-black text-4xl sm:text-5xl text-[#111111] tracking-tight">${champ.name}</h2>
+              <div class="inline-flex items-baseline gap-2 bg-[#111111] text-[#F4D03F] px-6 py-2.5 rounded-2xl border-2 border-[#111111] shadow-[5px_5px_0px_#F4D03F]">
                 <span class="font-display font-black text-4xl sm:text-5xl tabular-nums leading-none">${champ.total}</span>
                 <span class="font-display font-bold text-sm uppercase tracking-wider text-white/80">PTS</span>
               </div>
@@ -3410,8 +3456,8 @@
             ${runnersUp.length ? `
               <div class="w-full pt-3 mt-1 border-t-2 border-dashed border-[#111111]/25 grid grid-cols-2 gap-2.5">
                 ${runnersUp.map((r, i) => `
-                  <div class="bg-white border-2 border-[#111111] rounded-xl px-3 py-2 flex items-center justify-between gap-2 shadow-[2px_2px_0px_#111111]">
-                    <span class="font-display font-black text-xs text-[#111111]/70">#${i + 2}</span>
+                  <div class="bg-white border-2 border-[#111111] rounded-xl px-3 py-2 flex items-center justify-between gap-2 shadow-[3px_3px_0px_#111111]">
+                    <span class="font-display font-black text-xs px-1.5 py-0.5 rounded bg-[#F8F6F0] border border-[#111111]">#${i + 2}</span>
                     <span class="thai-safe font-display font-extrabold text-xs sm:text-sm text-[#111111] truncate flex-1 text-left">${r.name}</span>
                     <span class="font-display font-black text-sm tabular-nums text-[#111111]">${r.total}</span>
                   </div>

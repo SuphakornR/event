@@ -51,20 +51,44 @@
     } catch (_) {}
     let lastVoterRenderKey = '';
 
-    const renderVoter = async () => {
-      if (!apiBase) {
-        qEl.textContent = 'ต้องเชื่อมต่อเซิร์ฟเวอร์ (npm start) เพื่อใช้งานโหวตสด';
-        return;
-      }
+    const localPollKey = `helpdai_poll_local_${votePollId}`;
+    const pollBc = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('helpdai_poll_bc') : null;
+
+    const readLocalPollData = () => {
       try {
-        const res = await fetch(`${apiBase}/api/polls/${encodeURIComponent(votePollId)}`);
-        if (!res.ok) {
+        const loc = JSON.parse(localStorage.getItem(localPollKey) || 'null');
+        if (loc && Array.isArray(loc.options)) return loc;
+        const hostSaved = JSON.parse(localStorage.getItem('helpdai_poll_host_v1') || 'null');
+        if (hostSaved && hostSaved.pollId === votePollId && Array.isArray(hostSaved.options)) {
+          return {
+            pollId: votePollId,
+            question: hostSaved.question || 'โหวตสด',
+            options: hostSaved.options,
+            counts: hostSaved.options.map(() => 0),
+            totalVotes: 0,
+            isOpen: hostSaved.isOpen !== false
+          };
+        }
+      } catch (_) {}
+      return null;
+    };
+
+    const renderVoter = async () => {
+      try {
+        let data = null;
+        if (apiBase) {
+          try {
+            const res = await fetch(`${apiBase}/api/polls/${encodeURIComponent(votePollId)}`);
+            if (res.ok) data = await res.json();
+          } catch (_) {}
+        }
+        if (!data) data = readLocalPollData();
+        if (!data) {
           qEl.textContent = 'ไม่พบโพลนี้ หรือโพลถูกปิดไปแล้ว';
           choicesEl.innerHTML = '';
           lastVoterRenderKey = '';
           return;
         }
-        const data = await res.json();
         if (data.totalVotes === 0 && votedChoice !== null) {
           votedChoice = null;
           try { localStorage.removeItem(votedKey); } catch (_) {}
@@ -94,7 +118,7 @@
         const total = Math.max(1, data.totalVotes);
         choicesEl.innerHTML = data.options.map((opt, idx) => {
           const cnt = data.counts[idx] || 0;
-          const pct = Math.round((cnt / total) * 100);
+          const pct = data.totalVotes > 0 ? Math.round((cnt / total) * 100) : 0;
           const color = BAR_COLORS[idx % BAR_COLORS.length];
           const isPicked = votedChoice === idx;
           if (hasVoted || !data.isOpen) {
@@ -123,14 +147,30 @@
             if (votedChoice !== null) return;
             const choiceIndex = Number(btn.dataset.voteIdx);
             btn.disabled = true;
-            const r = await fetch(`${apiBase}/api/polls/${encodeURIComponent(votePollId)}/vote`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ choiceIndex, voterId })
-            });
-            if (r.ok) {
+            let votedOk = false;
+            if (apiBase) {
+              try {
+                const r = await fetch(`${apiBase}/api/polls/${encodeURIComponent(votePollId)}/vote`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ choiceIndex, voterId })
+                });
+                if (r.ok) votedOk = true;
+              } catch (_) {}
+            }
+            const loc = readLocalPollData();
+            if (loc) {
+              loc.counts = Array.isArray(loc.counts) ? loc.counts : loc.options.map(() => 0);
+              loc.counts[choiceIndex] = (loc.counts[choiceIndex] || 0) + 1;
+              loc.totalVotes = loc.counts.reduce((a, b) => a + b, 0);
+              try { localStorage.setItem(localPollKey, JSON.stringify(loc)); } catch (_) {}
+              try { pollBc?.postMessage(loc); } catch (_) {}
+              votedOk = true;
+            }
+            if (votedOk) {
               votedChoice = choiceIndex;
               try { localStorage.setItem(votedKey, String(choiceIndex)); } catch (_) {}
+              lastVoterRenderKey = '';
               renderVoter();
             } else {
               btn.disabled = false;
@@ -140,6 +180,9 @@
       } catch (_) {}
     };
 
+    pollBc?.addEventListener('message', (e) => {
+      if (e.data?.pollId === votePollId) renderVoter();
+    });
     renderVoter();
     setInterval(renderVoter, 2500);
     return;

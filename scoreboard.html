@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="referrer" content="strict-origin-when-cross-origin" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https: data:; media-src 'self' https: data:; frame-src https://www.youtube.com https://www.youtube-nocookie.com;" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; connect-src 'self' https: wss:; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https: data: blob:; media-src 'self' https: data: blob:; frame-src https://www.youtube.com https://www.youtube-nocookie.com;" />
   <title>HelpDai — Stage Scoreboard</title>
   <meta name="description" content="กระดานคะแนนสดบนเวที ปรับแต่งทีมและกิจกรรมแบบเรียลไทม์ พร้อมตัวจับเวลาและสื่อประกอบ" />
   <meta name="theme-color" content="#F4D03F" />
@@ -19,7 +19,7 @@
   <style>html,body{cursor:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 26 26'%3E%3Cpath d='M4 3 L20 13 L12.5 15 L9.5 22 Z' transform='translate(2 2)' fill='%23111111'/%3E%3Cpath d='M4 3 L20 13 L12.5 15 L9.5 22 Z' fill='%23F4D03F' stroke='%23111111' stroke-width='2.2' stroke-linejoin='round'/%3E%3C/svg%3E") 4 3,auto}</style>
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <link rel="stylesheet" href="assets/css/vox.css?v=20261122d" />
+  <link rel="stylesheet" href="assets/css/vox.css?v=20261122g" />
 </head>
 <body class="flex flex-col justify-between selection:bg-yellow-300 selection:text-black">
   <script src="assets/js/loader.js?v=20261122d"></script>
@@ -38,72 +38,92 @@
        ======================================================================== -->
   <main id="stage-container" class="w-full max-w-7xl mx-auto px-14 sm:px-16 py-3 sm:py-4 lg:h-screen lg:overflow-hidden flex flex-col gap-3">
 
-    <!-- Clean Vox Editorial Masthead -->
-    <header class="border-b-[3px] border-[#111111] pb-2.5 shrink-0 bg-[#F8F6F0]/90">
-      <div class="flex flex-wrap items-center justify-between gap-2 mb-1">
-        <div class="flex flex-wrap items-center gap-2 relative">
-        <a href="index.html" title="เมนูหลัก" aria-label="กลับเมนูหลัก" class="inline-flex items-center justify-center bg-white text-[#111111] border-2 border-[#111111] w-7 h-7 rounded-md font-display font-black text-sm shadow-[2px_2px_0px_#111111] hover:bg-[#F4D03F] transition-colors">←</a>
-        <button type="button" data-start-tutorial title="คู่มือการใช้งาน" aria-label="เปิดคู่มือการใช้งาน" class="inline-flex items-center justify-center bg-white text-[#111111] border-2 border-[#111111] w-7 h-7 rounded-md font-display font-black text-xs shadow-[2px_2px_0px_#111111] hover:bg-[#F4D03F] transition-colors cursor-pointer">?</button>
-        <button type="button" id="view-settings-btn" title="มุมมอง &amp; การจัดวาง" aria-label="ตั้งค่ามุมมอง" class="inline-flex items-center justify-center bg-white text-[#111111] border-2 border-[#111111] w-7 h-7 rounded-md shadow-[2px_2px_0px_#111111] hover:bg-[#F4D03F] transition-colors cursor-pointer" aria-expanded="false" aria-controls="view-settings-popover">
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
-        </button>
+    <!-- Clean Vox Editorial Masthead + Top-Right Big Image Banner -->
+    <header class="border-b-[3px] border-[#111111] pb-2.5 shrink-0 bg-[#F8F6F0]/90 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+      <div class="min-w-0 flex-1 flex flex-col justify-center">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-1">
+          <div class="flex flex-wrap items-center gap-2 relative">
+          <a href="index.html" title="เมนูหลัก" aria-label="กลับเมนูหลัก" class="inline-flex items-center justify-center bg-white text-[#111111] border-2 border-[#111111] w-7 h-7 rounded-md font-display font-black text-sm shadow-[2px_2px_0px_#111111] hover:bg-[#F4D03F] transition-colors">←</a>
+          <button type="button" data-start-tutorial title="คู่มือการใช้งาน" aria-label="เปิดคู่มือการใช้งาน" class="inline-flex items-center justify-center bg-white text-[#111111] border-2 border-[#111111] w-7 h-7 rounded-md font-display font-black text-xs shadow-[2px_2px_0px_#111111] hover:bg-[#F4D03F] transition-colors cursor-pointer">?</button>
+          <button type="button" id="view-settings-btn" title="มุมมอง &amp; การจัดวาง" aria-label="ตั้งค่ามุมมอง" class="inline-flex items-center justify-center bg-white text-[#111111] border-2 border-[#111111] w-7 h-7 rounded-md shadow-[2px_2px_0px_#111111] hover:bg-[#F4D03F] transition-colors cursor-pointer" aria-expanded="false" aria-controls="view-settings-popover">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
 
-        <!-- View Level & Layout Popover (Vector Icons) -->
-        <div id="view-settings-popover" class="hidden absolute top-full left-0 mt-2 z-50 w-56 vox-card bg-[#F8F6F0] p-3 flex-col gap-2.5 vox-panel-enter">
-          <div>
-            <span class="block text-[10px] font-display font-extrabold text-[#111111]/65 uppercase tracking-wider mb-1">Detail</span>
-            <div class="grid grid-cols-3 gap-1.5">
-              <button type="button" data-view-detail="full" title="รายละเอียดครบ (Full)" aria-label="รายละเอียดครบ" class="view-detail-btn btn-vox bg-white text-[#111111] py-1.5 rounded-lg flex flex-col items-center justify-center gap-0.5 cursor-pointer">
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
-                <span class="text-[9px] font-display font-bold leading-none">ครบ</span>
-              </button>
-              <button type="button" data-view-detail="compact" title="ระดับกลาง (Compact)" aria-label="ระดับกลาง" class="view-detail-btn btn-vox bg-[#111111] text-[#F4D03F] py-1.5 rounded-lg flex flex-col items-center justify-center gap-0.5 cursor-pointer">
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><rect x="4" y="8" width="16" height="8" rx="2"/></svg>
-                <span class="text-[9px] font-display font-bold leading-none">กลาง</span>
-              </button>
-              <button type="button" data-view-detail="simple" title="เรียบง่าย (Simple)" aria-label="เรียบง่าย" class="view-detail-btn btn-vox bg-white text-[#111111] py-1.5 rounded-lg flex flex-col items-center justify-center gap-0.5 cursor-pointer">
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="5"/></svg>
-                <span class="text-[9px] font-display font-bold leading-none">ย่อ</span>
-              </button>
+          <!-- View Level & Layout Popover (Vector Icons) -->
+          <div id="view-settings-popover" class="hidden absolute top-full left-0 mt-2 z-50 w-56 vox-card bg-[#F8F6F0] p-3 flex-col gap-2.5 vox-panel-enter">
+            <div>
+              <span class="block text-[10px] font-display font-extrabold text-[#111111]/65 uppercase tracking-wider mb-1">Detail</span>
+              <div class="grid grid-cols-3 gap-1.5">
+                <button type="button" data-view-detail="full" title="รายละเอียดครบ (Full)" aria-label="รายละเอียดครบ" class="view-detail-btn btn-vox bg-white text-[#111111] py-1.5 rounded-lg flex flex-col items-center justify-center gap-0.5 cursor-pointer">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+                  <span class="text-[9px] font-display font-bold leading-none">ครบ</span>
+                </button>
+                <button type="button" data-view-detail="compact" title="ระดับกลาง (Compact)" aria-label="ระดับกลาง" class="view-detail-btn btn-vox bg-[#111111] text-[#F4D03F] py-1.5 rounded-lg flex flex-col items-center justify-center gap-0.5 cursor-pointer">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><rect x="4" y="8" width="16" height="8" rx="2"/></svg>
+                  <span class="text-[9px] font-display font-bold leading-none">กลาง</span>
+                </button>
+                <button type="button" data-view-detail="simple" title="เรียบง่าย (Simple)" aria-label="เรียบง่าย" class="view-detail-btn btn-vox bg-white text-[#111111] py-1.5 rounded-lg flex flex-col items-center justify-center gap-0.5 cursor-pointer">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="5"/></svg>
+                  <span class="text-[9px] font-display font-bold leading-none">ย่อ</span>
+                </button>
+              </div>
+            </div>
+            <div>
+              <span class="block text-[10px] font-display font-extrabold text-[#111111]/65 uppercase tracking-wider mb-1">Layout</span>
+              <div class="grid grid-cols-2 gap-1.5">
+                <button type="button" data-view-layout="row" title="แถวแนวนอน (Row)" aria-label="แถวแนวนอน" class="view-layout-btn btn-vox bg-[#111111] text-[#F4D03F] py-1.5 rounded-lg flex items-center justify-center gap-1 cursor-pointer">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><rect x="3" y="5" width="5" height="14" rx="1.5"/><rect x="10" y="5" width="4" height="14" rx="1.5"/><rect x="16" y="5" width="5" height="14" rx="1.5"/></svg>
+                  <span class="text-[10px] font-display font-bold">แถว</span>
+                </button>
+                <button type="button" data-view-layout="grid" title="ตาราง (Grid)" aria-label="ตาราง" class="view-layout-btn btn-vox bg-white text-[#111111] py-1.5 rounded-lg flex items-center justify-center gap-1 cursor-pointer">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg>
+                  <span class="text-[10px] font-display font-bold">ตาราง</span>
+                </button>
+              </div>
             </div>
           </div>
-          <div>
-            <span class="block text-[10px] font-display font-extrabold text-[#111111]/65 uppercase tracking-wider mb-1">Layout</span>
-            <div class="grid grid-cols-2 gap-1.5">
-              <button type="button" data-view-layout="row" title="แถวแนวนอน (Row)" aria-label="แถวแนวนอน" class="view-layout-btn btn-vox bg-[#111111] text-[#F4D03F] py-1.5 rounded-lg flex items-center justify-center gap-1 cursor-pointer">
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><rect x="3" y="5" width="5" height="14" rx="1.5"/><rect x="10" y="5" width="4" height="14" rx="1.5"/><rect x="16" y="5" width="5" height="14" rx="1.5"/></svg>
-                <span class="text-[10px] font-display font-bold">แถว</span>
-              </button>
-              <button type="button" data-view-layout="grid" title="ตาราง (Grid)" aria-label="ตาราง" class="view-layout-btn btn-vox bg-white text-[#111111] py-1.5 rounded-lg flex items-center justify-center gap-1 cursor-pointer">
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg>
-                <span class="text-[10px] font-display font-bold">ตาราง</span>
-              </button>
-            </div>
+
+          <div class="inline-flex items-center gap-2 bg-[#111111] text-[#F8F6F0] px-2.5 py-0.5 rounded-md font-display font-extrabold text-[11px] sm:text-xs tracking-wider shadow-[2px_2px_0px_#F4D03F]">
+            <span class="relative flex h-2 w-2">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#F4D03F] opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2 w-2 bg-[#F4D03F]"></span>
+            </span>
+            <span>LIVE SCOREBOARD</span>
+          </div>
+          <button type="button" id="stage-sync-pill" title="สถานะการบันทึกข้อมูล" class="inline-flex items-center gap-1.5 bg-white hover:bg-[#F4D03F]/40 text-[#111111] border-2 border-[#111111] px-2 py-0.5 rounded-md font-display font-bold text-[10px] shadow-[2px_2px_0px_#111111] transition-colors cursor-pointer"></button>
+          <button type="button" id="header-screenshare-btn" title="แชร์หน้าจอไปจอมอนิเตอร์ / โปรเจกเตอร์ในห้องใหญ่" class="inline-flex items-center gap-1.5 bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] border-2 border-[#111111] px-2.5 py-0.5 rounded-md font-display font-extrabold text-[10px] shadow-[2px_2px_0px_#111111] transition-colors cursor-pointer">
+            <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+            <span>แชร์จอ / โปรเจกเตอร์</span>
+          </button>
           </div>
         </div>
 
-        <div class="inline-flex items-center gap-2 bg-[#111111] text-[#F8F6F0] px-2.5 py-0.5 rounded-md font-display font-extrabold text-[11px] sm:text-xs tracking-wider shadow-[2px_2px_0px_#F4D03F]">
-          <span class="relative flex h-2 w-2">
-            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#F4D03F] opacity-75"></span>
-            <span class="relative inline-flex rounded-full h-2 w-2 bg-[#F4D03F]"></span>
-          </span>
-          <span>LIVE SCOREBOARD</span>
+        <div class="flex flex-col gap-0.5">
+          <h1
+            id="event-title"
+            class="thai-safe font-display font-black text-2xl sm:text-3xl lg:text-[2.1rem] text-[#111111] tracking-tight break-words leading-tight"
+          >กระดานคะแนนกิจกรรม</h1>
+          <p
+            id="event-subtitle"
+            class="thai-safe-tight font-semibold text-xs sm:text-sm text-[#111111]/75 break-words"
+          >แสดงคะแนน กติกา และจับเวลาสดบนเวที</p>
         </div>
-        <button type="button" id="stage-sync-pill" title="สถานะการบันทึกข้อมูล" class="inline-flex items-center gap-1.5 bg-white hover:bg-[#F4D03F]/40 text-[#111111] border-2 border-[#111111] px-2 py-0.5 rounded-md font-display font-bold text-[10px] shadow-[2px_2px_0px_#111111] transition-colors cursor-pointer"></button>
-        </div>
-
       </div>
 
-      <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5">
-        <h1
-          id="event-title"
-          class="thai-safe font-display font-black text-2xl sm:text-3xl lg:text-[2.1rem] text-[#111111] tracking-tight break-words"
-        >กระดานคะแนนกิจกรรม</h1>
-        <p
-          id="event-subtitle"
-          class="thai-safe-tight font-semibold text-xs sm:text-sm text-[#111111]/75 break-words"
-        >แสดงคะแนน กติกา และจับเวลาสดบนเวที</p>
-      </div>
+      <!-- Top-Right Big Image Banner (Covers Top-Right Header Space) -->
+      <aside id="stage-top-banner" class="w-full lg:w-[31rem] xl:w-[37rem] h-24 sm:h-[6.25rem] shrink-0 rounded-xl border-[2.5px] border-[#111111] shadow-[4px_4px_0px_#111111] bg-[#111111] relative overflow-hidden group select-none" aria-label="แบนเนอร์เวที">
+        <div id="stage-banner-track" class="flex w-full h-full transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"></div>
+
+        <!-- Subtle Hover Controls (Dots, Prev/Next, Custom Image Upload) -->
+        <div class="absolute top-2 right-2 z-20 flex items-center gap-1">
+          <div id="stage-banner-dots" class="flex items-center gap-1 bg-[#111111]/75 backdrop-blur-sm px-1.5 py-1 rounded-md border border-white/20"></div>
+          <button type="button" id="stage-banner-prev" aria-label="ภาพก่อนหน้า" class="opacity-0 group-hover:opacity-100 w-5 h-5 rounded bg-white/95 hover:bg-[#F4D03F] border border-[#111111] text-[#111111] font-display font-black text-[11px] flex items-center justify-center cursor-pointer transition-opacity">‹</button>
+          <button type="button" id="stage-banner-next" aria-label="ภาพถัดไป" class="opacity-0 group-hover:opacity-100 w-5 h-5 rounded bg-white/95 hover:bg-[#F4D03F] border border-[#111111] text-[#111111] font-display font-black text-[11px] flex items-center justify-center cursor-pointer transition-opacity">›</button>
+          <button type="button" id="stage-banner-upload-btn" title="อัปโหลดภาพแบนเนอร์งานของคุณ" class="opacity-0 group-hover:opacity-100 bg-white/95 hover:bg-[#F4D03F] border border-[#111111] text-[#111111] font-display font-bold text-[10px] px-2 py-0.5 rounded cursor-pointer transition-opacity">🖼️ ภาพงาน</button>
+          <button type="button" id="stage-banner-reset-btn" title="คืนค่าแบนเนอร์เริ่มต้น" class="hidden opacity-0 group-hover:opacity-100 bg-[#E74C3C] text-white border border-[#111111] font-display font-bold text-[10px] px-1.5 py-0.5 rounded cursor-pointer transition-opacity">✕</button>
+          <input type="file" id="stage-banner-file" accept="image/*" class="hidden" />
+        </div>
+      </aside>
     </header>
 
     <!-- CENTER STAGE: Activity List (Left) + Activity Focus/Detail Block (Center/Right) -->
@@ -316,18 +336,12 @@
         </div>
       </div>
 
-      <!-- Circular Liquid-Rise Vox Countdown (Exaggerated Dual Layered Waves) -->
+      <!-- Circular Liquid-Rise Vox Countdown (Single Pure Front Wave Color, Seamless Overlap) -->
       <div class="timer-circle-mask relative w-64 h-64 sm:w-80 sm:h-80 rounded-full border-[5px] border-[#111111] bg-[#F8F6F0] shadow-[8px_8px_0px_#111111] overflow-hidden flex items-center justify-center">
-        <!-- Back Darker Wave Layer -->
-        <div id="center-timer-bar-back" class="timer-liquid-fill" style="height: 0%; background-color: #1B5E8A;">
-          <svg class="timer-liquid-wave-back" viewBox="0 0 240 48" preserveAspectRatio="none" aria-hidden="true">
-            <path id="center-timer-wave-back-path" d="M0 24 Q 30 46 60 24 T 120 24 T 180 24 T 240 24 L 240 48 L 0 48 Z" fill="#1B5E8A"/>
-          </svg>
-        </div>
-        <!-- Front Brighter Wave Layer -->
+        <!-- Pure Single-Color Wave Layer (deep solid base eliminates any horizontal seam) -->
         <div id="center-timer-bar" class="timer-liquid-fill" style="height: 0%; background-color: #2980B9;">
-          <svg class="timer-liquid-wave" viewBox="0 0 240 48" preserveAspectRatio="none" aria-hidden="true">
-            <path id="center-timer-wave-path" d="M0 24 Q 30 2 60 24 T 120 24 T 180 24 T 240 24 L 240 48 L 0 48 Z" fill="#2980B9"/>
+          <svg class="timer-liquid-wave" viewBox="0 0 240 64" preserveAspectRatio="none" aria-hidden="true">
+            <path id="center-timer-wave-path" d="M0 24 Q 30 2 60 24 T 120 24 T 180 24 T 240 24 L 240 64 L 0 64 Z" fill="#2980B9"/>
           </svg>
         </div>
 
@@ -361,13 +375,160 @@
   <script src="assets/js/config.js?v=20261122b" defer></script>
   <script src="assets/js/security.js?v=20261122b" defer></script>
   <script src="assets/js/mascots.js?v=20261122b" defer></script>
-  <script src="assets/js/scoreboard.js?v=20261122b" defer></script>
+  <script src="assets/js/scoreboard.js?v=20261122g" defer></script>
   <script src="assets/js/auth.js?v=20261122b" defer></script>
-  <script src="assets/js/cloud-sync.js?v=20261122b" defer></script>
+  <script src="assets/js/cloud-sync.js?v=20261122g" defer></script>
   <script src="assets/js/tos.js?v=20261122b" defer></script>
   <script src="assets/js/tutorial.js?v=20261122b" defer></script>
   <script src="assets/js/context-menu.js?v=20261122e" defer></script>
-  <script src="assets/js/bgm-dock.js?v=20261122e" defer></script>
-  <script src="assets/js/toolbox.js?v=20261122e" defer></script>
+  <script src="assets/js/bgm-dock.js?v=20261122f" defer></script>
+  <script src="assets/js/toolbox.js?v=20261122g" defer></script>
+  <script>
+    (() => {
+      const BANNER_KEY = 'helpdai_stage_custom_banner_v1';
+      const trackEl = document.getElementById('stage-banner-track');
+      const dotsEl = document.getElementById('stage-banner-dots');
+      const bannerEl = document.getElementById('stage-top-banner');
+      const uploadBtn = document.getElementById('stage-banner-upload-btn');
+      const resetBtn = document.getElementById('stage-banner-reset-btn');
+      const fileInp = document.getElementById('stage-banner-file');
+      if (!trackEl || !dotsEl || !bannerEl) return;
+
+      const SLIDES = [
+        {
+          tag: 'LIVE ARENA',
+          accent: '#F4D03F',
+          title: 'คลิกทีมเพื่อบวกคะแนน • คลิกขวากิจกรรมเพื่อแก้ไขกติกาและสื่อ',
+          art: `<svg class="w-full h-full object-cover" viewBox="0 0 600 110" xmlns="http://www.w3.org/2000/svg">
+            <rect width="600" height="110" fill="#171717"/>
+            <g opacity="0.14" stroke="#FFFFFF" stroke-width="1"><path d="M0 28h600M0 56h600M0 84h600M100 0v110M200 0v110M300 0v110M400 0v110M500 0v110"/></g>
+            <rect x="18" y="14" width="160" height="54" rx="10" fill="#F8F6F0" stroke="#111111" stroke-width="3"/>
+            <rect x="28" y="24" width="96" height="14" rx="4" fill="#F4D03F" stroke="#111111" stroke-width="2"/>
+            <rect x="28" y="44" width="134" height="14" rx="4" fill="#2980B9" stroke="#111111" stroke-width="2"/>
+            <rect x="194" y="14" width="236" height="54" rx="10" fill="#FFFFFF" stroke="#111111" stroke-width="3"/>
+            <rect x="206" y="24" width="180" height="14" rx="4" fill="#F4D03F" stroke="#111111" stroke-width="2"/>
+            <rect x="206" y="44" width="142" height="14" rx="4" fill="#E74C3C" stroke="#111111" stroke-width="2"/>
+            <circle cx="484" cy="40" r="24" fill="#F4D03F" stroke="#111111" stroke-width="3"/>
+            <path d="M473 46l5-14 6 7 6-7 5 14z" fill="#111111"/>
+            <circle cx="546" cy="40" r="24" fill="#2980B9" stroke="#111111" stroke-width="3"/>
+            <path d="M538 35h16v12h-16z" fill="#FFFFFF"/>
+          </svg>`
+        },
+        {
+          tag: 'STAGE TOOLS',
+          accent: '#2980B9',
+          title: 'แถบเครื่องมือเวที: สุ่มทีม • นาฬิกาคลื่นน้ำ • โหวตสด QR • เพลง YouTube',
+          art: `<svg class="w-full h-full object-cover" viewBox="0 0 600 110" xmlns="http://www.w3.org/2000/svg">
+            <rect width="600" height="110" fill="#112233"/>
+            <g opacity="0.14" stroke="#FFFFFF" stroke-width="1"><path d="M0 28h600M0 56h600M0 84h600M100 0v110M200 0v110M300 0v110M400 0v110M500 0v110"/></g>
+            <circle cx="62" cy="42" r="26" fill="#F8F6F0" stroke="#111111" stroke-width="3"/>
+            <path d="M38 42 Q 50 32 62 42 T 86 42 L 86 68 L 38 68 Z" fill="#2980B9"/>
+            <rect x="108" y="16" width="164" height="52" rx="10" fill="#FFFFFF" stroke="#111111" stroke-width="3"/>
+            <rect x="120" y="25" width="34" height="34" rx="6" fill="#F8F6F0" stroke="#111111" stroke-width="2"/>
+            <rect x="126" y="31" width="9" height="9" fill="#111111"/><rect x="139" y="31" width="9" height="9" fill="#111111"/><rect x="126" y="44" width="9" height="9" fill="#111111"/><rect x="139" y="44" width="9" height="9" fill="#F4D03F"/>
+            <rect x="164" y="27" width="94" height="12" rx="4" fill="#10B981" stroke="#111111" stroke-width="2"/>
+            <rect x="164" y="45" width="72" height="12" rx="4" fill="#F4D03F" stroke="#111111" stroke-width="2"/>
+            <rect x="290" y="16" width="286" height="52" rx="10" fill="#FFFFFF" stroke="#111111" stroke-width="3"/>
+            <rect x="304" y="26" width="52" height="32" rx="6" fill="#E74C3C" stroke="#111111" stroke-width="2"/>
+            <polygon points="325,35 325,49 338,42" fill="#FFFFFF"/>
+            <rect x="368" y="28" width="144" height="12" rx="4" fill="#111111"/>
+            <rect x="368" y="46" width="102" height="10" rx="4" fill="#F4D03F" stroke="#111111" stroke-width="1.5"/>
+          </svg>`
+        },
+        {
+          tag: 'QUICK TEMPLATE',
+          accent: '#E74C3C',
+          title: 'คลิกขวาพื้นหลังเพื่อเลือกเทมเพลต 1 คลิก หรือบันทึก/โหลดไฟล์งาน (.json)',
+          art: `<svg class="w-full h-full object-cover" viewBox="0 0 600 110" xmlns="http://www.w3.org/2000/svg">
+            <rect width="600" height="110" fill="#24161E"/>
+            <g opacity="0.14" stroke="#FFFFFF" stroke-width="1"><path d="M0 28h600M0 56h600M0 84h600M100 0v110M200 0v110M300 0v110M400 0v110M500 0v110"/></g>
+            <rect x="24" y="16" width="170" height="52" rx="10" fill="#F4D03F" stroke="#111111" stroke-width="3"/>
+            <text x="109" y="47" text-anchor="middle" font-family="Prompt, sans-serif" font-weight="900" font-size="15" fill="#111111">QUIZ &amp; TRIVIA</text>
+            <rect x="214" y="16" width="170" height="52" rx="10" fill="#2980B9" stroke="#111111" stroke-width="3"/>
+            <text x="299" y="47" text-anchor="middle" font-family="Prompt, sans-serif" font-weight="900" font-size="15" fill="#FFFFFF">SPORT DAY</text>
+            <rect x="404" y="16" width="170" height="52" rx="10" fill="#E74C3C" stroke="#111111" stroke-width="3"/>
+            <text x="489" y="47" text-anchor="middle" font-family="Prompt, sans-serif" font-weight="900" font-size="15" fill="#FFFFFF">WORKSHOP</text>
+          </svg>`
+        }
+      ];
+
+      let idx = 0;
+      let timerId = null;
+
+      const getCustomImg = () => {
+        try { return localStorage.getItem(BANNER_KEY) || ''; } catch (_) { return ''; }
+      };
+
+      const renderSlides = () => {
+        const customImg = getCustomImg();
+        resetBtn?.classList.toggle('hidden', !customImg);
+        if (customImg) {
+          clearInterval(timerId);
+          trackEl.style.transform = 'translateX(0%)';
+          trackEl.innerHTML = `<div class="w-full h-full shrink-0 relative"><img src="${customImg}" alt="Event Banner" class="w-full h-full object-cover" /></div>`;
+          dotsEl.innerHTML = `<span class="text-[9px] font-display font-black text-[#F4D03F] px-1">CUSTOM</span>`;
+          return;
+        }
+
+        trackEl.innerHTML = SLIDES.map(s => `
+          <div class="w-full h-full shrink-0 relative flex flex-col justify-end overflow-hidden">
+            <div class="absolute inset-0">${s.art}</div>
+            <div class="relative z-10 bg-gradient-to-t from-[#111111] via-[#111111]/85 to-transparent px-3 pt-4 pb-1.5 flex items-center gap-2">
+              <span class="text-[9px] font-display font-black px-1.5 py-0.5 rounded border border-[#111111] shrink-0" style="background:${s.accent}; color:${s.accent === '#F4D03F' ? '#111111' : '#FFFFFF'}">${s.tag}</span>
+              <span class="thai-safe-tight font-display font-bold text-[11px] sm:text-xs text-white truncate">${s.title}</span>
+            </div>
+          </div>
+        `).join('');
+        syncState();
+        resetAuto();
+      };
+
+      const syncState = () => {
+        if (getCustomImg()) return;
+        trackEl.style.transform = `translateX(-${idx * 100}%)`;
+        dotsEl.innerHTML = SLIDES.map((_, i) => `
+          <button type="button" data-sb-dot="${i}" aria-label="แบนเนอร์ ${i + 1}" class="h-1.5 rounded-full transition-all cursor-pointer ${i === idx ? 'w-4 bg-[#F4D03F]' : 'w-1.5 bg-white/60'}"></button>
+        `).join('');
+        dotsEl.querySelectorAll('[data-sb-dot]').forEach(b => {
+          b.addEventListener('click', () => go(Number(b.dataset.sbDot)));
+        });
+      };
+
+      const go = (next) => {
+        if (getCustomImg()) return;
+        idx = ((next % SLIDES.length) + SLIDES.length) % SLIDES.length;
+        syncState();
+        resetAuto();
+      };
+
+      const resetAuto = () => {
+        clearInterval(timerId);
+        if (!getCustomImg()) {
+          timerId = setInterval(() => go(idx + 1), 5000);
+        }
+      };
+
+      document.getElementById('stage-banner-prev')?.addEventListener('click', () => go(idx - 1));
+      document.getElementById('stage-banner-next')?.addEventListener('click', () => go(idx + 1));
+
+      uploadBtn?.addEventListener('click', () => fileInp?.click());
+      fileInp?.addEventListener('change', () => {
+        const f = fileInp.files?.[0];
+        if (!f) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          try { localStorage.setItem(BANNER_KEY, String(reader.result)); } catch (_) {}
+          renderSlides();
+        };
+        reader.readAsDataURL(f);
+      });
+      resetBtn?.addEventListener('click', () => {
+        try { localStorage.removeItem(BANNER_KEY); } catch (_) {}
+        renderSlides();
+      });
+
+      renderSlides();
+    })();
+  </script>
 </body>
 </html>

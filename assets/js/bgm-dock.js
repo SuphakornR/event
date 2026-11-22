@@ -1,23 +1,6 @@
-/* HelpDaiCha Cross-Page YouTube BGM State + Hub Compact Horizontal Player */
+/* HelpDaiCha Cross-Page Persistent YouTube BGM Engine + Footer Compact Player */
 (() => {
   const BGM_KEY = 'helpdai_bgm_player_v1';
-
-  const readBgm = () => {
-    try {
-      const raw = JSON.parse(localStorage.getItem(BGM_KEY) || 'null');
-      if (raw && typeof raw.videoId === 'string') {
-        return { videoId: raw.videoId, title: String(raw.title || ''), playing: Boolean(raw.playing) };
-      }
-    } catch (_) {}
-    return { videoId: '', title: '', playing: false };
-  };
-
-  const writeBgm = (next) => {
-    try {
-      localStorage.setItem(BGM_KEY, JSON.stringify(next));
-    } catch (_) {}
-    window.dispatchEvent(new CustomEvent('helpdai-bgm-change', { detail: next }));
-  };
 
   const extractYoutubeId = (raw) => {
     const s = String(raw || '').trim();
@@ -25,6 +8,73 @@
     if (/^[a-zA-Z0-9_-]{11}$/.test(s)) return s;
     const m = s.match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
     return m ? m[1] : '';
+  };
+
+  // If running inside the seamless cross-page shell iframe, delegate to window.parent.HelpDaiBgm
+  try {
+    if (window.parent && window.parent !== window && window.parent.HelpDaiBgm) {
+      const parentBgm = window.parent.HelpDaiBgm;
+      parentBgm.registerChildWindow?.(window);
+      window.HelpDaiBgm = parentBgm;
+
+      document.addEventListener('click', (e) => {
+        const a = e.target.closest?.('a[href]');
+        if (!a || a.target === '_blank' || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        const href = (a.getAttribute('href') || '').trim();
+        if (href === 'index.html' || href === './index.html' || href === '/') {
+          e.preventDefault();
+          parentBgm.parkOverlay?.();
+          parentBgm.closeShell?.('index.html');
+        }
+      });
+      return;
+    }
+  } catch (_) {}
+
+  const childWindows = new Set();
+
+  const readBgm = () => {
+    try {
+      const raw = JSON.parse(localStorage.getItem(BGM_KEY) || 'null');
+      if (raw && typeof raw.videoId === 'string') {
+        const playing = Boolean(raw.playing);
+        const baseElapsed = Math.max(0, Number(raw.elapsedSec) || 0);
+        const startedAt = Number(raw.startedAt) || 0;
+        const liveElapsed = (playing && startedAt > 0)
+          ? Math.max(baseElapsed, Math.floor((Date.now() - startedAt) / 1000))
+          : baseElapsed;
+        return {
+          videoId: raw.videoId,
+          title: String(raw.title || ''),
+          playing,
+          elapsedSec: liveElapsed,
+          startedAt
+        };
+      }
+    } catch (_) {}
+    return { videoId: '', title: '', playing: false, elapsedSec: 0, startedAt: 0 };
+  };
+
+  const broadcastBgm = (next) => {
+    window.dispatchEvent(new CustomEvent('helpdai-bgm-change', { detail: next }));
+    childWindows.forEach((w) => {
+      try {
+        if (w && !w.closed) {
+          w.dispatchEvent(new w.CustomEvent('helpdai-bgm-change', { detail: next }));
+        } else {
+          childWindows.delete(w);
+        }
+      } catch (_) {
+        childWindows.delete(w);
+      }
+    });
+  };
+
+  const writeBgm = (next, emit = true) => {
+    try {
+      localStorage.setItem(BGM_KEY, JSON.stringify(next));
+    } catch (_) {}
+    if (emit) broadcastBgm(next);
   };
 
   async function fetchTrackTitle(videoId) {
@@ -40,15 +90,182 @@
     return `YouTube (${videoId})`;
   }
 
+  // Single persistent YouTube host in window.top (never destroyed across index.html <-> scoreboard.html)
+  const ytFrameHost = document.createElement('div');
+  ytFrameHost.id = 'helpdai-top-yt-host';
+  ytFrameHost.className = 'fixed w-64 aspect-video rounded-lg overflow-hidden';
+  ytFrameHost.style.left = '-9999px';
+  ytFrameHost.style.top = '0px';
+  ytFrameHost.style.opacity = '0';
+  ytFrameHost.style.pointerEvents = 'none';
+  ytFrameHost.style.zIndex = '250';
+
+  let loadedId = '';
+  let loadedPlaying = false;
+
+  const ensureHostMounted = () => {
+    if (!ytFrameHost.isConnected && document.body) {
+      document.body.appendChild(ytFrameHost);
+    }
+  };
+
+  const sendYtCmd = (func, args = []) => {
+    const iframe = ytFrameHost.querySelector('iframe');
+    if (iframe?.contentWindow) {
+      iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func, args }), '*');
+    }
+  };
+
+  const parkOverlay = () => {
+    ytFrameHost.style.left = '-9999px';
+    ytFrameHost.style.top = '0px';
+    ytFrameHost.style.opacity = '0';
+    ytFrameHost.style.pointerEvents = 'none';
+  };
+
+  const mountOverlay = (rect) => {
+    ensureHostMounted();
+    if (!rect || rect.width < 10 || rect.height < 10 || !loadedId) {
+      parkOverlay();
+      return;
+    }
+    ytFrameHost.style.left = `${Math.round(rect.left)}px`;
+    ytFrameHost.style.top = `${Math.round(rect.top)}px`;
+    ytFrameHost.style.width = `${Math.round(rect.width)}px`;
+    ytFrameHost.style.height = `${Math.round(rect.height)}px`;
+    ytFrameHost.style.zIndex = '250';
+    ytFrameHost.style.opacity = '1';
+    ytFrameHost.style.pointerEvents = 'auto';
+  };
+
+  const syncEngineIframe = () => {
+    ensureHostMounted();
+    const st = readBgm();
+    if (st.videoId && st.videoId !== loadedId) {
+      loadedId = st.videoId;
+      loadedPlaying = st.playing;
+      const originParam = location.protocol.startsWith('http') ? `&origin=${encodeURIComponent(location.origin)}` : '';
+      const startParam = st.elapsedSec > 1 ? `&start=${Math.floor(st.elapsedSec)}` : '';
+      ytFrameHost.innerHTML = `<iframe class="w-full h-full rounded-lg border-2 border-[#111111]" src="https://www.youtube.com/embed/${st.videoId}?enablejsapi=1&autoplay=${st.playing ? 1 : 0}&rel=0${startParam}${originParam}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin" title="HelpDaiCha BGM"></iframe>`;
+      const iframe = ytFrameHost.querySelector('iframe');
+      iframe?.addEventListener('load', () => {
+        try {
+          iframe.contentWindow?.postMessage(JSON.stringify({ event: 'listening', id: 1 }), '*');
+        } catch (_) {}
+      });
+    } else if (!st.videoId && loadedId) {
+      loadedId = '';
+      loadedPlaying = false;
+      ytFrameHost.innerHTML = '';
+      parkOverlay();
+    } else if (st.videoId && st.videoId === loadedId && st.playing !== loadedPlaying) {
+      loadedPlaying = st.playing;
+      sendYtCmd(st.playing ? 'playVideo' : 'pauseVideo');
+    }
+  };
+
+  // Listen for YouTube embed currentTime telemetry so hard refreshes resume at the exact second
+  window.addEventListener('message', (e) => {
+    if (!e.origin.includes('youtube.com')) return;
+    try {
+      const msg = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
+      if (msg?.event === 'infoDelivery' && typeof msg.info?.currentTime === 'number') {
+        const cur = readBgm();
+        if (cur.videoId && cur.playing) {
+          const sec = Math.max(0, Math.floor(msg.info.currentTime));
+          writeBgm({
+            ...cur,
+            elapsedSec: sec,
+            startedAt: Date.now() - sec * 1000
+          }, false);
+        }
+      }
+    } catch (_) {}
+  });
+
+  // Seamless cross-page shell so switching index.html <-> scoreboard.html never unloads the YouTube iframe
+  let shellFrame = null;
+  let shellOpen = false;
+  const initialPage = location.pathname.endsWith('scoreboard.html') ? 'scoreboard.html' : 'index.html';
+
+  const openShell = (targetHref, pushHistory = true) => {
+    parkOverlay();
+    if (!shellFrame) {
+      shellFrame = document.createElement('iframe');
+      shellFrame.id = 'helpdai-page-shell';
+      shellFrame.src = targetHref;
+      shellFrame.title = 'HelpDaiCha Stage';
+      shellFrame.className = 'fixed inset-0 w-full h-full border-0 z-[200] bg-[#F8F6F0]';
+      shellFrame.setAttribute('allow', 'autoplay; fullscreen; clipboard-write');
+      document.body.appendChild(shellFrame);
+    } else {
+      shellFrame.classList.remove('hidden');
+    }
+    shellOpen = true;
+    if (pushHistory) {
+      try {
+        history.pushState({ helpdaiShell: targetHref }, '', targetHref);
+      } catch (_) {}
+    }
+  };
+
+  const closeShell = (backHref = initialPage, pushHistory = true) => {
+    parkOverlay();
+    if (shellFrame) {
+      shellFrame.classList.add('hidden');
+    }
+    shellOpen = false;
+    if (pushHistory) {
+      try {
+        history.pushState({ helpdaiShell: null }, '', backHref);
+      } catch (_) {}
+    }
+    broadcastBgm(readBgm());
+  };
+
+  window.addEventListener('popstate', () => {
+    const onScoreboard = location.pathname.endsWith('scoreboard.html');
+    const targetPage = onScoreboard ? 'scoreboard.html' : 'index.html';
+    if (targetPage !== initialPage) {
+      openShell(targetPage, false);
+    } else if (shellOpen) {
+      closeShell(initialPage, false);
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest?.('a[href]');
+    if (!a || a.target === '_blank' || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    const href = (a.getAttribute('href') || '').trim();
+    if (initialPage === 'index.html' && (href === 'scoreboard.html' || href === './scoreboard.html')) {
+      e.preventDefault();
+      openShell('scoreboard.html', true);
+    } else if (initialPage === 'scoreboard.html' && (href === 'index.html' || href === './index.html')) {
+      e.preventDefault();
+      openShell('index.html', true);
+    }
+  });
+
   window.HelpDaiBgm = Object.freeze({
     getState: readBgm,
     extractYoutubeId,
+    registerChildWindow(win) {
+      if (win) childWindows.add(win);
+    },
+    mountOverlay,
+    parkOverlay,
+    openShell,
+    closeShell,
     async setTrack(videoId, title = '', playing = true) {
       const cleanId = extractYoutubeId(videoId);
       if (!cleanId) return;
       const cur = readBgm();
-      const resolvedTitle = title || (cur.videoId === cleanId && cur.title ? cur.title : `YouTube (${cleanId})`);
-      writeBgm({ videoId: cleanId, title: resolvedTitle, playing: Boolean(playing) });
+      const isSameTrack = cur.videoId === cleanId;
+      const resolvedTitle = title || (isSameTrack && cur.title ? cur.title : `YouTube (${cleanId})`);
+      const elapsedSec = isSameTrack ? cur.elapsedSec : 0;
+      const startedAt = playing ? (Date.now() - elapsedSec * 1000) : 0;
+      writeBgm({ videoId: cleanId, title: resolvedTitle, playing: Boolean(playing), elapsedSec, startedAt });
+      syncEngineIframe();
       if (!title) {
         const fetched = await fetchTrackTitle(cleanId);
         const latest = readBgm();
@@ -60,52 +277,56 @@
     setPlaying(playing) {
       const cur = readBgm();
       if (!cur.videoId) return;
-      writeBgm({ ...cur, playing: Boolean(playing) });
+      const nextPlaying = Boolean(playing);
+      const elapsedSec = cur.elapsedSec;
+      const startedAt = nextPlaying ? (Date.now() - elapsedSec * 1000) : 0;
+      writeBgm({ ...cur, playing: nextPlaying, elapsedSec, startedAt });
+      syncEngineIframe();
     },
     stop() {
-      writeBgm({ videoId: '', title: '', playing: false });
+      writeBgm({ videoId: '', title: '', playing: false, elapsedSec: 0, startedAt: 0 });
+      syncEngineIframe();
     }
   });
 
   function mountHubPlayer() {
+    ensureHostMounted();
+    syncEngineIframe();
+
     const slot = document.getElementById('hub-bgm-slot');
     if (!slot) return;
 
-    const ytFrameHost = document.createElement('div');
-    ytFrameHost.className = 'fixed -left-[9999px] top-0 w-40 h-24 opacity-0 pointer-events-none';
-    document.body.appendChild(ytFrameHost);
-
-    let loadedId = '';
     let searchOpen = false;
 
     slot.innerHTML = `
-      <div class="vox-card bg-white px-3 py-2 flex flex-col gap-2 w-full max-w-xl mx-auto">
-        <div class="flex items-center gap-3">
-          <div id="hub-bgm-thumb-wrap" class="w-12 h-9 rounded-lg border-2 border-[#111111] bg-[#F4D03F] flex items-center justify-center overflow-hidden shrink-0">
-            <svg class="w-4 h-4 text-[#111111]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-          </div>
-          <div class="min-w-0 flex-1">
-            <div class="flex items-center gap-1.5">
-              <span id="hub-bgm-dot" class="hidden w-2 h-2 rounded-full bg-[#10B981] shrink-0 animate-pulse"></span>
-              <p id="hub-bgm-title" class="thai-safe-tight font-display font-extrabold text-xs text-[#111111] truncate">ยังไม่ได้เลือกเพลงพื้นหลัง</p>
-            </div>
-            <p id="hub-bgm-sub" class="text-[10px] font-semibold text-[#111111]/60 truncate">เล่นต่อเนื่องข้ามหน้าไปยัง Stage Scoreboard ได้ทันที</p>
-          </div>
-          <div class="flex items-center gap-1.5 shrink-0">
-            <button type="button" id="hub-bgm-toggle" title="เล่น / หยุด" aria-label="เล่นหรือหยุดเพลง" class="hidden btn-vox w-8 h-8 bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] rounded-lg items-center justify-center cursor-pointer"></button>
-            <button type="button" id="hub-bgm-stop" title="หยุดเพลง" aria-label="ปิดเพลง" class="hidden btn-vox w-8 h-8 bg-white hover:bg-red-50 text-[#E74C3C] rounded-lg items-center justify-center cursor-pointer">
-              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
-            </button>
-            <button type="button" id="hub-bgm-edit-btn" title="ใส่ลิงก์หรือค้นหาเพลง YouTube" aria-label="เลือกเพลง YouTube" class="btn-vox bg-[#111111] hover:bg-[#222222] text-[#F4D03F] font-display font-extrabold text-[11px] px-2.5 py-1.5 rounded-lg cursor-pointer">♪ เลือกเพลง</button>
-          </div>
+      <!-- Upward Popover for YouTube Link / Search so footer stays on the same horizontal level -->
+      <div id="hub-bgm-input-row" class="hidden absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 w-80 sm:w-96 z-50 vox-card bg-white p-2.5 flex-col gap-2 vox-panel-enter">
+        <div class="flex items-center justify-between gap-2 pb-1 border-b border-[#111111]/15">
+          <span class="font-display font-extrabold text-[11px] text-[#111111]">♪ เลือกเพลงพื้นหลัง YouTube</span>
+          <button type="button" id="hub-bgm-pop-close" class="w-5 h-5 rounded hover:bg-red-100 text-[#111111] hover:text-[#E74C3C] font-black text-[11px] flex items-center justify-center cursor-pointer">✕</button>
         </div>
+        <div class="flex gap-1.5">
+          <input id="hub-bgm-input" type="text" placeholder="วางลิงก์ YouTube หรือพิมพ์ชื่อเพลง..." class="flex-1 min-w-0 bg-[#F8F6F0] border-2 border-[#111111] rounded-lg px-2.5 py-1 text-xs font-semibold text-[#111111] focus:outline-none focus:bg-white" />
+          <button type="button" id="hub-bgm-go" class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-extrabold text-xs px-3 py-1 rounded-lg cursor-pointer">เล่น</button>
+        </div>
+        <div id="hub-bgm-results" class="hidden flex-col gap-1 max-h-40 overflow-y-auto"></div>
+      </div>
 
-        <div id="hub-bgm-input-row" class="hidden flex-col gap-1.5 pt-1 border-t border-[#111111]/15">
-          <div class="flex gap-1.5">
-            <input id="hub-bgm-input" type="text" placeholder="วางลิงก์ YouTube หรือพิมพ์ชื่อเพลงแล้วกด Enter..." class="flex-1 min-w-0 bg-[#F8F6F0] border-2 border-[#111111] rounded-lg px-2.5 py-1 text-xs font-semibold focus:outline-none focus:bg-white" />
-            <button type="button" id="hub-bgm-go" class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-extrabold text-xs px-3 py-1 rounded-lg cursor-pointer">เล่น</button>
-          </div>
-          <div id="hub-bgm-results" class="hidden flex-col gap-1 max-h-36 overflow-y-auto"></div>
+      <!-- Compact Horizontal Footer Card (Same Level as Suggestion Box & ToS) -->
+      <div class="bg-white border-2 border-[#111111] rounded-xl shadow-[2px_2px_0px_#111111] px-2.5 py-1 flex items-center gap-2 w-full">
+        <div id="hub-bgm-thumb-wrap" class="w-8 h-6 rounded-md border border-[#111111] bg-[#F4D03F] flex items-center justify-center overflow-hidden shrink-0">
+          <svg class="w-3.5 h-3.5 text-[#111111]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+        </div>
+        <div class="min-w-0 flex-1 flex items-center gap-1.5">
+          <span id="hub-bgm-dot" class="hidden w-2 h-2 rounded-full bg-[#10B981] shrink-0 animate-pulse"></span>
+          <p id="hub-bgm-title" class="thai-safe-tight font-display font-bold text-[11px] text-[#111111] truncate">ยังไม่ได้เปิดเพลงพื้นหลัง</p>
+        </div>
+        <div class="flex items-center gap-1 shrink-0">
+          <button type="button" id="hub-bgm-toggle" title="เล่น / พัก" aria-label="เล่นหรือพักเพลง" class="hidden btn-vox w-6 h-6 bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] rounded-md items-center justify-center cursor-pointer"></button>
+          <button type="button" id="hub-bgm-stop" title="ปิดเพลง" aria-label="ปิดเพลง" class="hidden btn-vox w-6 h-6 bg-white hover:bg-red-50 text-[#E74C3C] rounded-md items-center justify-center cursor-pointer">
+            <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
+          </button>
+          <button type="button" id="hub-bgm-edit-btn" title="เลือกเพลง YouTube" aria-label="เลือกเพลง YouTube" class="btn-vox bg-[#111111] hover:bg-[#222222] text-[#F4D03F] font-display font-extrabold text-[10px] px-2 py-0.5 rounded-md cursor-pointer">♪ เพลง</button>
         </div>
       </div>
     `;
@@ -113,23 +334,23 @@
     const thumbWrap = document.getElementById('hub-bgm-thumb-wrap');
     const dotEl = document.getElementById('hub-bgm-dot');
     const titleEl = document.getElementById('hub-bgm-title');
-    const subEl = document.getElementById('hub-bgm-sub');
     const toggleBtn = document.getElementById('hub-bgm-toggle');
     const stopBtn = document.getElementById('hub-bgm-stop');
     const editBtn = document.getElementById('hub-bgm-edit-btn');
+    const popCloseBtn = document.getElementById('hub-bgm-pop-close');
     const inputRow = document.getElementById('hub-bgm-input-row');
     const inpEl = document.getElementById('hub-bgm-input');
     const goBtn = document.getElementById('hub-bgm-go');
     const resultsEl = document.getElementById('hub-bgm-results');
 
-    const sendCmd = (func) => {
-      const iframe = ytFrameHost.querySelector('iframe');
-      if (iframe?.contentWindow) {
-        iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func, args: [] }), '*');
-      }
+    const closePop = () => {
+      searchOpen = false;
+      inputRow.classList.add('hidden');
+      inputRow.classList.remove('flex');
     };
 
     const syncUi = () => {
+      syncEngineIframe();
       const st = readBgm();
       const hasTrack = Boolean(st.videoId);
 
@@ -142,25 +363,12 @@
       if (hasTrack) {
         thumbWrap.innerHTML = `<img src="https://i.ytimg.com/vi/${st.videoId}/hqdefault.jpg" alt="" class="w-full h-full object-cover" />`;
         titleEl.textContent = st.title || `YouTube (${st.videoId})`;
-        subEl.textContent = st.playing ? 'กำลังเล่นเพลงพื้นหลัง • ต่อเนื่องข้ามหน้า' : 'หยุดชั่วคราว';
         toggleBtn.innerHTML = st.playing
-          ? '<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>'
-          : '<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l15 8-15 8V4z"/></svg>';
+          ? '<svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>'
+          : '<svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l15 8-15 8V4z"/></svg>';
       } else {
-        thumbWrap.innerHTML = '<svg class="w-4 h-4 text-[#111111]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>';
-        titleEl.textContent = 'ยังไม่ได้เลือกเพลงพื้นหลัง';
-        subEl.textContent = 'เล่นต่อเนื่องข้ามหน้าไปยัง Stage Scoreboard ได้ทันที';
-      }
-
-      if (st.videoId && st.videoId !== loadedId) {
-        loadedId = st.videoId;
-        const originParam = location.protocol.startsWith('http') ? `&origin=${encodeURIComponent(location.origin)}` : '';
-        ytFrameHost.innerHTML = `<iframe src="https://www.youtube.com/embed/${st.videoId}?enablejsapi=1&autoplay=${st.playing ? 1 : 0}&rel=0${originParam}" allow="autoplay; encrypted-media" referrerpolicy="strict-origin-when-cross-origin" title="Hub BGM"></iframe>`;
-      } else if (!st.videoId && loadedId) {
-        loadedId = '';
-        ytFrameHost.innerHTML = '';
-      } else if (st.videoId && st.videoId === loadedId) {
-        sendCmd(st.playing ? 'playVideo' : 'pauseVideo');
+        thumbWrap.innerHTML = '<svg class="w-3.5 h-3.5 text-[#111111]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>';
+        titleEl.textContent = 'ยังไม่ได้เปิดเพลงพื้นหลัง';
       }
     };
 
@@ -172,9 +380,7 @@
         inpEl.value = '';
         resultsEl.classList.add('hidden');
         resultsEl.classList.remove('flex');
-        searchOpen = false;
-        inputRow.classList.add('hidden');
-        inputRow.classList.remove('flex');
+        closePop();
         await window.HelpDaiBgm.setTrack(id, '', true);
         return;
       }
@@ -202,8 +408,7 @@
                 b.addEventListener('click', () => {
                   window.HelpDaiBgm.setTrack(b.dataset.hubYt, b.dataset.hubTitle, true);
                   resultsEl.classList.add('hidden');
-                  inputRow.classList.add('hidden');
-                  searchOpen = false;
+                  closePop();
                 });
               });
               return;
@@ -211,14 +416,19 @@
           }
         }
       } catch (_) {}
-      resultsEl.innerHTML = `<a href="https://www.youtube.com/results?search_query=${encodeURIComponent(raw)}" target="_blank" rel="noopener noreferrer" class="btn-vox bg-white hover:bg-[#F4D03F] px-2.5 py-1 rounded-lg text-[11px] font-display font-bold flex items-center justify-between"><span>ค้นหาบน YouTube ↗</span></a>`;
+      resultsEl.innerHTML = `<a href="https://www.youtube.com/results?search_query=${encodeURIComponent(raw)}" target="_blank" rel="noopener noreferrer" class="btn-vox bg-white hover:bg-[#F4D03F] px-2.5 py-1 rounded-lg text-[11px] font-display font-bold flex items-center justify-between text-[#111111]"><span>ค้นหาบน YouTube ↗</span></a>`;
     };
 
-    editBtn.addEventListener('click', () => {
+    editBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
       searchOpen = !searchOpen;
       inputRow.classList.toggle('hidden', !searchOpen);
       inputRow.classList.toggle('flex', searchOpen);
       if (searchOpen) inpEl.focus();
+    });
+    popCloseBtn?.addEventListener('click', closePop);
+    document.addEventListener('click', (e) => {
+      if (searchOpen && !slot.contains(e.target)) closePop();
     });
     goBtn.addEventListener('click', handleSearchOrUrl);
     inpEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); handleSearchOrUrl(); } });
