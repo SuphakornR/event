@@ -47,19 +47,23 @@
         </div>
       `;
       document.body.appendChild(editModalEl);
-      const hide = () => {
+      const hide = (force = false) => {
+        if (!force && editModalEl.dataset.dirty === '1') {
+          if (!window.confirm('มีการแก้ไขที่ยังไม่ได้บันทึก ต้องการทิ้งการแก้ไขหรือไม่?')) return;
+        }
+        editModalEl.dataset.dirty = '0';
         editModalEl.classList.add('hidden');
         editModalEl.classList.remove('flex');
       };
-      document.getElementById('vqe-close').addEventListener('click', hide);
-      document.getElementById('vqe-cancel').addEventListener('click', hide);
+      document.getElementById('vqe-close').addEventListener('click', () => hide(false));
+      document.getElementById('vqe-cancel').addEventListener('click', () => hide(false));
       editModalEl.addEventListener('click', (e) => {
-        if (e.target === editModalEl) hide();
+        if (e.target === editModalEl) hide(false);
       });
       window.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && editModalEl && !editModalEl.classList.contains('hidden')) {
           e.stopPropagation();
-          hide();
+          hide(false);
         }
       }, true);
     }
@@ -116,12 +120,19 @@
       }
     });
 
+    editModalEl.dataset.dirty = '0';
+    fieldsWrap.querySelectorAll('input, textarea').forEach(el => {
+      el.addEventListener('input', () => { editModalEl.dataset.dirty = '1'; });
+      el.addEventListener('change', () => { editModalEl.dataset.dirty = '1'; });
+    });
+
     const saveBtn = document.getElementById('vqe-save');
     const newSave = saveBtn.cloneNode(true);
     saveBtn.parentNode.replaceChild(newSave, saveBtn);
     const submitModal = () => {
       const vals = fields.map((_, i) => fieldsWrap.querySelector(`[data-vqe-idx="${i}"]`)?.value ?? '');
       onSave(vals);
+      editModalEl.dataset.dirty = '0';
       editModalEl.classList.add('hidden');
       editModalEl.classList.remove('flex');
     };
@@ -382,7 +393,7 @@
 
     // Left-click on non-interactive blocks (Team cards & Header) opens their menu too
     stage.addEventListener('click', (e) => {
-      if (e.target.closest('a, button, input, textarea, [data-game-index], #view-settings-popover')) return;
+      if (e.target.closest('a, button, input, textarea, [data-game-index], #view-settings-popover, #stage-timer-pill')) return;
       if (e.target.closest('.team-row, header')) {
         e.stopPropagation();
         openForTarget(e.target, e.clientX, e.clientY);

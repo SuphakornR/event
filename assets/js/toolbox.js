@@ -326,11 +326,14 @@
         };
 
         const updateTimer = (fn) => {
-          const t = st.timer;
-          fn(t);
-          t.timerVersion = Date.now();
-          localStorage.setItem('vox_scoreboard_clean_v3', JSON.stringify(st));
-          window.dispatchEvent(new StorageEvent('storage', { key: 'vox_scoreboard_clean_v3', newValue: JSON.stringify(st) }));
+          if (api.updateTimer) {
+            api.updateTimer(fn);
+          } else {
+            const t = st.timer;
+            fn(t);
+            t.timerVersion = Date.now();
+            localStorage.setItem('vox_scoreboard_clean_v3', JSON.stringify(st));
+          }
           syncTimerPopUI();
         };
 
@@ -442,42 +445,19 @@
     };
 
     const searchYoutubeInApp = async (query) => {
-      const q = encodeURIComponent(query);
-      const mirrors = [
-        { url: `https://pipedapi.kavin.rocks/search?q=${q}&filter=videos`, type: 'piped' },
-        { url: `https://pipedapi.adminforge.de/search?q=${q}&filter=videos`, type: 'piped' },
-        { url: `https://inv.nadeko.net/api/v1/search?q=${q}&type=video`, type: 'invidious' },
-        { url: `https://yewtu.be/api/v1/search?q=${q}&type=video`, type: 'invidious' }
-      ];
-
-      for (const m of mirrors) {
-        const ctrl = new AbortController();
-        const tid = setTimeout(() => ctrl.abort(), 3500);
+      const cfg = window.HELPDAI_CONFIG || {};
+      const defaultApiBase = (!location.hostname.endsWith('github.io') && location.protocol.startsWith('http')) ? location.origin : '';
+      const apiBase = (cfg.apiBase || defaultApiBase).replace(/\/$/, '');
+      if (apiBase) {
         try {
-          const res = await fetch(m.url, { signal: ctrl.signal });
-          clearTimeout(tid);
-          if (!res.ok) continue;
-          const data = await res.json();
-          const list = m.type === 'piped' ? (data?.items || []) : (Array.isArray(data) ? data : []);
-          const normalized = list
-            .map(item => {
-              if (m.type === 'piped') {
-                const id = extractYoutubeId(item.url || '');
-                return id ? { id, title: item.title || '', author: item.uploaderName || '', thumb: item.thumbnail || '' } : null;
-              }
-              return item.videoId ? {
-                id: item.videoId,
-                title: item.title || '',
-                author: item.author || '',
-                thumb: item.videoThumbnails?.[0]?.url || ''
-              } : null;
-            })
-            .filter(Boolean)
-            .slice(0, 4);
-          if (normalized.length) return normalized;
-        } catch (_) {
-          clearTimeout(tid);
-        }
+          const res = await fetch(`${apiBase}/api/yt-search?q=${encodeURIComponent(query)}`, {
+            signal: AbortSignal.timeout(5000)
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data?.items) && data.items.length) return data.items.slice(0, 4);
+          }
+        } catch (_) {}
       }
       return [];
     };
@@ -533,7 +513,13 @@
           const items = await searchYoutubeInApp(raw);
           if (!resultsEl) return;
           if (!items.length) {
-            resultsEl.innerHTML = `<div class="text-[11px] font-semibold text-[#E74C3C] py-1 text-center">ไม่พบผลการค้นหา ลองวางลิงก์ YouTube โดยตรง</div>`;
+            resultsEl.innerHTML = `
+              <div class="text-[11px] font-semibold text-[#111111]/70 text-center py-0.5">ไม่พบผลการค้นหาในโหมดออฟไลน์</div>
+              <a href="https://www.youtube.com/results?search_query=${encodeURIComponent(raw)}" target="_blank" rel="noopener noreferrer" class="btn-vox bg-white hover:bg-[#F4D03F] px-2.5 py-1.5 rounded-lg text-[11px] font-display font-bold text-[#111111] flex items-center justify-between">
+                <span class="truncate">ค้นหา "${raw.replace(/[<>&"]/g, '')}" บน YouTube</span>
+                <span class="shrink-0 ml-1">↗</span>
+              </a>
+            `;
             return;
           }
 

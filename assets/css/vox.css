@@ -765,8 +765,22 @@
     }
 
     @keyframes timerWaveSlide {
-      0% { transform: translateX(0); }
-      100% { transform: translateX(-50%); }
+      0% { transform: translate3d(0, 0, 0); }
+      100% { transform: translate3d(-50%, 0, 0); }
+    }
+
+    @keyframes timerWaveSlideBack {
+      0% { transform: translate3d(-50%, 0, 0); }
+      100% { transform: translate3d(0, 0, 0); }
+    }
+
+    .timer-circle-mask {
+      isolation: isolate;
+      -webkit-mask-image: -webkit-radial-gradient(white, black);
+      transform: translateZ(0);
+      box-shadow: inset 0 5px 14px rgba(255, 255, 255, 0.55),
+                  inset 0 -8px 16px rgba(17, 17, 17, 0.14),
+                  8px 8px 0px #111111;
     }
 
     .timer-liquid-fill {
@@ -776,8 +790,9 @@
       bottom: 0;
       height: 0%;
       transition: height 0.65s cubic-bezier(0.22, 1, 0.36, 1),
-                  background-color 0.35s ease;
-      will-change: height;
+                  background-color 0.35s ease,
+                  opacity 0.3s ease;
+      will-change: height, opacity;
     }
 
     .timer-liquid-wave {
@@ -786,7 +801,18 @@
       bottom: calc(100% - 2px);
       width: 200%;
       height: 22px;
-      animation: timerWaveSlide 2.8s linear infinite;
+      animation: timerWaveSlide 2.6s linear infinite;
+      pointer-events: none;
+    }
+
+    .timer-liquid-wave-back {
+      position: absolute;
+      left: 0;
+      bottom: calc(100% - 1px);
+      width: 200%;
+      height: 26px;
+      opacity: 0.72;
+      animation: timerWaveSlideBack 4s linear infinite;
       pointer-events: none;
     }
 

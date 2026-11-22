@@ -277,7 +277,10 @@
         }
       }
 
+      let hasSessionChanges = false;
+
       function saveAndBroadcast(options = { broadcast: true }) {
+        hasSessionChanges = true;
         state.updatedAt = Date.now();
         try {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -887,14 +890,31 @@
 
           const totalDur = Math.max(1, Number(t.durationSec) || 180);
           const elapsedPct = Math.max(0, Math.min(100, ((totalDur - sec) / totalDur) * 100));
+          const hasStarted = elapsedPct > 0;
+          centerBar.style.opacity = hasStarted ? '1' : '0';
           centerBar.style.height = `${elapsedPct}%`;
+          const centerBarBack = document.getElementById('center-timer-bar-back');
+          if (centerBarBack) {
+            centerBarBack.style.opacity = hasStarted ? '1' : '0';
+            centerBarBack.style.height = `${Math.min(100, elapsedPct + (hasStarted && elapsedPct < 98 ? 2 : 0))}%`;
+          }
+          const cToggleIcon = document.getElementById('center-timer-toggle-icon');
+          if (cToggleIcon) {
+            cToggleIcon.innerHTML = t.running
+              ? '<rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>'
+              : '<path d="M6 4l15 8-15 8V4z"/>';
+          }
 
           const isCritical = sec <= 5;
           const isWarn = sec > 5 && sec <= 15;
           const liquidColor = isCritical ? '#E74C3C' : (isWarn ? '#F4D03F' : '#2980B9');
+          const darkLiquidColor = isCritical ? '#A93226' : (isWarn ? '#B7950B' : '#1B5E8A');
           centerBar.style.backgroundColor = liquidColor;
+          if (centerBarBack) centerBarBack.style.backgroundColor = darkLiquidColor;
           const wavePath = document.getElementById('center-timer-wave-path');
           if (wavePath) wavePath.setAttribute('fill', liquidColor);
+          const waveBackPath = document.getElementById('center-timer-wave-back-path');
+          if (waveBackPath) waveBackPath.setAttribute('fill', darkLiquidColor);
 
           centerCard.classList.toggle('bg-[#FFFDF5]', !isCritical);
           centerCard.classList.toggle('bg-[#FFE8E6]', isCritical);
@@ -2938,6 +2958,36 @@
 
       const minimizeCenterTimer = () => updateTimerState(t => { t.mode = 'corner'; });
       onClick('center-timer-minimize-btn', minimizeCenterTimer);
+      onClick('stage-timer-pill', () => {
+        state.timer.mode = 'center';
+        state.timer.visible = true;
+        state.timer.timerVersion = Date.now();
+        saveAndBroadcast();
+        renderTimerUI();
+      });
+      onClick('center-timer-toggle-btn', () => {
+        if (state.timer.running) {
+          state.timer.remainingSec = getLiveRemainingSec();
+          state.timer.running = false;
+          state.timer.endAt = null;
+        } else {
+          const rem = state.timer.remainingSec > 0 ? state.timer.remainingSec : (state.timer.durationSec || 180);
+          state.timer.remainingSec = rem;
+          state.timer.running = true;
+          state.timer.endAt = Date.now() + rem * 1000;
+        }
+        state.timer.timerVersion = Date.now();
+        saveAndBroadcast();
+        renderTimerUI();
+      });
+      onClick('center-timer-reset-btn', () => {
+        state.timer.remainingSec = state.timer.durationSec || 180;
+        state.timer.running = false;
+        state.timer.endAt = null;
+        state.timer.timerVersion = Date.now();
+        saveAndBroadcast();
+        renderTimerUI();
+      });
 
       const centerTimerOverlayEl = document.getElementById('center-timer-overlay');
       if (centerTimerOverlayEl) {
@@ -3158,7 +3208,7 @@
 
             <div class="inline-flex items-center gap-2 bg-[#F4D03F] border-2 border-[#111111] px-4 py-1 rounded-full shadow-[3px_3px_0px_#111111] font-display font-black text-xs sm:text-sm tracking-widest uppercase text-[#111111]">
               ${getVoxCrownSvg('w-5 h-5')}
-              <span>CHAMPION!</span>
+              <span>CONGRATULATION!</span>
             </div>
 
             <div class="relative flex flex-col items-center justify-center my-1">
@@ -3390,6 +3440,12 @@
           if (state.winnerAnnounced) triggerVictorySequence();
           else hideVictorySpotlight();
         },
+        updateTimer: (fn) => {
+          if (typeof fn === 'function') fn(state.timer);
+          state.timer.timerVersion = Date.now();
+          saveAndBroadcast();
+          renderTimerUI();
+        },
         resetScores: () => {
           state.teams.forEach(t => { t.scores = state.games.map(() => 0); });
           state.winnerAnnounced = false;
@@ -3438,8 +3494,63 @@
           syncAccordionFromState();
           renderLeaderboard(true);
           renderDrawerControls();
-        }
+        },
+        markSaved: () => { hasSessionChanges = false; }
       };
+
+      // Unsaved / Modified Session Guard (Internal links + Browser leave/refresh)
+      window.addEventListener('beforeunload', (e) => {
+        if (!hasSessionChanges) return;
+        e.preventDefault();
+        e.returnValue = '';
+      });
+
+      document.addEventListener('click', (e) => {
+        const link = e.target.closest('a[href]');
+        if (!link || !hasSessionChanges) return;
+        const href = link.getAttribute('href') || '';
+        if (!href || href.startsWith('#') || link.target === '_blank') return;
+
+        e.preventDefault();
+        let leaveModal = document.getElementById('vox-leave-modal');
+        if (!leaveModal) {
+          leaveModal = document.createElement('div');
+          leaveModal.id = 'vox-leave-modal';
+          leaveModal.className = 'fixed inset-0 z-[185] flex items-center justify-center p-4 bg-black/60 backdrop-blur-[2px]';
+          leaveModal.innerHTML = `
+            <div class="vox-panel-enter vox-card bg-[#F8F6F0] w-full max-w-sm p-5 flex flex-col gap-3">
+              <h3 class="font-display font-black text-base text-[#111111]">มีการแก้ไขที่ยังไม่ได้สำรองไฟล์</h3>
+              <p class="text-xs text-[#111111]/75 leading-relaxed">ข้อมูลของคุณถูกจำไว้ในเบราว์เซอร์แล้ว แต่หากต้องการนำไฟล์ไปใช้ต่อที่เครื่องอื่น แนะนำให้บันทึกไฟล์ (.json) ก่อนออก</p>
+              <div class="flex flex-col gap-2 pt-1">
+                <button type="button" id="vox-leave-save" class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-extrabold text-xs py-2 rounded-xl cursor-pointer">บันทึกไฟล์ (.json) แล้วออก</button>
+                <div class="grid grid-cols-2 gap-2">
+                  <button type="button" id="vox-leave-go" class="btn-vox bg-white hover:bg-red-50 text-[#E74C3C] font-display font-bold text-xs py-2 rounded-xl cursor-pointer">ออกเลย</button>
+                  <button type="button" id="vox-leave-stay" class="btn-vox bg-[#111111] text-white font-display font-bold text-xs py-2 rounded-xl cursor-pointer">อยู่หน้านี้ต่อ</button>
+                </div>
+              </div>
+            </div>
+          `;
+          document.body.appendChild(leaveModal);
+        } else {
+          leaveModal.classList.remove('hidden');
+          leaveModal.classList.add('flex');
+        }
+
+        const hideLeave = () => {
+          leaveModal.classList.add('hidden');
+          leaveModal.classList.remove('flex');
+        };
+        document.getElementById('vox-leave-stay').onclick = hideLeave;
+        document.getElementById('vox-leave-go').onclick = () => {
+          hasSessionChanges = false;
+          window.location.href = href;
+        };
+        document.getElementById('vox-leave-save').onclick = () => {
+          window.VoxCloudSync?.exportEventJson();
+          hasSessionChanges = false;
+          setTimeout(() => { window.location.href = href; }, 180);
+        };
+      });
 
       // ========================================================================
       // INITIALIZE IMMEDIATELY

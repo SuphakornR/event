@@ -176,6 +176,31 @@ const server = http.createServer(async (req, res) => {
     return sendJson(res, 200, { ok: true, service: 'helpdai-backend', db: 'sqlite' });
   }
 
+  if (pathname === '/api/yt-search' && req.method === 'GET') {
+    const clientIp = req.socket?.remoteAddress || 'unknown';
+    if (isRateLimited(clientIp)) return sendJson(res, 429, { ok: false, error: 'Too many requests' });
+    const q = (url.searchParams.get('q') || '').trim().slice(0, 120);
+    if (!q) return sendJson(res, 400, { ok: false, error: 'Missing query' });
+    try {
+      const ytHtml = await fetch(`https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`, {
+        headers: { 'User-Agent': 'Mozilla/5.0', 'Accept-Language': 'en-US,en;q=0.9' },
+        signal: AbortSignal.timeout(4500)
+      }).then(r => r.text());
+      const m = ytHtml.match(/var ytInitialData = (\{.*?\});<\/script>/);
+      const data = m ? JSON.parse(m[1]) : null;
+      const contents = data?.contents?.twoColumnSearchResultsRenderer?.primaryContents?.sectionListRenderer?.contents?.[0]?.itemSectionRenderer?.contents || [];
+      const items = contents.map(c => c.videoRenderer).filter(Boolean).slice(0, 5).map(v => ({
+        id: v.videoId,
+        title: v.title?.runs?.[0]?.text || '',
+        author: v.ownerText?.runs?.[0]?.text || '',
+        thumb: v.thumbnail?.thumbnails?.[0]?.url || ''
+      })).filter(it => it.id);
+      return sendJson(res, 200, { ok: true, items });
+    } catch (err) {
+      return sendJson(res, 502, { ok: false, error: err.message, items: [] });
+    }
+  }
+
   if (pathname.startsWith('/api/rooms/')) {
     const roomId = decodeURIComponent(pathname.slice('/api/rooms/'.length)).replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 48);
     if (!roomId) return sendJson(res, 400, { ok: false, error: 'Invalid room ID' });
