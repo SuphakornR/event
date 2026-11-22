@@ -1,7 +1,7 @@
 /* Real-progress loading screen: tracks DOMContentLoaded, fonts.ready, and window.load with zero artificial delay. */
 (() => {
   document.body.insertAdjacentHTML('afterbegin', `
-    <div id="app-loader" role="status" aria-live="polite">
+    <div id="app-loader" role="status" aria-live="polite" style="cursor: url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 26 26'%3E%3Cpath d='M4 3 L20 13 L12.5 15 L9.5 22 Z' transform='translate(2 2)' fill='%23111111'/%3E%3Cpath d='M4 3 L20 13 L12.5 15 L9.5 22 Z' fill='%23F4D03F' stroke='%23111111' stroke-width='2.2' stroke-linejoin='round'/%3E%3C/svg%3E&quot;) 4 3, auto;">
       <div class="inline-flex items-center gap-2 bg-[#111111] text-[#F8F6F0] px-3 py-1 rounded-md font-display font-extrabold text-xs tracking-widest shadow-[3px_3px_0px_#F4D03F]">
         <span class="w-2 h-2 rounded-full bg-[#F4D03F]"></span>
         <span>HELPDAI • EVENT TOOLKIT</span>

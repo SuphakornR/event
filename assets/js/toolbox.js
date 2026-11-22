@@ -135,10 +135,12 @@
         el.style.left = `${winObj.customPos.left}px`;
         el.style.top = `${winObj.customPos.top}px`;
       } else {
+        const h = el.offsetHeight || 220;
+        const maxT = Math.max(12, window.innerHeight - h - 12);
+        const topPx = Math.max(12, Math.min(maxT, Math.round((window.innerHeight - h) / 2 + indexOffset)));
         el.style.left = '';
-        el.style.top = indexOffset ? `calc(50% + ${indexOffset}px)` : '';
-        el.classList.add('top-1/2', '-translate-y-1/2');
-        el.classList.remove('left-16', 'right-16');
+        el.style.top = `${topPx}px`;
+        el.classList.remove('top-1/2', '-translate-y-1/2', 'left-16', 'right-16');
         el.classList.add(side === 'left' ? 'left-16' : 'right-16');
       }
     };
@@ -205,7 +207,7 @@
       if (!winObj) {
         const el = document.createElement('div');
         el.id = `tb-win-${key}`;
-        el.className = `fixed top-1/2 -translate-y-1/2 hidden ${widthClass} vox-card bg-[#F8F6F0] p-3.5 flex-col gap-2.5 vox-panel-enter`;
+        el.className = `fixed hidden ${widthClass} vox-card bg-[#F8F6F0] p-3.5 flex-col gap-2.5`;
         el.style.zIndex = String(++topWinZ);
         el.innerHTML = `
           <div data-tb-drag="${key}" title="กดค้างเพื่อลากย้ายตำแหน่ง" class="vox-grab flex items-center justify-between pb-2 border-b-2 border-[#111111] select-none">
@@ -239,9 +241,9 @@
       const isCurrentlyHidden = winObj.el.classList.contains('hidden');
       if (isCurrentlyHidden) {
         winObj.el.style.zIndex = String(++topWinZ);
-        positionSubWindow(winObj, winObj.offset);
         winObj.el.classList.remove('hidden', 'vox-panel-enter');
         winObj.el.classList.add('flex');
+        positionSubWindow(winObj, winObj.offset);
         void winObj.el.offsetWidth;
         winObj.el.classList.add('vox-panel-enter');
         if (winObj.onShow) winObj.onShow(winObj.el);
