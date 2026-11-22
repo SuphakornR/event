@@ -220,14 +220,11 @@
           if (!raw) return cloneDefaultState();
           const st = normalizeState(JSON.parse(raw), null);
           if (st.timer) {
-            if (st.timer.running && st.timer.endAt && st.timer.endAt <= Date.now()) {
-              st.timer.running = false;
+            if (!st.timer.running) {
               st.timer.visible = false;
               st.timer.mode = 'corner';
-              st.timer.remainingSec = st.timer.durationSec;
+              st.timer.remainingSec = st.timer.durationSec || 180;
               st.timer.endAt = null;
-            } else if (!st.timer.running && st.timer.mode === 'center') {
-              st.timer.mode = 'corner';
             }
           }
           return st;
@@ -880,6 +877,7 @@
         const showCorner = Boolean(t.visible && t.mode !== 'center');
         if (stagePill && stageDisplay) {
           stagePill.classList.toggle('hidden', !showCorner);
+          stagePill.classList.toggle('inline-flex', showCorner);
           stageDisplay.textContent = formatted;
           const isUrgent = showCorner && sec <= 10;
           stagePill.classList.toggle('bg-[#E74C3C]', isUrgent);
@@ -1485,6 +1483,7 @@
               </div>
               <div class="flex items-center gap-1.5 shrink-0">
                 <span class="${hasContent ? '' : 'hidden'} w-2 h-2 rounded-full bg-[#111111]" title="มีรายละเอียดหรือสื่อประกอบ"></span>
+                <button type="button" data-game-menu="${idx}" title="ตั้งค่ากิจกรรม (หรือคลิกขวา)" aria-label="ตั้งค่ากิจกรรม" class="w-6 h-6 rounded-md border border-transparent hover:border-[#111111] hover:bg-[#F4D03F] font-display font-black text-xs text-[#111111]/65 hover:text-[#111111] flex items-center justify-center transition-colors cursor-pointer">⋯</button>
                 <span class="game-chevron font-display font-black text-base text-[#111111]/55 leading-none">›</span>
               </div>
             </div>
@@ -1493,7 +1492,15 @@
 
         row.querySelectorAll('[data-game-index]').forEach(card => {
           const idx = Number(card.dataset.gameIndex);
-          card.addEventListener('click', () => toggleGameAccordion(idx));
+          card.querySelector('[data-game-menu]')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const r = e.currentTarget.getBoundingClientRect();
+            window.VoxContextMenu?.openForTarget?.(card, r.left, r.bottom + 4);
+          });
+          card.addEventListener('click', (e) => {
+            if (e.target.closest('[data-game-menu]')) return;
+            toggleGameAccordion(idx);
+          });
           card.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' || e.code === 'Space') {
               e.preventDefault();
@@ -3084,7 +3091,17 @@
 
       const minimizeCenterTimer = () => updateTimerState(t => { t.mode = 'corner'; });
       onClick('center-timer-minimize-btn', minimizeCenterTimer);
-      onClick('stage-timer-pill', () => {
+      onClick('stage-timer-close-btn', (e) => {
+        e.stopPropagation();
+        updateTimerState(t => {
+          t.visible = false;
+          t.running = false;
+          t.endAt = null;
+          t.mode = 'corner';
+        });
+      });
+      onClick('stage-timer-pill', (e) => {
+        if (e.target.closest('#stage-timer-close-btn')) return;
         state.timer.mode = 'center';
         state.timer.visible = true;
         state.timer.timerVersion = Date.now();

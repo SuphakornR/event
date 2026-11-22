@@ -462,7 +462,7 @@
     });
   }
 
-  window.VoxContextMenu = Object.freeze({ openMediaEditor });
+  window.VoxContextMenu = Object.freeze({ openMediaEditor, openForTarget });
 
   const stage = document.getElementById('stage-container');
   if (stage) {

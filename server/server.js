@@ -533,9 +533,7 @@ const server = http.createServer(async (req, res) => {
 
   const ext = path.extname(fullPath).toLowerCase();
   const mimeType = MIME[ext] || 'application/octet-stream';
-  const cacheControl = safePath.startsWith('/assets/') || safePath.startsWith('\\assets\\')
-    ? 'public, max-age=3600'
-    : 'no-cache';
+  const cacheControl = 'no-cache';
   const isCompressible = ['.html', '.css', '.js', '.json', '.svg'].includes(ext);
   const acceptsGzip = /\bgzip\b/i.test(req.headers['accept-encoding'] || '');
 

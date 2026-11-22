@@ -43,10 +43,8 @@
     if (finished) return;
     setProgress(100);
     finished = true;
-    setTimeout(() => {
-      loaderEl.classList.add('is-done');
-      setTimeout(() => loaderEl.remove(), 520);
-    }, 180);
+    loaderEl.classList.add('is-done');
+    setTimeout(() => loaderEl.remove(), 320);
   };
 
   if (document.readyState === 'interactive' || document.readyState === 'complete') {
@@ -89,7 +87,7 @@
   if (document.fonts?.ready) {
     Promise.race([
       document.fonts.ready,
-      new Promise((resolve) => setTimeout(resolve, 600))
+      new Promise((resolve) => setTimeout(resolve, 180))
     ]).then(() => {
       fontsDone = true;
       setProgress(domDone ? 100 : 85);
@@ -104,7 +102,7 @@
   }
 
   // Safety timeout in case a slow external CDN/font hangs
-  setTimeout(finish, 1800);
+  setTimeout(finish, 750);
 
   // Auto-hide custom Vox cursor after 2.8s of mouse inactivity
   let idleCursorTimer = null;
