@@ -303,17 +303,21 @@
         </button>
       </div>
 
-      <div id="center-timer-digits" class="font-display font-black text-7xl sm:text-8xl lg:text-[7.5rem] tabular-nums leading-none tracking-tight select-none">
-        03:00
-      </div>
+      <!-- Circular Liquid-Rise Vox Countdown -->
+      <div class="relative w-64 h-64 sm:w-80 sm:h-80 rounded-full border-[5px] border-[#111111] bg-[#F8F6F0] shadow-[8px_8px_0px_#111111] overflow-hidden flex items-center justify-center">
+        <div id="center-timer-bar" class="timer-liquid-fill" style="height: 0%; background-color: #2980B9;">
+          <svg class="timer-liquid-wave" viewBox="0 0 240 24" preserveAspectRatio="none" aria-hidden="true">
+            <path id="center-timer-wave-path" d="M0 12 Q 30 2 60 12 T 120 12 T 180 12 T 240 12 L 240 24 L 0 24 Z" fill="#2980B9"/>
+          </svg>
+        </div>
 
-      <!-- Vox Barber-Pole Drain Progress Bar -->
-      <div class="w-full h-7 sm:h-9 bg-[#F0EDE4] border-[3px] border-[#111111] rounded-xl overflow-hidden p-0.5 shadow-[4px_4px_0px_#111111]">
-        <div id="center-timer-bar" class="infographic-bar-fill h-full rounded-[6px]" style="width: 100%; background-color: #F4D03F; border-right: 2px solid #111111;"></div>
+        <div id="center-timer-digits" class="relative z-10 bg-white/90 border-[3px] border-[#111111] rounded-2xl px-5 py-2 shadow-[4px_4px_0px_#111111] font-display font-black text-5xl sm:text-6xl text-[#111111] tabular-nums leading-none tracking-tight select-none">
+          03:00
+        </div>
       </div>
 
       <div id="center-timer-timesup-badge" class="hidden bg-[#111111] text-[#F4D03F] border-[3px] border-[#111111] px-5 py-2 rounded-xl font-display font-black text-xl sm:text-2xl tracking-wider shadow-[4px_4px_0px_#F4D03F]">
-        ⏱ TIME'S UP! หมดเวลา!
+        TIME'S UP! หมดเวลา!
       </div>
     </div>
   </div>

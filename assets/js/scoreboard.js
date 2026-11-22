@@ -886,18 +886,19 @@
           }
 
           const totalDur = Math.max(1, Number(t.durationSec) || 180);
-          const pct = Math.max(0, Math.min(100, (sec / totalDur) * 100));
-          centerBar.style.width = `${pct}%`;
+          const elapsedPct = Math.max(0, Math.min(100, ((totalDur - sec) / totalDur) * 100));
+          centerBar.style.height = `${elapsedPct}%`;
 
           const isCritical = sec <= 5;
           const isWarn = sec > 5 && sec <= 15;
-          centerCard.classList.toggle('bg-[#E74C3C]', isCritical);
-          centerCard.classList.toggle('text-white', isCritical);
-          centerCard.classList.toggle('bg-[#FFFBEB]', isWarn);
-          centerCard.classList.toggle('bg-[#FFFFFF]', !isCritical && !isWarn);
-          centerCard.classList.toggle('text-[#111111]', !isCritical);
+          const liquidColor = isCritical ? '#E74C3C' : (isWarn ? '#F4D03F' : '#2980B9');
+          centerBar.style.backgroundColor = liquidColor;
+          const wavePath = document.getElementById('center-timer-wave-path');
+          if (wavePath) wavePath.setAttribute('fill', liquidColor);
 
-          centerBar.style.backgroundColor = isCritical ? '#F4D03F' : (isWarn ? '#E74C3C' : '#F4D03F');
+          centerCard.classList.toggle('bg-[#FFFDF5]', !isCritical);
+          centerCard.classList.toggle('bg-[#FFE8E6]', isCritical);
+          centerCard.classList.toggle('text-[#111111]', true);
           if (centerStatusText) {
             centerStatusText.textContent = sec === 0 ? "TIME'S UP!" : (t.running ? 'GAME COUNTDOWN • LIVE' : 'GAME COUNTDOWN • PAUSED');
           }
