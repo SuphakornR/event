@@ -2541,21 +2541,25 @@
       if (drawerToggleBtn) drawerToggleBtn.addEventListener('click', () => setDrawerOpen());
       if (btnCloseDrawer) btnCloseDrawer.addEventListener('click', () => setDrawerOpen());
 
-      btnWinner.addEventListener('click', () => {
-        state.winnerAnnounced = !state.winnerAnnounced;
-        saveAndBroadcast();
-        renderLeaderboard(true);
-        if (state.winnerAnnounced) triggerVictorySequence();
-        else hideVictorySpotlight();
-      });
+      if (btnWinner) {
+        btnWinner.addEventListener('click', () => {
+          state.winnerAnnounced = !state.winnerAnnounced;
+          saveAndBroadcast();
+          renderLeaderboard(true);
+          if (state.winnerAnnounced) triggerVictorySequence();
+          else hideVictorySpotlight();
+        });
+      }
 
-      bindTwoStepReset(btnReset, 'รีเซ็ตคะแนน', 'กดอีกครั้งเพื่อยืนยันรีเซ็ต', () => {
-        state.teams.forEach(t => { t.scores = [0, 0, 0]; });
-        state.winnerAnnounced = false;
-        saveAndBroadcast();
-        renderLeaderboard(true);
-        renderDrawerControls();
-      });
+      if (btnReset) {
+        bindTwoStepReset(btnReset, 'รีเซ็ตคะแนน', 'กดอีกครั้งเพื่อยืนยันรีเซ็ต', () => {
+          state.teams.forEach(t => { t.scores = [0, 0, 0]; });
+          state.winnerAnnounced = false;
+          saveAndBroadcast();
+          renderLeaderboard(true);
+          renderDrawerControls();
+        });
+      }
 
       // Keyboard Shortcuts (Esc steps back: Victory -> Center Timer -> Zoom -> Focus -> Accordion)
       window.addEventListener('keydown', (e) => {
@@ -3611,11 +3615,21 @@
           renderLeaderboard(true);
         },
         toggleVictory: () => {
-          state.winnerAnnounced = !state.winnerAnnounced;
-          saveAndBroadcast();
-          renderLeaderboard(true);
-          if (state.winnerAnnounced) triggerVictorySequence();
-          else hideVictorySpotlight();
+          const isOverlayOpen = Boolean(
+            document.getElementById('victory-celebration-overlay') ||
+            document.getElementById('victory-drumroll-overlay')
+          );
+          if (isOverlayOpen) {
+            state.winnerAnnounced = false;
+            saveAndBroadcast();
+            renderLeaderboard(true);
+            hideVictorySpotlight();
+          } else {
+            state.winnerAnnounced = true;
+            saveAndBroadcast();
+            renderLeaderboard(true);
+            triggerVictorySequence();
+          }
         },
         updateTimer: (fn) => {
           if (typeof fn === 'function') fn(state.timer);

@@ -490,10 +490,10 @@
         syncTimerPopUI();
       }, {
         onShow: () => {
+          syncTimerPopUI();
           if (timerPollId) clearInterval(timerPollId);
-          const clockEl = document.getElementById('tb-t-clock');
           timerPollId = setInterval(() => {
-            if (clockEl) clockEl.textContent = fmtClock(getLiveSec());
+            syncTimerPopUI();
           }, 200);
         },
         onHide: () => {
