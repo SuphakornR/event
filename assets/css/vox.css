@@ -34,7 +34,7 @@
     }
 
     a, button, [role="button"], .cursor-pointer, select, input[type="range"], input[type="checkbox"], input[type="radio"] {
-      cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Cpath d='M5 3 L21 13 L13.5 15.2 L10.5 23 Z' transform='translate(2 2)' fill='%23111111'/%3E%3Cpath d='M5 3 L21 13 L13.5 15.2 L10.5 23 Z' fill='%23FFFFFF' stroke='%23111111' stroke-width='2.2' stroke-linejoin='round'/%3E%3Ccircle cx='18' cy='6' r='3' fill='%23E74C3C' stroke='%23111111' stroke-width='1.5'/%3E%3C/svg%3E") 5 3, pointer !important;
+      cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 26 26'%3E%3Cpath d='M4 3 L20 13 L12.5 15 L9.5 22 Z' transform='translate(2 2)' fill='%23111111'/%3E%3Cpath d='M4 3 L20 13 L12.5 15 L9.5 22 Z' fill='%23F4D03F' stroke='%23111111' stroke-width='2.2' stroke-linejoin='round'/%3E%3C/svg%3E") 4 3, pointer !important;
     }
 
     input[type="text"], input[type="number"], input[type="url"], input[type="password"], textarea, [contenteditable="true"] {
@@ -114,19 +114,20 @@
 
     #activity-list-col.is-bookmark-dock::after,
     #stage-bottom-slot.is-team-bookmark-dock::after {
-      content: '›';
       position: absolute;
       right: 0;
       top: 50%;
-      width: 22px;
-      height: 52px;
+      width: 24px;
+      height: 68px;
       transform: translateY(-50%);
       display: flex;
       align-items: center;
       justify-content: center;
+      writing-mode: vertical-rl;
       font-family: 'Prompt', sans-serif;
-      font-weight: 900;
-      font-size: 16px;
+      font-weight: 800;
+      font-size: 10px;
+      letter-spacing: 0.04em;
       color: #111111;
       border-left: 2px solid #111111;
       border-radius: 0 12px 12px 0;
@@ -135,7 +136,14 @@
     }
 
     #activity-list-col.is-bookmark-dock::after {
+      content: 'กิจกรรม';
       background: #F4D03F;
+    }
+
+    #stage-bottom-slot.is-team-bookmark-dock::after {
+      content: 'ทีม';
+      background: #2980B9;
+      color: #FFFFFF;
     }
 
     #stage-bottom-slot.is-team-bookmark-dock {

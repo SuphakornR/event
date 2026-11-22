@@ -53,25 +53,30 @@
           <div>
             <span class="block text-[10px] font-display font-extrabold text-[#111111]/65 uppercase tracking-wider mb-1">Detail</span>
             <div class="grid grid-cols-3 gap-1.5">
-              <button type="button" data-view-detail="full" title="รายละเอียดครบ (Full)" aria-label="รายละเอียดครบ" class="view-detail-btn btn-vox bg-white text-[#111111] py-1.5 rounded-lg flex items-center justify-center cursor-pointer">
+              <button type="button" data-view-detail="full" title="รายละเอียดครบ (Full)" aria-label="รายละเอียดครบ" class="view-detail-btn btn-vox bg-white text-[#111111] py-1.5 rounded-lg flex flex-col items-center justify-center gap-0.5 cursor-pointer">
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+                <span class="text-[9px] font-display font-bold leading-none">ครบ</span>
               </button>
-              <button type="button" data-view-detail="compact" title="ระดับกลาง (Compact)" aria-label="ระดับกลาง" class="view-detail-btn btn-vox bg-[#111111] text-[#F4D03F] py-1.5 rounded-lg flex items-center justify-center cursor-pointer">
+              <button type="button" data-view-detail="compact" title="ระดับกลาง (Compact)" aria-label="ระดับกลาง" class="view-detail-btn btn-vox bg-[#111111] text-[#F4D03F] py-1.5 rounded-lg flex flex-col items-center justify-center gap-0.5 cursor-pointer">
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><rect x="4" y="8" width="16" height="8" rx="2"/></svg>
+                <span class="text-[9px] font-display font-bold leading-none">กลาง</span>
               </button>
-              <button type="button" data-view-detail="simple" title="เรียบง่าย (Simple)" aria-label="เรียบง่าย" class="view-detail-btn btn-vox bg-white text-[#111111] py-1.5 rounded-lg flex items-center justify-center cursor-pointer">
+              <button type="button" data-view-detail="simple" title="เรียบง่าย (Simple)" aria-label="เรียบง่าย" class="view-detail-btn btn-vox bg-white text-[#111111] py-1.5 rounded-lg flex flex-col items-center justify-center gap-0.5 cursor-pointer">
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="5"/></svg>
+                <span class="text-[9px] font-display font-bold leading-none">ย่อ</span>
               </button>
             </div>
           </div>
           <div>
             <span class="block text-[10px] font-display font-extrabold text-[#111111]/65 uppercase tracking-wider mb-1">Layout</span>
             <div class="grid grid-cols-2 gap-1.5">
-              <button type="button" data-view-layout="row" title="แถวแนวนอน (Row)" aria-label="แถวแนวนอน" class="view-layout-btn btn-vox bg-[#111111] text-[#F4D03F] py-1.5 rounded-lg flex items-center justify-center cursor-pointer">
+              <button type="button" data-view-layout="row" title="แถวแนวนอน (Row)" aria-label="แถวแนวนอน" class="view-layout-btn btn-vox bg-[#111111] text-[#F4D03F] py-1.5 rounded-lg flex items-center justify-center gap-1 cursor-pointer">
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><rect x="3" y="5" width="5" height="14" rx="1.5"/><rect x="10" y="5" width="4" height="14" rx="1.5"/><rect x="16" y="5" width="5" height="14" rx="1.5"/></svg>
+                <span class="text-[10px] font-display font-bold">แถว</span>
               </button>
-              <button type="button" data-view-layout="grid" title="ตาราง (Grid)" aria-label="ตาราง" class="view-layout-btn btn-vox bg-white text-[#111111] py-1.5 rounded-lg flex items-center justify-center cursor-pointer">
+              <button type="button" data-view-layout="grid" title="ตาราง (Grid)" aria-label="ตาราง" class="view-layout-btn btn-vox bg-white text-[#111111] py-1.5 rounded-lg flex items-center justify-center gap-1 cursor-pointer">
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg>
+                <span class="text-[10px] font-display font-bold">ตาราง</span>
               </button>
             </div>
           </div>
@@ -101,11 +106,11 @@
         <h1
           id="event-title"
           class="thai-safe font-display font-black text-2xl sm:text-3xl lg:text-[2.1rem] text-[#111111] tracking-tight break-words"
-        >Event Scoreboard</h1>
+        >กระดานคะแนนกิจกรรม</h1>
         <p
           id="event-subtitle"
           class="thai-safe-tight font-semibold text-xs sm:text-sm text-[#111111]/75 break-words"
-        >Live Score &amp; Activity Tracker</p>
+        >แสดงคะแนน กติกา และจับเวลาสดบนเวที</p>
       </div>
     </header>
 
@@ -113,7 +118,11 @@
     <div id="stage-center-grid" class="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
 
       <!-- Activity List Column (Dynamically rendered 1..6 activities, auto-fit zero-scroll) -->
-      <aside id="activity-list-col" class="lg:col-span-4 flex flex-col gap-2 min-h-0 overflow-hidden pb-2 pr-2 bg-[#F8F6F0]/90">
+      <aside id="activity-list-col" class="lg:col-span-4 flex flex-col gap-1.5 min-h-0 overflow-hidden pb-2 pr-2 bg-[#F8F6F0]/90">
+        <div class="flex items-center justify-between gap-2 px-0.5 shrink-0">
+          <span class="font-display font-extrabold text-[10px] uppercase tracking-wider text-[#111111]/60">กิจกรรม • คลิกเปิด / คลิกขวาแก้ไข</span>
+          <span class="hidden sm:inline font-display font-bold text-[10px] text-[#111111]/45">คลิกที่ทีมเพื่อปรับคะแนน</span>
+        </div>
         <div class="flex-1 min-h-0 flex flex-col gap-2" id="game-cards-row">
           <!-- Populated dynamically by JS -->
         </div>

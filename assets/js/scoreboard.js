@@ -35,8 +35,8 @@
 
       // Default Initial State (Clean Neutral Presets)
       const defaultState = {
-        eventTitle: 'Event Scoreboard',
-        eventSubtitle: 'Live Score & Activity Tracker',
+        eventTitle: 'กระดานคะแนนกิจกรรม',
+        eventSubtitle: 'แสดงคะแนน กติกา และจับเวลาสดบนเวที',
         games: [
           'Activity 1',
           'Activity 2',
@@ -3394,6 +3394,47 @@
           state.winnerAnnounced = false;
           hideVictorySpotlight();
           saveAndBroadcast();
+          renderLeaderboard(true);
+          renderDrawerControls();
+        },
+        applyTemplate: (key) => {
+          const templates = {
+            camp: {
+              title: 'กิจกรรมค่าย & กลุ่มสัมพันธ์',
+              sub: 'คะแนนรวมฐานกิจกรรม',
+              games: ['ฐานที่ 1: ละลายพฤติกรรม', 'ฐานที่ 2: เกมวางแผน', 'ฐานที่ 3: ภารกิจรวมพลัง'],
+              teams: ['ทีมสีเหลือง', 'ทีมสีแดง', 'ทีมสีน้ำเงิน']
+            },
+            quiz: {
+              title: 'Quiz Show Battle',
+              sub: 'การแข่งขันตอบคำถามชิงไหวพริบ',
+              games: ['รอบเก็บคะแนน', 'รอบความเร็ว', 'รอบชิงชนะเลิศ (x2)'],
+              teams: ['Team Alpha', 'Team Bravo', 'Team Charlie', 'Team Delta']
+            },
+            sports: {
+              title: 'กีฬาสี & เกมมหาสนุก',
+              sub: 'ตารางคะแนนรวมทุกสี',
+              games: ['วิ่งผลัด', 'ชักเย่อ', 'เกมกองเชียร์', 'ภารกิจลับ'],
+              teams: ['สีเหลือง', 'สีแดง', 'สีน้ำเงิน', 'สีเขียว', 'สีม่วง', 'สีส้ม']
+            }
+          };
+          const tpl = templates[key];
+          if (!tpl) return;
+          state.eventTitle = tpl.title;
+          state.eventSubtitle = tpl.sub;
+          state.games = tpl.games.slice();
+          state.gameMedia = tpl.games.map(() => ({ description: '', youtubeUrl: '', imageData: '', activeMediaType: 'video' }));
+          state.teams = tpl.teams.map((name, i) => {
+            const pal = TEAM_PALETTE[i % TEAM_PALETTE.length];
+            return { id: `team-${i + 1}`, name, color: pal.color, textColor: pal.textColor, scores: tpl.games.map(() => 0) };
+          });
+          state.winnerAnnounced = false;
+          state.activeGameAccordion = null;
+          state.isActivityFocused = false;
+          hideVictorySpotlight();
+          saveAndBroadcast();
+          syncHeaderTexts();
+          syncAccordionFromState();
           renderLeaderboard(true);
           renderDrawerControls();
         }

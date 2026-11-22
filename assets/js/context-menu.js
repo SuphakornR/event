@@ -268,10 +268,11 @@
       return;
     }
 
-    // 2. Activity Card
+    // 2. Activity Card (or Open Activity Detail Card #media-accordion)
     const gameCard = target.closest('[data-game-index]');
-    if (gameCard) {
-      const gIdx = Number(gameCard.dataset.gameIndex);
+    const openDetailCard = !gameCard ? target.closest('#media-accordion') : null;
+    if (gameCard || (openDetailCard && st.activeGameAccordion !== null)) {
+      const gIdx = gameCard ? Number(gameCard.dataset.gameIndex) : st.activeGameAccordion;
       const gTitle = st.games[gIdx] || `Activity ${gIdx + 1}`;
       const media = st.gameMedia[gIdx] || {};
 
@@ -347,13 +348,24 @@
       return;
     }
 
-    // 4. General Stage Background (Backup/Restore + Stage-wide reset)
+    // 4. General Stage Background (Quick Templates + Backup/Restore + Reset)
     const items = `
+      <div class="px-1 py-1 border-b border-[#111111]/15 mb-0.5">
+        <div class="text-[10px] font-bold text-[#111111]/60 mb-1">เทมเพลตเริ่มไว (1-Click)</div>
+        <div class="grid grid-cols-3 gap-1">
+          <button type="button" data-cm-tpl="camp" class="btn-vox bg-white hover:bg-[#F4D03F] font-display font-bold text-[10px] py-1 rounded-lg cursor-pointer">ค่าย 3 ทีม</button>
+          <button type="button" data-cm-tpl="quiz" class="btn-vox bg-white hover:bg-[#F4D03F] font-display font-bold text-[10px] py-1 rounded-lg cursor-pointer">ควิซ 4 ทีม</button>
+          <button type="button" data-cm-tpl="sports" class="btn-vox bg-white hover:bg-[#F4D03F] font-display font-bold text-[10px] py-1 rounded-lg cursor-pointer">สี 6 ทีม</button>
+        </div>
+      </div>
       ${menuBtn('export-json', CM_ICONS.download, 'บันทึกไฟล์งาน (.json)')}
       ${menuBtn('import-json', CM_ICONS.upload, 'โหลดไฟล์งาน (.json)')}
       ${menuBtn('reset-scores', CM_ICONS.reset, 'รีเซ็ตคะแนนทั้งหมด', true)}
     `;
     showMenuAt(x, y, 'Stage Menu', items, (m) => {
+      m.querySelectorAll('[data-cm-tpl]').forEach(btn => {
+        btn.addEventListener('click', () => { closeMenu(); api.applyTemplate(btn.dataset.cmTpl); });
+      });
       m.querySelector('[data-cm-action="export-json"]')?.addEventListener('click', () => { closeMenu(); window.VoxCloudSync?.exportEventJson(); });
       m.querySelector('[data-cm-action="import-json"]')?.addEventListener('click', () => { closeMenu(); window.VoxCloudSync?.importEventJson(); });
       m.querySelector('[data-cm-action="reset-scores"]')?.addEventListener('click', () => { closeMenu(); api.resetScores(); });
