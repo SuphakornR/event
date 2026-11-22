@@ -405,7 +405,7 @@
   function setupDisplayModeUI() {
     if (!isDisplayViewer) return;
     document.body.classList.add('is-bigroom-display');
-    ['header-screenshare-btn', 'stage-sync-pill', 'view-settings-btn'].forEach(id => {
+    ['header-screenshare-btn', 'stage-sync-pill', 'stage-menu-btn', 'view-settings-btn'].forEach(id => {
       document.getElementById(id)?.classList.add('hidden');
     });
     document.querySelectorAll('[data-start-tutorial]').forEach(el => el.classList.add('hidden'));

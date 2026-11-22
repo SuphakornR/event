@@ -988,4 +988,18 @@
       pointer-events: none;
       z-index: 80;
     }
+
+    /* Custom Vox Auto-Sync Bent Arrows Animation */
+    @keyframes voxAutoSyncSpin {
+      0% { transform: rotate(0deg); }
+      65% { transform: rotate(360deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .vox-autosync-spin {
+      animation: voxAutoSyncSpin 4.2s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+      transform-origin: center;
+    }
+    .vox-autosync-spin.is-syncing-fast {
+      animation-duration: 1.1s;
+    }
   

@@ -307,35 +307,169 @@
       }
 
       function syncStageSyncPill() {
-        const pill = document.getElementById('stage-sync-pill');
-        if (!pill) return;
+        const iconEl = document.getElementById('stage-autosync-icon');
+        const labelEl = document.getElementById('stage-sync-label');
+        const btnEl = document.getElementById('stage-menu-btn');
+        if (!iconEl || !labelEl) return;
         const signedIn = isAccountSignedIn();
         const savedLocal = isLocallySaved();
         if (signedIn) {
           const slot = window.VoxCloudSync?.getSlot?.() || 1;
-          pill.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span><span>ซิงค์บัญชี (งาน ${slot})</span>`;
-          pill.className = 'inline-flex items-center gap-1.5 bg-[#10B981]/15 hover:bg-[#10B981]/25 text-[#111111] border-2 border-[#111111] px-2 py-0.5 rounded-md font-display font-bold text-[10px] shadow-[2px_2px_0px_#111111] transition-colors cursor-pointer';
-          pill.title = 'ข้อมูลซิงค์กับบัญชีของคุณอัตโนมัติ (คลิกเพื่อสลับงาน)';
+          iconEl.className = 'vox-autosync-spin w-3.5 h-3.5 shrink-0 text-[#10B981]';
+          labelEl.textContent = `ซิงค์ ${slot}`;
+          if (btnEl) btnEl.title = 'เมนูงาน • ซิงค์บัญชีอัตโนมัติ';
         } else if (savedLocal) {
-          pill.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-[#F4D03F] border border-[#111111]"></span><span>บันทึกในเครื่อง</span>`;
-          pill.className = 'inline-flex items-center gap-1.5 bg-[#F4D03F]/45 hover:bg-[#F4D03F] text-[#111111] border-2 border-[#111111] px-2 py-0.5 rounded-md font-display font-bold text-[10px] shadow-[2px_2px_0px_#111111] transition-colors cursor-pointer';
-          pill.title = 'บันทึกไว้ในเบราว์เซอร์นี้แล้ว (เข้าสู่ระบบเพื่อซิงค์ข้ามเครื่อง)';
+          iconEl.className = 'vox-autosync-spin w-3.5 h-3.5 shrink-0 text-[#2980B9]';
+          labelEl.textContent = 'ในเครื่อง';
+          if (btnEl) btnEl.title = 'เมนูงาน • บันทึกในเครื่องอัตโนมัติ';
         } else {
-          pill.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-[#E74C3C]"></span><span>${hasUnsavedGuestChanges ? 'ยังไม่บันทึก (Guest)' : 'Guest Mode'}</span>`;
-          pill.className = `inline-flex items-center gap-1.5 ${hasUnsavedGuestChanges ? 'bg-[#FFE8E6]' : 'bg-white'} hover:bg-[#F4D03F] text-[#111111] border-2 border-[#111111] px-2 py-0.5 rounded-md font-display font-bold text-[10px] shadow-[2px_2px_0px_#111111] transition-colors cursor-pointer`;
-          pill.title = 'คลิกเพื่อเข้าสู่ระบบและซิงค์ข้อมูล';
+          iconEl.className = `vox-autosync-spin w-3.5 h-3.5 shrink-0 ${hasUnsavedGuestChanges ? 'text-[#E74C3C]' : 'text-[#111111]/65'}`;
+          labelEl.textContent = hasUnsavedGuestChanges ? 'ยังไม่เซฟ' : 'Guest';
+          if (btnEl) btnEl.title = 'เมนูงาน • โหมดทดลองใช้ (คลิกเพื่อบันทึกหรือเข้าสู่ระบบ)';
         }
       }
 
-      document.getElementById('stage-sync-pill')?.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (isAccountSignedIn()) {
-          const r = e.currentTarget.getBoundingClientRect();
-          window.VoxContextMenu?.openForTarget?.(document.body, r.left, r.bottom + 6);
-        } else if (window.HelpDaiAuth?.openLogin) {
-          window.HelpDaiAuth.openLogin();
-        }
-      });
+      (() => {
+        const menuBtn = document.getElementById('stage-menu-btn');
+        const popEl = document.getElementById('stage-menu-popover');
+        if (!menuBtn || !popEl) return;
+
+        const closeStageMenu = () => {
+          popEl.classList.add('hidden');
+          popEl.classList.remove('flex');
+          menuBtn.setAttribute('aria-expanded', 'false');
+        };
+
+        const renderStageMenu = () => {
+          const signedIn = isAccountSignedIn();
+          const curSlot = window.VoxCloudSync?.getSlot?.() || 1;
+          const userEmail = window.HelpDaiAuth?.getSession?.()?.user?.email || '';
+          const syncText = signedIn
+            ? `ซิงค์บัญชีอัตโนมัติ (งาน ${curSlot})`
+            : (isLocallySaved() ? 'บันทึกในเบราว์เซอร์อัตโนมัติ' : 'Guest Mode (ยังไม่บันทึก)');
+
+          popEl.innerHTML = `
+            <div class="flex items-center justify-between gap-2 bg-white border-2 border-[#111111] rounded-xl px-2.5 py-2 shadow-[2px_2px_0px_#111111]">
+              <div class="flex items-center gap-2 min-w-0">
+                <svg class="vox-autosync-spin w-4 h-4 shrink-0 ${signedIn ? 'text-[#10B981]' : 'text-[#2980B9]'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-15.5-6.36L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 15.5 6.36L21 16"/><path d="M16 16h5v5"/></svg>
+                <div class="min-w-0">
+                  <div class="font-display font-extrabold text-[11px] text-[#111111] truncate">${syncText}</div>
+                  ${userEmail ? `<div class="text-[9px] font-semibold text-[#111111]/60 truncate">${userEmail}</div>` : ''}
+                </div>
+              </div>
+            </div>
+
+            ${signedIn ? `
+              <div class="grid grid-cols-3 gap-1">
+                ${[1, 2, 3].map(n => `<button type="button" data-sm-slot="${n}" class="btn-vox py-1 rounded-lg font-display font-extrabold text-[10px] cursor-pointer ${curSlot === n ? 'bg-[#111111] text-[#F4D03F]' : 'bg-white text-[#111111] hover:bg-[#F4D03F]'}">งาน ${n}</button>`).join('')}
+              </div>
+            ` : ''}
+
+            <div class="flex flex-col gap-1 pt-1 border-t border-[#111111]/15">
+              <span class="text-[9px] font-display font-extrabold uppercase tracking-wider text-[#111111]/55 px-1">ไฟล์งาน (File)</span>
+              <button type="button" data-sm-act="save" class="w-full text-left px-2.5 py-1.5 rounded-lg bg-white hover:bg-[#F4D03F] border border-[#111111] font-display font-bold text-xs text-[#111111] cursor-pointer flex items-center justify-between"><span>💾 บันทึกงาน (Save)</span></button>
+              <button type="button" data-sm-act="new" class="w-full text-left px-2.5 py-1.5 rounded-lg bg-white hover:bg-[#F4D03F] border border-[#111111] font-display font-bold text-xs text-[#111111] cursor-pointer flex items-center justify-between"><span>✨ สร้างงานใหม่ (New)</span></button>
+              <div class="grid grid-cols-2 gap-1">
+                <button type="button" data-sm-act="export" class="px-2 py-1.5 rounded-lg bg-white hover:bg-[#F4D03F] border border-[#111111] font-display font-bold text-[11px] text-[#111111] cursor-pointer">📤 ส่งออก .json</button>
+                <button type="button" data-sm-act="import" class="px-2 py-1.5 rounded-lg bg-white hover:bg-[#F4D03F] border border-[#111111] font-display font-bold text-[11px] text-[#111111] cursor-pointer">📥 นำเข้า .json</button>
+              </div>
+            </div>
+
+            <div class="flex flex-col gap-1 pt-1 border-t border-[#111111]/15">
+              <span class="text-[9px] font-display font-extrabold uppercase tracking-wider text-[#111111]/55 px-1">เทมเพลตเริ่มไว (Presets)</span>
+              <div class="grid grid-cols-3 gap-1">
+                <button type="button" data-sm-preset="quiz" class="px-1.5 py-1 rounded-lg bg-white hover:bg-[#F4D03F] border border-[#111111] font-display font-bold text-[10px] text-[#111111] cursor-pointer">🎯 Quiz</button>
+                <button type="button" data-sm-preset="sport" class="px-1.5 py-1 rounded-lg bg-white hover:bg-[#F4D03F] border border-[#111111] font-display font-bold text-[10px] text-[#111111] cursor-pointer">🏅 Sport</button>
+                <button type="button" data-sm-preset="workshop" class="px-1.5 py-1 rounded-lg bg-white hover:bg-[#F4D03F] border border-[#111111] font-display font-bold text-[10px] text-[#111111] cursor-pointer">🧩 Group</button>
+              </div>
+            </div>
+
+            <div class="pt-1 border-t border-[#111111]/15">
+              ${signedIn
+                ? `<button type="button" data-sm-act="logout" class="w-full px-2.5 py-1.5 rounded-lg bg-white hover:bg-red-50 border border-[#111111] font-display font-bold text-xs text-[#E74C3C] cursor-pointer">ออกจากระบบ</button>`
+                : `<button type="button" data-sm-act="login" class="w-full btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] py-1.5 rounded-xl font-display font-extrabold text-xs text-[#111111] cursor-pointer">🔑 เข้าสู่ระบบเพื่อซิงค์ข้ามเครื่อง</button>`
+              }
+            </div>
+          `;
+
+          popEl.querySelectorAll('[data-sm-slot]').forEach(b => {
+            b.addEventListener('click', () => {
+              window.VoxCloudSync?.setSlot?.(Number(b.dataset.smSlot));
+              closeStageMenu();
+            });
+          });
+          popEl.querySelectorAll('[data-sm-preset]').forEach(b => {
+            b.addEventListener('click', () => {
+              const kind = b.dataset.smPreset;
+              const presets = {
+                quiz: { title: 'Quiz & Trivia Battle', sub: 'ตอบไวได้คะแนน!', games: ['รอบที่ 1: ความรู้ทั่วไป', 'รอบที่ 2: ทายภาพ', 'รอบชิงชนะเลิศ'] },
+                sport: { title: 'Sport Day Arena', sub: 'ตารางคะแนนกีฬาสี', games: ['วิ่งผลัด', 'ชักเย่อ', 'แชร์บอล'] },
+                workshop: { title: 'Team Workshop', sub: 'คะแนนกิจกรรมกลุ่ม', games: ['Ice Breaking', 'ระดมสมอง', 'นำเสนอผลงาน'] }
+              };
+              const p = presets[kind];
+              if (p) {
+                state.eventTitle = p.title;
+                state.eventSubtitle = p.sub;
+                state.games = p.games;
+                state.gameMedia = p.games.map(() => ({ description: '', youtubeUrl: '', imageData: '', activeMediaType: 'video' }));
+                state.teams.forEach(t => { t.scores = p.games.map(() => 0); });
+                saveAndBroadcast();
+                syncHeaderTexts();
+                renderLeaderboard(true);
+                renderDrawerControls();
+              }
+              closeStageMenu();
+            });
+          });
+          popEl.querySelector('[data-sm-act="save"]')?.addEventListener('click', () => {
+            try { localStorage.setItem(LOCAL_SAVED_KEY, '1'); } catch (_) {}
+            saveAndBroadcast();
+            showVoxAlert('✓ บันทึกงานเรียบร้อยแล้ว', 'success');
+            closeStageMenu();
+          });
+          popEl.querySelector('[data-sm-act="new"]')?.addEventListener('click', () => {
+            state = cloneDefaultState();
+            saveAndBroadcast();
+            syncHeaderTexts();
+            renderLeaderboard(true);
+            renderDrawerControls();
+            closeStageMenu();
+          });
+          popEl.querySelector('[data-sm-act="export"]')?.addEventListener('click', () => {
+            window.VoxCloudSync?.exportEventJson?.();
+            closeStageMenu();
+          });
+          popEl.querySelector('[data-sm-act="import"]')?.addEventListener('click', () => {
+            window.VoxCloudSync?.importEventJson?.();
+            closeStageMenu();
+          });
+          popEl.querySelector('[data-sm-act="login"]')?.addEventListener('click', () => {
+            closeStageMenu();
+            window.HelpDaiAuth?.openLogin?.();
+          });
+          popEl.querySelector('[data-sm-act="logout"]')?.addEventListener('click', () => {
+            closeStageMenu();
+            window.HelpDaiAuth?.signOut?.();
+          });
+        };
+
+        menuBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const isHidden = popEl.classList.contains('hidden');
+          if (isHidden) {
+            renderStageMenu();
+            popEl.classList.remove('hidden');
+            popEl.classList.add('flex');
+            menuBtn.setAttribute('aria-expanded', 'true');
+          } else {
+            closeStageMenu();
+          }
+        });
+        document.addEventListener('click', (e) => {
+          if (!popEl.contains(e.target) && e.target !== menuBtn && !menuBtn.contains(e.target)) closeStageMenu();
+        });
+        window.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeStageMenu(); });
+      })();
 
       function saveAndBroadcast(options = { broadcast: true }) {
         state.updatedAt = Date.now();

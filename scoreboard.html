@@ -19,7 +19,7 @@
   <style>html,body{cursor:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 26 26'%3E%3Cpath d='M4 3 L20 13 L12.5 15 L9.5 22 Z' transform='translate(2 2)' fill='%23111111'/%3E%3Cpath d='M4 3 L20 13 L12.5 15 L9.5 22 Z' fill='%23F4D03F' stroke='%23111111' stroke-width='2.2' stroke-linejoin='round'/%3E%3C/svg%3E") 4 3,auto}</style>
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <link rel="stylesheet" href="assets/css/vox.css?v=20261123a" />
+  <link rel="stylesheet" href="assets/css/vox.css?v=20261123b" />
 </head>
 <body class="flex flex-col justify-between selection:bg-yellow-300 selection:text-black">
   <script src="assets/js/loader.js?v=20261122d"></script>
@@ -90,11 +90,22 @@
             </span>
             <span>LIVE SCOREBOARD</span>
           </div>
-          <button type="button" id="stage-sync-pill" title="สถานะการบันทึกข้อมูล" class="inline-flex items-center gap-1.5 bg-white hover:bg-[#F4D03F]/40 text-[#111111] border-2 border-[#111111] px-2 py-0.5 rounded-md font-display font-bold text-[10px] shadow-[2px_2px_0px_#111111] transition-colors cursor-pointer"></button>
-          <button type="button" id="header-screenshare-btn" title="แชร์หน้าจอไปจอมอนิเตอร์ / โปรเจกเตอร์ในห้องใหญ่" class="inline-flex items-center gap-1.5 bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] border-2 border-[#111111] px-2.5 py-0.5 rounded-md font-display font-extrabold text-[10px] shadow-[2px_2px_0px_#111111] transition-colors cursor-pointer">
-            <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
-            <span>แชร์จอ / โปรเจกเตอร์</span>
+          <button type="button" id="stage-menu-btn" title="เมนูงาน &amp; สถานะซิงค์อัตโนมัติ" aria-expanded="false" aria-controls="stage-menu-popover" class="inline-flex items-center gap-1.5 bg-white hover:bg-[#F4D03F] text-[#111111] border-2 border-[#111111] px-2.5 py-0.5 rounded-md font-display font-extrabold text-[11px] shadow-[2px_2px_0px_#111111] transition-colors cursor-pointer">
+            <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+            <span>เมนู</span>
+            <span id="stage-sync-badge" class="inline-flex items-center gap-1 pl-1.5 ml-0.5 border-l-2 border-[#111111]/20 text-[10px]">
+              <svg id="stage-autosync-icon" class="vox-autosync-spin w-3.5 h-3.5 shrink-0 text-[#10B981]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 12a9 9 0 0 0-15.5-6.36L3 8"/>
+                <path d="M3 3v5h5"/>
+                <path d="M3 12a9 9 0 0 0 15.5 6.36L21 16"/>
+                <path d="M16 16h5v5"/>
+              </svg>
+              <span id="stage-sync-label" class="font-display font-bold">Auto</span>
+            </span>
           </button>
+
+          <!-- Organized Stage Menu Popover (File / Save / New / Presets / Account) -->
+          <div id="stage-menu-popover" class="hidden absolute top-full left-0 mt-2 z-50 w-64 vox-card bg-[#F8F6F0] p-2.5 flex-col gap-2 vox-panel-enter"></div>
           </div>
         </div>
 
@@ -110,17 +121,12 @@
         </div>
       </div>
 
-      <!-- Top-Right Big Image Banner (Covers Top-Right Header Space) -->
-      <aside id="stage-top-banner" class="w-full lg:w-[31rem] xl:w-[37rem] h-24 sm:h-[6.25rem] shrink-0 rounded-xl border-[2.5px] border-[#111111] shadow-[4px_4px_0px_#111111] bg-[#111111] relative overflow-hidden group select-none" aria-label="แบนเนอร์เวที">
+      <!-- Top-Right Big Image Banner (Right-Click to Edit Banner Image) -->
+      <aside id="stage-top-banner" title="คลิกขวาเพื่อเปลี่ยนภาพแบนเนอร์" class="w-full lg:w-[31rem] xl:w-[37rem] h-24 sm:h-[6.25rem] shrink-0 rounded-xl border-[2.5px] border-[#111111] shadow-[4px_4px_0px_#111111] bg-[#111111] relative overflow-hidden select-none" aria-label="แบนเนอร์เวที">
         <div id="stage-banner-track" class="flex w-full h-full transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"></div>
 
-        <!-- Subtle Hover Controls (Dots, Prev/Next, Custom Image Upload) -->
         <div class="absolute top-2 right-2 z-20 flex items-center gap-1">
           <div id="stage-banner-dots" class="flex items-center gap-1 bg-[#111111]/75 backdrop-blur-sm px-1.5 py-1 rounded-md border border-white/20"></div>
-          <button type="button" id="stage-banner-prev" aria-label="ภาพก่อนหน้า" class="opacity-0 group-hover:opacity-100 w-5 h-5 rounded bg-white/95 hover:bg-[#F4D03F] border border-[#111111] text-[#111111] font-display font-black text-[11px] flex items-center justify-center cursor-pointer transition-opacity">‹</button>
-          <button type="button" id="stage-banner-next" aria-label="ภาพถัดไป" class="opacity-0 group-hover:opacity-100 w-5 h-5 rounded bg-white/95 hover:bg-[#F4D03F] border border-[#111111] text-[#111111] font-display font-black text-[11px] flex items-center justify-center cursor-pointer transition-opacity">›</button>
-          <button type="button" id="stage-banner-upload-btn" title="อัปโหลดภาพแบนเนอร์งานของคุณ" class="opacity-0 group-hover:opacity-100 bg-white/95 hover:bg-[#F4D03F] border border-[#111111] text-[#111111] font-display font-bold text-[10px] px-2 py-0.5 rounded cursor-pointer transition-opacity">🖼️ ภาพงาน</button>
-          <button type="button" id="stage-banner-reset-btn" title="คืนค่าแบนเนอร์เริ่มต้น" class="hidden opacity-0 group-hover:opacity-100 bg-[#E74C3C] text-white border border-[#111111] font-display font-bold text-[10px] px-1.5 py-0.5 rounded cursor-pointer transition-opacity">✕</button>
           <input type="file" id="stage-banner-file" accept="image/*" class="hidden" />
         </div>
       </aside>
@@ -381,13 +387,13 @@
   <script src="assets/js/config.js?v=20261122b" defer></script>
   <script src="assets/js/security.js?v=20261122b" defer></script>
   <script src="assets/js/mascots.js?v=20261122b" defer></script>
-  <script src="assets/js/scoreboard.js?v=20261123a" defer></script>
+  <script src="assets/js/scoreboard.js?v=20261123b" defer></script>
   <script src="assets/js/auth.js?v=20261122b" defer></script>
   <script src="assets/js/cloud-sync.js?v=20261123a" defer></script>
   <script src="assets/js/tos.js?v=20261122b" defer></script>
   <script src="assets/js/tutorial.js?v=20261122b" defer></script>
   <script src="assets/js/context-menu.js?v=20261122e" defer></script>
-  <script src="assets/js/bgm-dock.js?v=20261123a" defer></script>
+  <script src="assets/js/bgm-dock.js?v=20261123b" defer></script>
   <script src="assets/js/toolbox.js?v=20261123a" defer></script>
   <script>
     (() => {
@@ -514,10 +520,37 @@
         }
       };
 
-      document.getElementById('stage-banner-prev')?.addEventListener('click', () => go(idx - 1));
-      document.getElementById('stage-banner-next')?.addEventListener('click', () => go(idx + 1));
+      document.getElementById('stage-top-banner')?.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        let m = document.getElementById('stage-banner-ctx');
+        if (!m) {
+          m = document.createElement('div');
+          m.id = 'stage-banner-ctx';
+          m.className = 'fixed z-[180] hidden flex-col gap-1 w-52 vox-card bg-[#F8F6F0] p-1.5 vox-panel-enter';
+          document.body.appendChild(m);
+          document.addEventListener('click', (ev) => { if (!m.contains(ev.target)) m.classList.add('hidden'); });
+          window.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') m.classList.add('hidden'); });
+        }
+        const hasCustom = Boolean(getCustomImg());
+        m.innerHTML = `
+          <button type="button" data-sbc="upload" class="w-full text-left px-2.5 py-1.5 rounded-lg font-display font-bold text-xs text-[#111111] hover:bg-[#F4D03F] cursor-pointer">🖼️ เปลี่ยนภาพแบนเนอร์</button>
+          <button type="button" data-sbc="next" class="w-full text-left px-2.5 py-1.5 rounded-lg font-display font-bold text-xs text-[#111111] hover:bg-[#F4D03F] cursor-pointer">› สไลด์ถัดไป</button>
+          ${hasCustom ? '<button type="button" data-sbc="reset" class="w-full text-left px-2.5 py-1.5 rounded-lg font-display font-bold text-xs text-[#E74C3C] hover:bg-red-50 cursor-pointer">↺ คืนค่าแบนเนอร์เริ่มต้น</button>' : ''}
+        `;
+        m.querySelector('[data-sbc="upload"]')?.addEventListener('click', () => { m.classList.add('hidden'); fileInp?.click(); });
+        m.querySelector('[data-sbc="next"]')?.addEventListener('click', () => { m.classList.add('hidden'); go(idx + 1); });
+        m.querySelector('[data-sbc="reset"]')?.addEventListener('click', () => {
+          m.classList.add('hidden');
+          try { localStorage.removeItem(BANNER_KEY); } catch (_) {}
+          renderSlides();
+        });
+        m.classList.remove('hidden');
+        m.classList.add('flex');
+        m.style.left = `${Math.max(8, Math.min(e.clientX, window.innerWidth - 220))}px`;
+        m.style.top = `${Math.max(8, Math.min(e.clientY, window.innerHeight - 130))}px`;
+      });
 
-      uploadBtn?.addEventListener('click', () => fileInp?.click());
       fileInp?.addEventListener('change', () => {
         const f = fileInp.files?.[0];
         if (!f) return;
@@ -527,10 +560,6 @@
           renderSlides();
         };
         reader.readAsDataURL(f);
-      });
-      resetBtn?.addEventListener('click', () => {
-        try { localStorage.removeItem(BANNER_KEY); } catch (_) {}
-        renderSlides();
       });
 
       renderSlides();

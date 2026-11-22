@@ -1,4 +1,4 @@
-/* HelpDaiCha Cross-Page YouTube BGM State + Compact Main-Menu Card */
+/* HelpDaiCha Cross-Page YouTube BGM State + Footer-Aligned Compact Card & Smooth Modal */
 (() => {
   const BGM_KEY = 'helpdai_bgm_player_v1';
 
@@ -105,30 +105,40 @@
   const syncEngineIframe = () => {
     ensureHostMounted();
     const st = readBgm();
-    if (st.videoId && st.videoId !== loadedId) {
+    if (!st.videoId) {
+      if (loadedId) {
+        loadedId = '';
+        loadedPlaying = false;
+        ytFrameHost.innerHTML = '';
+        parkOverlay();
+      }
+      return;
+    }
+
+    // Only mount/autoplay iframe when playing is true (or if already loaded and paused)
+    if (st.videoId !== loadedId) {
+      if (!st.playing) {
+        // Track is paused: do NOT autoplay or load hidden playing iframe across refresh/page change
+        return;
+      }
       loadedId = st.videoId;
-      loadedPlaying = st.playing;
+      loadedPlaying = true;
       const originParam = location.protocol.startsWith('http') ? `&origin=${encodeURIComponent(location.origin)}` : '';
       const startParam = st.elapsedSec > 1 ? `&start=${Math.floor(st.elapsedSec)}` : '';
-      ytFrameHost.innerHTML = `<iframe class="w-full h-full rounded-lg border-2 border-[#111111]" src="https://www.youtube.com/embed/${st.videoId}?enablejsapi=1&autoplay=${st.playing ? 1 : 0}&rel=0${startParam}${originParam}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin" title="HelpDaiCha BGM"></iframe>`;
+      ytFrameHost.innerHTML = `<iframe class="w-full h-full rounded-lg border-2 border-[#111111]" src="https://www.youtube.com/embed/${st.videoId}?enablejsapi=1&autoplay=1&rel=0${startParam}${originParam}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin" title="HelpDaiCha BGM"></iframe>`;
       const iframe = ytFrameHost.querySelector('iframe');
       iframe?.addEventListener('load', () => {
         try {
           iframe.contentWindow?.postMessage(JSON.stringify({ event: 'listening', id: 1 }), '*');
         } catch (_) {}
       });
-    } else if (!st.videoId && loadedId) {
-      loadedId = '';
-      loadedPlaying = false;
-      ytFrameHost.innerHTML = '';
-      parkOverlay();
-    } else if (st.videoId && st.videoId === loadedId && st.playing !== loadedPlaying) {
+    } else if (st.playing !== loadedPlaying) {
       loadedPlaying = st.playing;
       sendYtCmd(st.playing ? 'playVideo' : 'pauseVideo');
     }
   };
 
-  // Track exact YouTube currentTime so cross-page navigation resumes seamlessly
+  // Track exact YouTube currentTime ONLY while playing
   window.addEventListener('message', (e) => {
     if (!e.origin.includes('youtube.com')) return;
     try {
@@ -180,8 +190,11 @@
       syncEngineIframe();
     },
     stop() {
+      loadedId = '';
+      loadedPlaying = false;
+      ytFrameHost.innerHTML = '';
+      parkOverlay();
       writeBgm({ videoId: '', title: '', playing: false, elapsedSec: 0, startedAt: 0 });
-      syncEngineIframe();
     }
   });
 
@@ -192,62 +205,74 @@
     const slot = document.getElementById('hub-bgm-slot');
     if (!slot) return;
 
-    let searchOpen = false;
-
+    // Compact inline footer card (same height & level as Suggestion Box / ToS / Ko-fi, no inner เพลง button)
     slot.innerHTML = `
-      <!-- Upward Popover for YouTube Link / Search -->
-      <div id="hub-bgm-input-row" class="hidden absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 w-80 sm:w-96 z-50 vox-card bg-white p-3 flex-col gap-2 vox-panel-enter">
-        <div class="flex items-center justify-between gap-2 pb-1.5 border-b-2 border-[#111111]/15">
-          <span class="font-display font-extrabold text-xs text-[#111111]">♪ เลือกเพลงพื้นหลัง YouTube</span>
-          <button type="button" id="hub-bgm-pop-close" class="w-5 h-5 rounded hover:bg-red-100 text-[#111111] hover:text-[#E74C3C] font-black text-xs flex items-center justify-center cursor-pointer">✕</button>
+      <div id="hub-bgm-card" title="คลิก หรือ คลิกขวา เพื่อเลือก/แก้ไขเพลง YouTube" class="bg-white border-2 border-[#111111] rounded-xl shadow-[2px_2px_0px_#111111] px-2.5 py-1 flex items-center gap-2 cursor-pointer hover:bg-[#FFFDF5] transition-colors select-none max-w-[16rem]">
+        <div id="hub-bgm-thumb-wrap" class="w-7 h-7 rounded-md border-2 border-[#111111] bg-[#F4D03F] flex items-center justify-center overflow-hidden shrink-0">
+          <svg class="w-3.5 h-3.5 text-[#111111]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
         </div>
-        <div class="flex gap-1.5">
-          <input id="hub-bgm-input" type="text" placeholder="วางลิงก์ YouTube หรือพิมพ์ชื่อเพลง..." class="flex-1 min-w-0 bg-[#F8F6F0] border-2 border-[#111111] rounded-lg px-2.5 py-1.5 text-xs font-semibold text-[#111111] focus:outline-none focus:bg-white" />
-          <button type="button" id="hub-bgm-go" class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-extrabold text-xs px-3 py-1 rounded-lg cursor-pointer">เล่น</button>
+        <div class="min-w-0 flex-1 flex items-center gap-1.5">
+          <span id="hub-bgm-dot" class="hidden w-2 h-2 rounded-full bg-[#10B981] shrink-0 animate-pulse"></span>
+          <p id="hub-bgm-title" class="thai-safe-tight font-display font-extrabold text-[11px] text-[#111111] truncate">คลิกขวาเลือกเพลง</p>
         </div>
-        <div id="hub-bgm-results" class="hidden flex-col gap-1 max-h-40 overflow-y-auto"></div>
-      </div>
-
-      <!-- Compact Vox Music Card (Bottom Center) -->
-      <div class="vox-card bg-white px-3 py-2.5 flex items-center gap-3 w-full max-w-sm mx-auto">
-        <div id="hub-bgm-thumb-wrap" class="w-11 h-11 rounded-xl border-2 border-[#111111] bg-[#F4D03F] flex items-center justify-center overflow-hidden shrink-0 shadow-[2px_2px_0px_#111111]">
-          <svg class="w-5 h-5 text-[#111111]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-        </div>
-        <div class="min-w-0 flex-1 flex flex-col">
-          <div class="flex items-center gap-1.5">
-            <span id="hub-bgm-dot" class="hidden w-2 h-2 rounded-full bg-[#10B981] shrink-0 animate-pulse"></span>
-            <p id="hub-bgm-title" class="thai-safe-tight font-display font-extrabold text-xs text-[#111111] truncate">ยังไม่ได้เลือกเพลงพื้นหลัง</p>
-          </div>
-          <p id="hub-bgm-sub" class="text-[10px] font-semibold text-[#111111]/60 truncate">เล่นต่อเนื่องเมื่อเข้าหน้าเวที</p>
-        </div>
-        <div class="flex items-center gap-1.5 shrink-0">
-          <button type="button" id="hub-bgm-toggle" title="เล่น / พัก" aria-label="เล่นหรือพักเพลง" class="hidden btn-vox w-8 h-8 bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] rounded-lg items-center justify-center cursor-pointer"></button>
-          <button type="button" id="hub-bgm-stop" title="ปิดเพลง" aria-label="ปิดเพลง" class="hidden btn-vox w-8 h-8 bg-white hover:bg-red-50 text-[#E74C3C] rounded-lg items-center justify-center cursor-pointer">
-            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
+        <div class="flex items-center gap-1 shrink-0">
+          <button type="button" id="hub-bgm-toggle" title="เล่น / พัก" aria-label="เล่นหรือพักเพลง" class="hidden w-6 h-6 bg-[#F4D03F] hover:bg-[#f2c61d] border border-[#111111] text-[#111111] rounded-md items-center justify-center cursor-pointer"></button>
+          <button type="button" id="hub-bgm-stop" title="ปิดเพลง" aria-label="ปิดเพลง" class="hidden w-6 h-6 bg-white hover:bg-red-50 border border-[#111111] text-[#E74C3C] rounded-md items-center justify-center cursor-pointer">
+            <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
           </button>
-          <button type="button" id="hub-bgm-edit-btn" title="เลือกเพลง YouTube" aria-label="เลือกเพลง YouTube" class="btn-vox bg-[#111111] hover:bg-[#222222] text-[#F4D03F] font-display font-extrabold text-[11px] px-2.5 py-1.5 rounded-lg cursor-pointer">♪ เพลง</button>
         </div>
       </div>
     `;
 
+    // Smooth Centered Modal (never teleports or jumps!)
+    let modal = document.getElementById('hub-bgm-modal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'hub-bgm-modal';
+      modal.className = 'hidden fixed inset-0 z-[170] items-center justify-center p-4 bg-[#111111]/60 backdrop-blur-sm';
+      modal.innerHTML = `
+        <div class="vox-panel-enter w-full max-w-md vox-card bg-[#F8F6F0] p-5 flex flex-col gap-3">
+          <div class="flex items-center justify-between gap-2 pb-2 border-b-2 border-[#111111]">
+            <div class="flex items-center gap-2">
+              <span class="w-7 h-7 rounded-lg border-2 border-[#111111] bg-[#F4D03F] flex items-center justify-center shadow-[2px_2px_0px_#111111]">
+                <svg class="w-4 h-4 text-[#111111]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+              </span>
+              <h2 class="thai-safe-tight font-display font-extrabold text-base text-[#111111]">เลือกเพลงพื้นหลัง (YouTube)</h2>
+            </div>
+            <button type="button" id="hub-bgm-pop-close" class="w-7 h-7 rounded-lg border-2 border-[#111111] bg-white hover:bg-[#E74C3C] hover:text-white font-display font-black text-xs flex items-center justify-center cursor-pointer transition-colors">✕</button>
+          </div>
+          <div class="flex gap-1.5">
+            <input id="hub-bgm-input" type="text" placeholder="วางลิงก์ YouTube หรือพิมพ์ชื่อเพลงแล้วกด Enter..." class="flex-1 min-w-0 bg-white border-2 border-[#111111] rounded-xl px-3 py-2 text-xs sm:text-sm font-semibold text-[#111111] focus:outline-none" />
+            <button type="button" id="hub-bgm-go" class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-extrabold text-xs px-4 py-2 rounded-xl cursor-pointer">เล่น</button>
+          </div>
+          <div id="hub-bgm-results" class="hidden flex-col gap-1.5 max-h-48 overflow-y-auto"></div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+    }
+
+    const cardEl = document.getElementById('hub-bgm-card');
     const thumbWrap = document.getElementById('hub-bgm-thumb-wrap');
     const dotEl = document.getElementById('hub-bgm-dot');
     const titleEl = document.getElementById('hub-bgm-title');
-    const subEl = document.getElementById('hub-bgm-sub');
     const toggleBtn = document.getElementById('hub-bgm-toggle');
     const stopBtn = document.getElementById('hub-bgm-stop');
-    const editBtn = document.getElementById('hub-bgm-edit-btn');
     const popCloseBtn = document.getElementById('hub-bgm-pop-close');
-    const inputRow = document.getElementById('hub-bgm-input-row');
     const inpEl = document.getElementById('hub-bgm-input');
     const goBtn = document.getElementById('hub-bgm-go');
     const resultsEl = document.getElementById('hub-bgm-results');
 
-    const closePop = () => {
-      searchOpen = false;
-      inputRow.classList.add('hidden');
-      inputRow.classList.remove('flex');
+    const openMusicModal = () => {
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      inpEl?.focus();
     };
+    const closeMusicModal = () => {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    };
+
+    window.HelpDaiBgmModal = openMusicModal;
 
     const syncUi = () => {
       syncEngineIframe();
@@ -263,14 +288,12 @@
       if (hasTrack) {
         thumbWrap.innerHTML = `<img src="https://i.ytimg.com/vi/${st.videoId}/hqdefault.jpg" alt="" class="w-full h-full object-cover" />`;
         titleEl.textContent = st.title || `YouTube (${st.videoId})`;
-        if (subEl) subEl.textContent = st.playing ? 'กำลังเล่น • ต่อเนื่องข้ามหน้า' : 'หยุดชั่วคราว';
         toggleBtn.innerHTML = st.playing
-          ? '<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>'
-          : '<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l15 8-15 8V4z"/></svg>';
+          ? '<svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>'
+          : '<svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l15 8-15 8V4z"/></svg>';
       } else {
-        thumbWrap.innerHTML = '<svg class="w-5 h-5 text-[#111111]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>';
-        titleEl.textContent = 'ยังไม่ได้เลือกเพลงพื้นหลัง';
-        if (subEl) subEl.textContent = 'เล่นต่อเนื่องเมื่อเข้าหน้าเวที';
+        thumbWrap.innerHTML = '<svg class="w-3.5 h-3.5 text-[#111111]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>';
+        titleEl.textContent = 'คลิกขวาเลือกเพลง';
       }
     };
 
@@ -282,14 +305,14 @@
         inpEl.value = '';
         resultsEl.classList.add('hidden');
         resultsEl.classList.remove('flex');
-        closePop();
+        closeMusicModal();
         await window.HelpDaiBgm.setTrack(id, '', true);
         return;
       }
 
       resultsEl.classList.remove('hidden');
       resultsEl.classList.add('flex');
-      resultsEl.innerHTML = `<div class="text-[11px] font-display font-bold text-[#111111]/60 py-1 text-center">กำลังค้นหา...</div>`;
+      resultsEl.innerHTML = `<div class="text-xs font-display font-bold text-[#111111]/60 py-2 text-center">กำลังค้นหา...</div>`;
       try {
         const cfg = window.HELPDAI_CONFIG || {};
         const defaultApiBase = (!location.hostname.endsWith('github.io') && location.protocol.startsWith('http')) ? location.origin : '';
@@ -301,16 +324,16 @@
             const items = Array.isArray(data?.items) ? data.items.slice(0, 4) : [];
             if (items.length) {
               resultsEl.innerHTML = items.map(it => `
-                <button type="button" data-hub-yt="${it.id}" data-hub-title="${String(it.title || '').replace(/"/g, '&quot;')}" class="w-full text-left bg-[#F8F6F0] hover:bg-[#F4D03F] border border-[#111111] rounded-lg p-1.5 flex items-center gap-2 cursor-pointer">
-                  ${it.thumb ? `<img src="${it.thumb}" alt="" class="w-9 h-6 object-cover rounded border border-[#111111] shrink-0" />` : ''}
-                  <span class="font-display font-bold text-[11px] text-[#111111] truncate">${String(it.title || '').replace(/[<>&"]/g, '')}</span>
+                <button type="button" data-hub-yt="${it.id}" data-hub-title="${String(it.title || '').replace(/"/g, '&quot;')}" class="w-full text-left bg-white hover:bg-[#F4D03F] border-2 border-[#111111] rounded-xl p-2 flex items-center gap-2.5 cursor-pointer transition-colors">
+                  ${it.thumb ? `<img src="${it.thumb}" alt="" class="w-11 h-8 object-cover rounded border border-[#111111] shrink-0" />` : ''}
+                  <span class="font-display font-bold text-xs text-[#111111] truncate">${String(it.title || '').replace(/[<>&"]/g, '')}</span>
                 </button>
               `).join('');
               resultsEl.querySelectorAll('[data-hub-yt]').forEach(b => {
                 b.addEventListener('click', () => {
                   window.HelpDaiBgm.setTrack(b.dataset.hubYt, b.dataset.hubTitle, true);
                   resultsEl.classList.add('hidden');
-                  closePop();
+                  closeMusicModal();
                 });
               });
               return;
@@ -318,27 +341,28 @@
           }
         }
       } catch (_) {}
-      resultsEl.innerHTML = `<a href="https://www.youtube.com/results?search_query=${encodeURIComponent(raw)}" target="_blank" rel="noopener noreferrer" class="btn-vox bg-white hover:bg-[#F4D03F] px-2.5 py-1 rounded-lg text-[11px] font-display font-bold flex items-center justify-between text-[#111111]"><span>ค้นหาบน YouTube ↗</span></a>`;
+      resultsEl.innerHTML = `<a href="https://www.youtube.com/results?search_query=${encodeURIComponent(raw)}" target="_blank" rel="noopener noreferrer" class="btn-vox bg-white hover:bg-[#F4D03F] px-3 py-2 rounded-xl text-xs font-display font-bold flex items-center justify-between text-[#111111]"><span>ค้นหาบน YouTube ↗</span></a>`;
     };
 
-    editBtn.addEventListener('click', (e) => {
+    cardEl?.addEventListener('click', (e) => {
+      if (e.target.closest('button')) return;
+      openMusicModal();
+    });
+    popCloseBtn?.addEventListener('click', closeMusicModal);
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeMusicModal();
+    });
+    goBtn?.addEventListener('click', handleSearchOrUrl);
+    inpEl?.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); handleSearchOrUrl(); } });
+    toggleBtn?.addEventListener('click', (e) => {
       e.stopPropagation();
-      searchOpen = !searchOpen;
-      inputRow.classList.toggle('hidden', !searchOpen);
-      inputRow.classList.toggle('flex', searchOpen);
-      if (searchOpen) inpEl.focus();
-    });
-    popCloseBtn?.addEventListener('click', closePop);
-    document.addEventListener('click', (e) => {
-      if (searchOpen && !slot.contains(e.target)) closePop();
-    });
-    goBtn.addEventListener('click', handleSearchOrUrl);
-    inpEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); handleSearchOrUrl(); } });
-    toggleBtn.addEventListener('click', () => {
       const cur = readBgm();
       window.HelpDaiBgm.setPlaying(!cur.playing);
     });
-    stopBtn.addEventListener('click', () => window.HelpDaiBgm.stop());
+    stopBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      window.HelpDaiBgm.stop();
+    });
 
     window.addEventListener('helpdai-bgm-change', syncUi);
     window.addEventListener('storage', (e) => { if (e.key === BGM_KEY) syncUi(); });
