@@ -884,7 +884,6 @@
               osc.stop(t + 0.62);
             });
           }
-          showVoxAlert('หมดเวลาแล้ว!', 'alarm');
         } catch (_) {}
       }
 
@@ -1035,11 +1034,10 @@
           const waveBackPath = document.getElementById('center-timer-wave-back-path');
           if (waveBackPath) waveBackPath.setAttribute('fill', darkLiquidColor);
 
-          centerCard.classList.toggle('bg-[#FFFDF5]', !isCritical);
-          centerCard.classList.toggle('bg-[#FFE8E6]', isCritical);
-          centerCard.classList.toggle('text-[#111111]', true);
+          centerCard.classList.add('bg-[#FFFFFF]', 'text-[#111111]');
+          centerCard.classList.remove('bg-[#FFE8E6]', 'bg-[#FFFDF5]');
           if (centerStatusText) {
-            centerStatusText.textContent = sec === 0 ? "TIME'S UP!" : (t.running ? 'GAME COUNTDOWN • LIVE' : 'GAME COUNTDOWN • PAUSED');
+            centerStatusText.textContent = t.running ? 'GAME COUNTDOWN • LIVE' : 'GAME COUNTDOWN';
           }
           if (centerTimesUp) {
             centerTimesUp.classList.toggle('hidden', sec > 0);

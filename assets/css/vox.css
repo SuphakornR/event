@@ -829,21 +829,14 @@
 
     @keyframes timerWaveSlide {
       0% { transform: translate3d(0, 0, 0); }
-      50% { transform: translate3d(-25%, -2.5px, 0); }
+      50% { transform: translate3d(-25%, -5px, 0); }
       100% { transform: translate3d(-50%, 0, 0); }
     }
 
     @keyframes timerWaveSlideBack {
       0% { transform: translate3d(-50%, 0, 0); }
-      50% { transform: translate3d(-25%, 2.5px, 0); }
+      50% { transform: translate3d(-25%, 5px, 0); }
       100% { transform: translate3d(0, 0, 0); }
-    }
-
-    @keyframes timerBubbleRise {
-      0% { transform: translateY(0) scale(0.75); opacity: 0; }
-      20% { opacity: 0.45; }
-      80% { opacity: 0.35; }
-      100% { transform: translateY(-190px) scale(1.15); opacity: 0; }
     }
 
     .timer-circle-mask {
@@ -874,32 +867,22 @@
     .timer-liquid-wave {
       position: absolute;
       left: 0;
-      bottom: calc(100% - 2px);
+      bottom: calc(100% - 3px);
       width: 200%;
-      height: 24px;
-      animation: timerWaveSlide 2.2s linear infinite;
+      height: 44px;
+      animation: timerWaveSlide 1.65s linear infinite;
       pointer-events: none;
     }
 
     .timer-liquid-wave-back {
       position: absolute;
       left: 0;
-      bottom: calc(100% - 1px);
+      bottom: calc(100% - 2px);
       width: 200%;
-      height: 28px;
+      height: 50px;
       opacity: 0.68;
-      animation: timerWaveSlideBack 3.4s linear infinite;
+      animation: timerWaveSlideBack 2.5s linear infinite;
       pointer-events: none;
-    }
-
-    .timer-bubble {
-      position: absolute;
-      bottom: 6px;
-      border-radius: 9999px;
-      background: rgba(255, 255, 255, 0.5);
-      border: 1px solid rgba(255, 255, 255, 0.7);
-      pointer-events: none;
-      animation: timerBubbleRise 3.2s ease-in infinite;
     }
 
     @keyframes timerDigitPop {
