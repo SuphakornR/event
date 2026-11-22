@@ -65,7 +65,10 @@
           <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></svg>
           <span>เสนอแนะ</span>
         </button>
-        <button type="button" id="open-changelog-btn" class="hover:text-[#111111] underline cursor-pointer">บันทึกการอัปเดต (Changelog)</button>
+        <button type="button" id="open-changelog-btn" title="ดูบันทึกการอัปเดต (Changelog)" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border-2 border-[#111111] bg-white hover:bg-[#F4D03F] text-[#111111] font-display font-extrabold text-[11px] shadow-[2px_2px_0px_#111111] cursor-pointer transition-colors">
+          <span>Build</span>
+          <span id="changelog-build-label" class="tabular-nums bg-[#111111] text-[#F4D03F] px-1.5 py-0.5 rounded text-[10px]">v0.1.0</span>
+        </button>
         <button type="button" data-open-tos class="hover:text-[#111111] underline cursor-pointer">ข้อตกลงการใช้งาน (ToS)</button>
         <div class="inline-flex items-center">
           <script type='text/javascript' src='https://storage.ko-fi.com/cdn/widget/Widget_2.js'></script>
@@ -83,35 +86,21 @@
           <span class="w-7 h-7 rounded-lg border-2 border-[#111111] bg-[#F4D03F] flex items-center justify-center shadow-[2px_2px_0px_#111111]">
             <svg class="w-4 h-4 text-[#111111]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg>
           </span>
-          <h2 class="thai-safe-tight font-display font-extrabold text-base text-[#111111]">บันทึกการอัปเดต (Change Log)</h2>
+          <h2 class="thai-safe-tight font-display font-extrabold text-base text-[#111111]">บันทึกการอัปเดต</h2>
+          <span id="changelog-modal-version" class="font-display font-black text-[11px] bg-[#111111] text-[#F4D03F] px-2 py-0.5 rounded tabular-nums">v0.1.0</span>
         </div>
         <button type="button" id="close-changelog-btn" aria-label="ปิดบันทึกการอัปเดต" class="w-7 h-7 rounded-lg border-2 border-[#111111] bg-white hover:bg-[#E74C3C] hover:text-white font-display font-black text-xs flex items-center justify-center cursor-pointer transition-colors">✕</button>
       </div>
-      <div class="flex-1 overflow-y-auto pr-1 flex flex-col gap-2.5 text-xs sm:text-sm text-[#111111]/85">
-        <div class="bg-white border-2 border-[#111111] rounded-xl p-3 shadow-[2px_2px_0px_#111111]">
-          <div class="flex items-center justify-between gap-2 mb-1">
-            <span class="font-display font-black text-xs bg-[#111111] text-[#F4D03F] px-2 py-0.5 rounded">v2.4 • ล่าสุด</span>
-            <span class="text-[11px] font-bold text-[#111111]/55">Stage &amp; Hub Polish</span>
-          </div>
-          <ul class="list-disc pl-4 space-y-1 text-xs leading-relaxed">
-            <li>แบนเนอร์รองรับหลายภาพพร้อมเลื่อนอัตโนมัติ (คลิกขวาเพื่อเพิ่ม/ลบ/รีเซ็ตภาพ) และแสดงขนาดพิกเซลเมื่อชี้เมาส์</li>
-            <li>ปรับการประกาศผู้ชนะแบบจอมืดทั้งหน้า พร้อมข้อความลุ้นทีละจังหวะ เสียงกลอง และพลุเฉลิมฉลอง</li>
-            <li>เพิ่มเสียงนับถอยหลัง 5 วินาทีสุดท้ายและเสียงหมดเวลาที่ซิงค์ตรงจังหวะ พร้อมคลื่นน้ำ 2 ชั้น</li>
-            <li>ปุ่มเมนูใหม่บนหน้าเวทีพร้อมสัญลักษณ์ Auto-Sync แสดงสถานะซิงค์จริง</li>
-          </ul>
+      <div class="flex flex-wrap items-center justify-between gap-2 shrink-0">
+        <div class="flex flex-wrap items-center gap-1.5">
+          <button type="button" data-cl-filter="all" class="px-2.5 py-1 rounded-lg border-2 border-[#111111] bg-[#111111] text-[#F4D03F] font-display font-bold text-[11px] cursor-pointer transition-colors">ทั้งหมด</button>
+          <button type="button" data-cl-filter="major" class="px-2.5 py-1 rounded-lg border-2 border-[#111111] bg-white text-[#111111] hover:bg-[#F4D03F]/40 font-display font-bold text-[11px] cursor-pointer transition-colors">Important</button>
+          <button type="button" data-cl-filter="medium" class="px-2.5 py-1 rounded-lg border-2 border-[#111111] bg-white text-[#111111] hover:bg-[#F4D03F]/40 font-display font-bold text-[11px] cursor-pointer transition-colors">Medium</button>
+          <button type="button" data-cl-filter="minor" class="px-2.5 py-1 rounded-lg border-2 border-[#111111] bg-white text-[#111111] hover:bg-[#F4D03F]/40 font-display font-bold text-[11px] cursor-pointer transition-colors">Minor</button>
         </div>
-        <div class="bg-white border-2 border-[#111111] rounded-xl p-3 shadow-[2px_2px_0px_#111111]">
-          <div class="flex items-center justify-between gap-2 mb-1">
-            <span class="font-display font-black text-xs bg-[#F4D03F] text-[#111111] border border-[#111111] px-2 py-0.5 rounded">v2.3</span>
-            <span class="text-[11px] font-bold text-[#111111]/55">Stage Tools</span>
-          </div>
-          <ul class="list-disc pl-4 space-y-1 text-xs leading-relaxed">
-            <li>รวม Live QR Poll เข้าสู่แถบเครื่องมือหน้าเวที พร้อมโหมดฉายกลางจอแบบอ่านอย่างเดียว</li>
-            <li>เพิ่มเครื่องมือแชร์หน้าจอห้องใหญ่ (จอที่ 2, รหัสห้อง/QR, Screen Cast)</li>
-            <li>เพลงพื้นหลัง YouTube เล่นต่อเนื่องข้ามหน้า และแสดงการ์ดขนาดกะทัดรัดในการ์ด Stage Scoreboard</li>
-          </ul>
-        </div>
+        <span class="text-[10px] font-bold text-[#111111]/55">Major.Medium.Minor</span>
       </div>
+      <div id="changelog-list" class="flex-1 overflow-y-auto pr-1 flex flex-col gap-2.5 text-xs sm:text-sm text-[#111111]/85"></div>
     </div>
   </div>
 
@@ -477,16 +466,6 @@
 
       renderHubBanner();
 
-      // Change Log Modal
-      (() => {
-        const clModal = document.getElementById('changelog-modal');
-        const openCl = () => { clModal?.classList.remove('hidden'); clModal?.classList.add('flex'); clModal?.setAttribute('aria-hidden', 'false'); };
-        const closeCl = () => { clModal?.classList.add('hidden'); clModal?.classList.remove('flex'); clModal?.setAttribute('aria-hidden', 'true'); };
-        document.getElementById('open-changelog-btn')?.addEventListener('click', openCl);
-        document.getElementById('close-changelog-btn')?.addEventListener('click', closeCl);
-        clModal?.addEventListener('click', (e) => { if (e.target === clModal) closeCl(); });
-      })();
-
       // Lightweight Vox Context Menu for Welcome Page (Banner & Music Box)
       let hubCtxEl = null;
       const closeHubCtx = () => {
@@ -571,5 +550,6 @@
       });
     })();
   </script>
+  <script src="assets/js/changelog.js"></script>
 </body>
 </html>
