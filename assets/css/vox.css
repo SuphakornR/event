@@ -1,0 +1,832 @@
+    /* ==========================================================================
+       VOX EDITORIAL MOTION GRAPHICS DESIGN SYSTEM
+       ========================================================================== */
+    :root {
+      --bg-paper: #F8F6F0;
+      --ink-black: #111111;
+      --team-yellow: #F4D03F;
+      --team-coral: #E74C3C;
+      --team-blue: #2980B9;
+      --border-thick: 3px solid #111111;
+      --shadow-hard: 6px 6px 0px #111111;
+      --shadow-hard-sm: 3px 3px 0px #111111;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background-color: var(--bg-paper);
+      color: var(--ink-black);
+      font-family: 'IBM Plex Sans Thai', sans-serif;
+      background-image:
+        linear-gradient(to right, rgba(17, 17, 17, 0.055) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(17, 17, 17, 0.055) 1px, transparent 1px);
+      background-size: 32px 32px;
+      margin: 0;
+      min-height: 100vh;
+    }
+
+    .font-display {
+      font-family: 'Prompt', sans-serif;
+    }
+
+    /* ==========================================================================
+       THAI DIACRITIC CEILING & LINE-HEIGHT PROTECTION
+       Prevents clipping of upper Thai vowels & tone marks (็, ่, ้, ๊, ๋, ิ, ี, ึ, ื)
+       ========================================================================== */
+    .thai-safe {
+      line-height: 1.48 !important;
+      padding-top: 0.2em;
+      padding-bottom: 0.12em;
+      overflow: visible !important;
+    }
+
+    .thai-safe-tight {
+      line-height: 1.44 !important;
+      padding-top: 0.18em;
+      padding-bottom: 0.1em;
+      overflow: visible !important;
+    }
+
+    /* Paper Cutout Card & Hard Offset Shadow */
+    .vox-card {
+      background: #FFFFFF;
+      border: var(--border-thick);
+      box-shadow: var(--shadow-hard);
+      border-radius: 14px;
+    }
+
+    .vox-card-hover {
+      transition: transform 0.26s cubic-bezier(0.22, 1, 0.36, 1),
+                  box-shadow 0.26s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .vox-card-hover:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 8px 8px 0px #111111;
+    }
+
+    .game-chevron {
+      transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    /* Left-Edge & Right-Edge Folder Bookmark Docks in Fullscreen Focus Mode */
+    #activity-list-col,
+    #stage-bottom-slot,
+    #vox-toolbox {
+      transition: transform 0.58s cubic-bezier(0.22, 1, 0.36, 1),
+                  box-shadow 0.42s ease,
+                  opacity 0.38s ease,
+                  padding 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    #activity-list-col.is-bookmark-dock {
+      position: fixed;
+      left: 0;
+      top: 28%;
+      width: 248px;
+      max-height: 40vh;
+      z-index: 46;
+      padding: 10px 26px 10px 10px;
+      background: rgba(248, 246, 240, 0.97);
+      border: 3px solid #111111;
+      border-left: none;
+      border-radius: 0 16px 16px 0;
+      box-shadow: 5px 5px 0px #111111;
+      transform: translateY(-50%) translateX(calc(-100% + 24px));
+      overflow: visible;
+    }
+
+    #activity-list-col.is-bookmark-dock::after,
+    #stage-bottom-slot.is-team-bookmark-dock::after {
+      content: '›';
+      position: absolute;
+      right: 0;
+      top: 50%;
+      width: 22px;
+      height: 52px;
+      transform: translateY(-50%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Prompt', sans-serif;
+      font-weight: 900;
+      font-size: 16px;
+      color: #111111;
+      border-left: 2px solid #111111;
+      border-radius: 0 12px 12px 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+
+    #activity-list-col.is-bookmark-dock::after {
+      background: #F4D03F;
+    }
+
+    #stage-bottom-slot.is-team-bookmark-dock {
+      position: fixed;
+      left: 0;
+      top: 72%;
+      width: 268px;
+      max-height: 40vh;
+      z-index: 45;
+      padding: 10px 26px 10px 10px;
+      background: rgba(248, 246, 240, 0.97);
+      border: 3px solid #111111;
+      border-left: none;
+      border-radius: 0 16px 16px 0;
+      box-shadow: 5px 5px 0px #111111;
+      transform: translateY(-50%) translateX(calc(-100% + 24px));
+      overflow: visible;
+    }
+
+    #stage-bottom-slot.is-team-bookmark-dock::after {
+      background: #2980B9;
+      color: #FFFFFF;
+    }
+
+    #stage-bottom-slot.is-team-bookmark-dock #leaderboard-list {
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 6px !important;
+      padding: 2px 6px 6px 2px !important;
+      max-height: calc(40vh - 24px);
+      overflow-y: auto;
+    }
+
+    #stage-bottom-slot.is-team-bookmark-dock .team-row {
+      flex-shrink: 0 !important;
+      padding: 7px 10px !important;
+      box-shadow: 3px 3px 0px #111111 !important;
+    }
+
+    #stage-bottom-slot.is-team-bookmark-dock .team-row > :nth-child(n+3) {
+      display: none !important;
+    }
+
+    #activity-list-col.is-bookmark-dock:hover,
+    #activity-list-col.is-bookmark-dock:focus-within,
+    #stage-bottom-slot.is-team-bookmark-dock:hover,
+    #stage-bottom-slot.is-team-bookmark-dock:focus-within {
+      transform: translateY(-50%) translateX(0);
+      padding-right: 12px;
+      box-shadow: 10px 10px 0px #111111;
+      z-index: 48;
+    }
+
+    #activity-list-col.is-bookmark-dock:hover::after,
+    #activity-list-col.is-bookmark-dock:focus-within::after,
+    #stage-bottom-slot.is-team-bookmark-dock:hover::after,
+    #stage-bottom-slot.is-team-bookmark-dock:focus-within::after {
+      opacity: 0;
+    }
+
+    /* Right-Edge Folder Bookmark for Toolbox in Fullscreen Focus Mode */
+    body.is-activity-focused #vox-toolbox {
+      left: auto !important;
+      right: 0 !important;
+      top: 50% !important;
+      border-right: none;
+      border-radius: 16px 0 0 16px;
+      padding-left: 16px;
+      transform: translateY(-50%) translateX(calc(100% - 16px)) !important;
+    }
+
+    body.is-activity-focused #vox-toolbox:hover,
+    body.is-activity-focused #vox-toolbox:focus-within {
+      transform: translateY(-50%) translateX(0) !important;
+      padding-left: 8px;
+    }
+
+    .game-pill-card.is-active .game-chevron {
+      transform: rotate(90deg);
+    }
+
+    /* Sleek Editorial Scrollbar & Smooth Scroll Containers */
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(17, 17, 17, 0.24) transparent;
+    }
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(17, 17, 17, 0.22);
+      border-radius: 999px;
+      transition: background-color 0.2s ease;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(17, 17, 17, 0.55);
+    }
+
+    .vox-scroll-area {
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+      scroll-behavior: smooth;
+      scrollbar-gutter: stable;
+      padding-right: 4px;
+      padding-bottom: 6px;
+    }
+
+    /* Inline Editable Styling */
+    [contenteditable="true"] {
+      outline: none;
+      border-radius: 6px;
+      transition: background-color 0.2s ease, box-shadow 0.2s ease;
+      cursor: text;
+    }
+
+    [contenteditable="true"]:hover {
+      background-color: rgba(244, 208, 63, 0.32);
+    }
+
+    [contenteditable="true"]:focus {
+      background-color: #FFFDF5;
+      box-shadow: 0 0 0 2.5px #111111;
+      padding-left: 6px;
+      padding-right: 6px;
+    }
+
+    /* ==========================================================================
+       INTERACTIVE GAME HEADER CARDS & SUBTLE WRENCH ICON
+       ========================================================================== */
+    .game-pill-card {
+      background: #FFFFFF;
+      border: 2.5px solid #111111;
+      box-shadow: 3px 3px 0px #111111;
+      border-radius: 12px;
+      transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1),
+                  box-shadow 0.18s cubic-bezier(0.22, 1, 0.36, 1),
+                  background-color 0.2s ease;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .game-pill-card:hover {
+      transform: translate(-1px, -1px);
+      box-shadow: 4px 4px 0px #111111;
+      background-color: #FFFDF7;
+    }
+
+    .game-pill-card.is-active {
+      background-color: #FFFBEB;
+      transform: translate(2px, 2px);
+      box-shadow: 1px 1px 0px #111111;
+    }
+
+    /* Subtle wrench icon at rest (opacity: 0.16), solid on hover */
+    .game-wrench-btn {
+      opacity: 0.16;
+      border: 1.5px solid rgba(17, 17, 17, 0.35);
+      background-color: rgba(248, 246, 240, 0.75);
+      transition: opacity 0.2s ease, transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+    }
+
+    .game-pill-card:hover .game-wrench-btn {
+      opacity: 0.42;
+    }
+
+    .game-wrench-btn:hover,
+    .game-wrench-btn:focus-visible {
+      opacity: 1 !important;
+      border-color: #111111;
+      background-color: #F4D03F;
+      transform: rotate(18deg) scale(1.08);
+    }
+
+    /* ==========================================================================
+       SMOOTH SLIDE-DOWN MEDIA ACCORDION & SEAMLESS VOX CUTOUT CONTROLS
+       ========================================================================== */
+    .media-accordion-wrapper {
+      display: grid;
+      grid-template-rows: 0fr;
+      opacity: 0;
+      margin-top: 0px;
+      transition: grid-template-rows 0.56s cubic-bezier(0.22, 1, 0.36, 1),
+                  opacity 0.42s ease,
+                  margin-top 0.56s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .media-accordion-wrapper.is-open {
+      grid-template-rows: 1fr;
+      opacity: 1;
+      margin-top: 16px;
+    }
+
+    .media-accordion-inner {
+      overflow: hidden;
+    }
+
+    .media-content-stage {
+      transition: opacity 0.24s ease, transform 0.24s ease;
+    }
+
+    .media-content-stage.is-swapping {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+
+    /* Subtle Accordion Header Actions (faded at rest for clean presentation) */
+    .accordion-subtle-actions {
+      opacity: 0.16;
+      transition: opacity 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    #media-accordion:hover .accordion-subtle-actions,
+    .accordion-subtle-actions:focus-within {
+      opacity: 1;
+    }
+
+    /* Seamless Floating Vox Media Controls (Hidden at rest, reveals on hover — works over YouTube iframe too) */
+    .media-floating-controls {
+      opacity: 0;
+      pointer-events: auto;
+      transform: translateY(-6px) scale(0.97);
+      transition: opacity 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+                  transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    #media-visual-host:hover .media-floating-controls,
+    .media-floating-controls:hover,
+    #media-visual-host:focus-within .media-floating-controls {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    /* Smooth Video <-> Image/GIF Crossfade & Scale Transition */
+    .media-visual-pane {
+      transition: opacity 0.36s cubic-bezier(0.22, 1, 0.36, 1),
+                  transform 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+      will-change: opacity, transform;
+    }
+
+    .media-visual-pane.is-fading-out {
+      opacity: 0;
+      transform: scale(0.975);
+    }
+
+    /* ==========================================================================
+       THEATER MEDIA ZOOM OVERLAY (SMOOTH SCALE & BACKDROP FADE)
+       ========================================================================== */
+    #theater-zoom-overlay {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.36s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    #theater-zoom-overlay.is-zoomed {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    #theater-zoom-dialog {
+      transform: scale(0.88) translateY(14px);
+      opacity: 0;
+      transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+                  opacity 0.32s ease;
+      will-change: transform, opacity;
+    }
+
+    #theater-zoom-overlay.is-zoomed #theater-zoom-dialog {
+      transform: scale(1) translateY(0);
+      opacity: 1;
+    }
+
+    /* ==========================================================================
+       SMOOTH FLIP MOTION FOR GROUP ROWS & VICTORY BADGE
+       ========================================================================== */
+    .team-row {
+      position: relative;
+      will-change: transform;
+      transition: box-shadow 0.35s ease, border-color 0.35s ease, background-color 0.35s ease;
+    }
+
+    .team-row.is-winner {
+      border-width: 4px;
+      border-color: #111111;
+      box-shadow: 8px 8px 0px #111111;
+      background: linear-gradient(135deg, #F9E066 0%, #F4D03F 100%);
+      overflow: hidden;
+    }
+
+    .winner-crown-bg {
+      display: none;
+      position: absolute;
+      right: -4%;
+      top: 50%;
+      transform: translateY(-50%) rotate(-10deg);
+      width: min(52%, 150px);
+      height: 112%;
+      opacity: 0.26;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .team-row.is-winner .winner-crown-bg {
+      display: block;
+    }
+
+    @keyframes victorySpin {
+      from { transform: translate(-50%, -50%) rotate(0deg); }
+      to { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+
+    @keyframes victoryCardSlam {
+      0% { opacity: 0; transform: scale(0.35) rotate(-6deg); }
+      55% { opacity: 1; transform: scale(1.08) rotate(2deg); }
+      78% { transform: scale(0.96) rotate(-1deg); }
+      100% { opacity: 1; transform: scale(1) rotate(0deg); }
+    }
+
+    @keyframes victoryStageShake {
+      0%, 100% { transform: translate(0, 0); }
+      15% { transform: translate(-5px, 3px); }
+      30% { transform: translate(5px, -4px); }
+      45% { transform: translate(-4px, -2px); }
+      60% { transform: translate(3px, 3px); }
+      75% { transform: translate(-2px, 1px); }
+    }
+
+    .victory-sunburst {
+      animation: victorySpin 18s linear infinite;
+    }
+
+    .victory-card-slam {
+      animation: victoryCardSlam 0.68s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+
+    .victory-stage-shake {
+      animation: victoryStageShake 0.48s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+    }
+
+    .crown-badge {
+      display: none;
+      animation: popBounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    .team-row.is-winner .crown-badge {
+      display: inline-flex;
+    }
+
+    @keyframes popBounce {
+      0% { transform: scale(0) rotate(-18deg); opacity: 0; }
+      70% { transform: scale(1.18) rotate(4deg); opacity: 1; }
+      100% { transform: scale(1) rotate(-3deg); opacity: 1; }
+    }
+
+    /* ==========================================================================
+       LIQUID WATER-FLOW PROGRESS BAR (SEAMLESS 40px TILE + WAVE SHEEN)
+       ========================================================================== */
+    @keyframes barberPoleSlow {
+      0% { background-position: 0 0; }
+      100% { background-position: 40px 0; }
+    }
+
+    @keyframes waterSheenFlow {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(220%); }
+    }
+
+    .infographic-bar-fill {
+      position: relative;
+      overflow: hidden;
+      will-change: width;
+      transition: width 1.15s cubic-bezier(0.22, 1, 0.36, 1);
+      background-image: linear-gradient(
+        -45deg,
+        rgba(255, 255, 255, 0.28) 25%,
+        rgba(255, 255, 255, 0.04) 25%,
+        rgba(255, 255, 255, 0.04) 50%,
+        rgba(255, 255, 255, 0.28) 50%,
+        rgba(255, 255, 255, 0.28) 75%,
+        rgba(255, 255, 255, 0.04) 75%,
+        rgba(255, 255, 255, 0.04)
+      );
+      background-size: 40px 40px;
+      animation: barberPoleSlow 2.2s linear infinite;
+      box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.45), inset 0 -2px 0 rgba(17, 17, 17, 0.12);
+    }
+
+    .infographic-bar-fill::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      width: 45%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.42), transparent);
+      animation: waterSheenFlow 2.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+      pointer-events: none;
+    }
+
+    /* Tactile Brutalist Buttons */
+    .btn-vox {
+      border: 2.5px solid #111111;
+      box-shadow: var(--shadow-hard-sm);
+      transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.15s ease;
+      user-select: none;
+    }
+
+    .btn-vox:active {
+      transform: translate(2px, 2px);
+      box-shadow: 1px 1px 0px #111111;
+    }
+
+    /* Smooth Backstage Reveal / Collapse & Panel Transitions */
+    .vox-collapse {
+      display: grid;
+      grid-template-rows: 0fr;
+      opacity: 0;
+      margin-top: 0 !important;
+      pointer-events: none;
+      transition: grid-template-rows 0.26s cubic-bezier(0.22, 1, 0.36, 1),
+                  opacity 0.2s ease,
+                  margin-top 0.24s ease;
+    }
+
+    .vox-collapse.is-open {
+      grid-template-rows: 1fr;
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .vox-collapse > .vox-collapse-inner {
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    @keyframes voxFadeSlide {
+      from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.97);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .vox-panel-enter {
+      animation: voxFadeSlide 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+      will-change: opacity, transform;
+    }
+
+    @keyframes voxStageFlow {
+      from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.985);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .vox-stage-enter {
+      animation: voxStageFlow 0.54s cubic-bezier(0.22, 1, 0.36, 1);
+      will-change: opacity, transform;
+    }
+
+    @keyframes voxSyncPulse {
+      0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(41, 128, 185, 0.7); }
+      60% { transform: scale(1.35); box-shadow: 0 0 0 6px rgba(41, 128, 185, 0); }
+      100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(41, 128, 185, 0); }
+    }
+
+    .vox-sync-pulse {
+      animation: voxSyncPulse 0.36s ease-out;
+    }
+
+    @keyframes scoreDeltaPop {
+      0% { opacity: 0; transform: translate(-50%, 6px) scale(0.8); }
+      20% { opacity: 1; transform: translate(-50%, -6px) scale(1.08); }
+      100% { opacity: 0; transform: translate(-50%, -32px) scale(0.95); }
+    }
+
+    .score-delta-pop {
+      position: absolute;
+      top: -10px;
+      left: 50%;
+      pointer-events: none;
+      animation: scoreDeltaPop 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      z-index: 20;
+    }
+
+    .team-row.is-leader {
+      background-color: #FFFDF4;
+    }
+
+
+    /* Vox-style mascot idle float */
+    @keyframes mascotFloat {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-4px) rotate(-3deg); }
+    }
+    .mascot-float { animation: mascotFloat 3.2s ease-in-out infinite; }
+
+    /* Loading screen: looping geometric shapes */
+    #app-loader {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background-color: var(--bg-paper);
+      background-image:
+        linear-gradient(to right, rgba(17,17,17,0.055) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(17,17,17,0.055) 1px, transparent 1px);
+      background-size: 32px 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1.75rem;
+      transition: opacity 0.5s ease, visibility 0.5s ease;
+    }
+    #app-loader.is-done { opacity: 0; visibility: hidden; pointer-events: none; }
+
+    .loader-stage { display: flex; align-items: flex-end; gap: 1.5rem; height: 7rem; }
+    .loader-shape { width: 4.5rem; height: 4.5rem; transform-origin: 50% 100%; }
+    .loader-square { animation: loaderRelayJump 1.8s cubic-bezier(0.22, 1, 0.36, 1) infinite 0s; }
+    .loader-triangle { animation: loaderRelayJump 1.8s cubic-bezier(0.22, 1, 0.36, 1) infinite 0.6s; }
+    .loader-circle { animation: loaderRelayJump 1.8s cubic-bezier(0.22, 1, 0.36, 1) infinite 1.2s; }
+
+    @keyframes loaderRelayJump {
+      0% { transform: translateY(0) scale(1, 1); }
+      5% { transform: translateY(0) scale(1.12, 0.88); }
+      17% { transform: translateY(-36px) scale(0.92, 1.1); }
+      28% { transform: translateY(0) scale(1.14, 0.86); }
+      34%, 100% { transform: translateY(0) scale(1, 1); }
+    }
+    .loader-bar {
+      width: min(20rem, 74vw);
+      height: 1.65rem;
+      background: #F0EDE4;
+      border: 3px solid #111111;
+      border-radius: 12px;
+      overflow: hidden;
+      padding: 3px;
+      box-shadow: 4px 4px 0 #111111;
+    }
+    .loader-bar-fill {
+      position: relative;
+      overflow: hidden;
+      height: 100%;
+      width: 15%;
+      border-radius: 5px;
+      background-color: #F4D03F;
+      border-right: 2px solid #111111;
+      transition: width 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+      background-image: linear-gradient(
+        -45deg,
+        rgba(17, 17, 17, 0.14) 25%,
+        transparent 25%,
+        transparent 50%,
+        rgba(17, 17, 17, 0.14) 50%,
+        rgba(17, 17, 17, 0.14) 75%,
+        transparent 75%,
+        transparent
+      );
+      background-size: 40px 40px;
+      animation: barberPoleSlow 1.8s linear infinite;
+    }
+    .loader-bar-fill::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      width: 50%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+      animation: waterSheenFlow 1.6s ease-in-out infinite;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .loader-shape, .loader-bar-fill, .mascot-float, .vox-panel-enter, .vox-stage-enter { animation: none; }
+    }
+
+    /* Collapsible Control Drawer */
+    #control-drawer {
+      transition: transform 0.38s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.28s ease;
+    }
+
+    #control-drawer.drawer-closed {
+      transform: translateY(105%);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* ==========================================================================
+       CENTER-STAGE VOX COUNTDOWN OVERLAY
+       ========================================================================== */
+    #center-timer-overlay {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    #center-timer-overlay.is-open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    #center-timer-card {
+      transform: scale(0.88) translateY(16px);
+      opacity: 0;
+      transition: transform 0.38s cubic-bezier(0.22, 1, 0.36, 1),
+                  opacity 0.3s ease,
+                  background-color 0.3s ease,
+                  color 0.3s ease;
+    }
+
+    #center-timer-overlay.is-open #center-timer-card {
+      transform: scale(1) translateY(0);
+      opacity: 1;
+    }
+
+    @keyframes timerDigitPop {
+      0% { transform: scale(1); }
+      35% { transform: scale(1.07); }
+      100% { transform: scale(1); }
+    }
+
+    .timer-digit-pop {
+      animation: timerDigitPop 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    /* Subtle Bottom-Right Settings Gear Trigger (opacity: 0.16 at rest, solid on hover) */
+    .control-fab {
+      opacity: 0.16;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+
+    .control-fab:hover,
+    .control-fab:focus-visible,
+    .control-fab.is-active {
+      opacity: 1;
+      transform: scale(1.06);
+    }
+
+    /* Vox Documentary Range Slider */
+    .vox-range {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 12px;
+      background: #F0EDE4;
+      border: 2px solid #111111;
+      border-radius: 999px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .vox-range::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 7px;
+      background: #F4D03F;
+      border: 2.5px solid #111111;
+      box-shadow: 2px 2px 0px #111111;
+      cursor: pointer;
+      transition: transform 0.12s ease;
+    }
+
+    .vox-range::-webkit-slider-thumb:hover {
+      transform: scale(1.08);
+    }
+
+    .vox-range::-moz-range-thumb {
+      width: 22px;
+      height: 22px;
+      border-radius: 7px;
+      background: #F4D03F;
+      border: 2.5px solid #111111;
+      box-shadow: 2px 2px 0px #111111;
+      cursor: pointer;
+    }
+
+    /* Hide number input arrows for cleaner look */
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type="number"] {
+      -moz-appearance: textfield;
+    }
+
+    /* Confetti Canvas Overlay */
+    #confetti-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 80;
+    }
+  

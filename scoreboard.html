@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https: data:; media-src 'self' https: data:; frame-src https://www.youtube.com https://www.youtube-nocookie.com;" />
+  <title>HelpDai — Stage Scoreboard</title>
+  <meta name="description" content="กระดานคะแนนสดบนเวที ปรับแต่งทีมและกิจกรรมแบบเรียลไทม์ พร้อมตัวจับเวลาและสื่อประกอบ" />
+  <meta name="theme-color" content="#F4D03F" />
+  <meta property="og:title" content="HelpDai — Stage Scoreboard" />
+  <meta property="og:description" content="กระดานคะแนนสดบนเวที ปรับแต่งทีมและกิจกรรมแบบเรียลไทม์" />
+  <meta property="og:type" content="website" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath d='M9 9 H35 V35 H9 Z' transform='translate(3.5 3.5)' fill='%23111111'/%3E%3Cpath d='M9 9 H35 V35 H9 Z' fill='%23F4D03F' stroke='%23111111' stroke-width='3' stroke-linejoin='round'/%3E%3Ccircle cx='18' cy='21' r='2.3' fill='%23111111'/%3E%3Ccircle cx='28' cy='21' r='2.3' fill='%23111111'/%3E%3C/svg%3E" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Prompt:wght@600;700;800;900&display=swap" rel="stylesheet" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <link rel="stylesheet" href="assets/css/vox.css" />
+</head>
+<body class="flex flex-col justify-between selection:bg-yellow-300 selection:text-black">
+  <script src="assets/js/loader.js"></script>
+
+  <!-- Confetti Canvas -->
+  <canvas id="confetti-canvas"></canvas>
+
+  <!-- Hidden Background Music Host (Plays on Stage MacBook without cluttering screen) -->
+  <div id="stage-bgm-host" aria-hidden="true" class="fixed -left-[9999px] top-0 w-px h-px opacity-0 pointer-events-none overflow-hidden">
+    <audio id="stage-bgm-audio" loop preload="auto"></audio>
+    <div id="stage-bgm-yt-wrap"></div>
+  </div>
+
+  <!-- ========================================================================
+       VIEW 1: CLEAN REAL-TIME STAGE VIEW (PROJECTOR READY — NO TOP-RIGHT BUTTONS)
+       ======================================================================== -->
+  <main id="stage-container" class="w-full max-w-7xl mx-auto px-14 sm:px-16 py-3 sm:py-4 lg:h-screen lg:overflow-hidden flex flex-col gap-3">
+
+    <!-- Clean Vox Editorial Masthead -->
+    <header class="border-b-[3px] border-[#111111] pb-2.5 shrink-0 bg-[#F8F6F0]/90">
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-1">
+        <div class="flex flex-wrap items-center gap-2 relative">
+        <a href="index.html" title="เมนูหลัก" aria-label="กลับเมนูหลัก" class="inline-flex items-center justify-center bg-white text-[#111111] border-2 border-[#111111] w-7 h-7 rounded-md font-display font-black text-sm shadow-[2px_2px_0px_#111111] hover:bg-[#F4D03F] transition-colors">←</a>
+        <button type="button" data-start-tutorial title="คู่มือการใช้งาน" aria-label="เปิดคู่มือการใช้งาน" class="inline-flex items-center justify-center bg-white text-[#111111] border-2 border-[#111111] w-7 h-7 rounded-md font-display font-black text-xs shadow-[2px_2px_0px_#111111] hover:bg-[#F4D03F] transition-colors cursor-pointer">?</button>
+        <button type="button" id="view-settings-btn" title="มุมมอง &amp; การจัดวาง" aria-label="ตั้งค่ามุมมอง" class="inline-flex items-center justify-center bg-white text-[#111111] border-2 border-[#111111] w-7 h-7 rounded-md shadow-[2px_2px_0px_#111111] hover:bg-[#F4D03F] transition-colors cursor-pointer" aria-expanded="false" aria-controls="view-settings-popover">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+
+        <!-- View Level & Layout Popover (Vector Icons) -->
+        <div id="view-settings-popover" class="hidden absolute top-full left-0 mt-2 z-50 w-56 vox-card bg-[#F8F6F0] p-3 flex-col gap-2.5 vox-panel-enter">
+          <div>
+            <span class="block text-[10px] font-display font-extrabold text-[#111111]/65 uppercase tracking-wider mb-1">Detail</span>
+            <div class="grid grid-cols-3 gap-1.5">
+              <button type="button" data-view-detail="full" title="รายละเอียดครบ (Full)" aria-label="รายละเอียดครบ" class="view-detail-btn btn-vox bg-white text-[#111111] py-1.5 rounded-lg flex items-center justify-center cursor-pointer">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+              </button>
+              <button type="button" data-view-detail="compact" title="ระดับกลาง (Compact)" aria-label="ระดับกลาง" class="view-detail-btn btn-vox bg-[#111111] text-[#F4D03F] py-1.5 rounded-lg flex items-center justify-center cursor-pointer">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><rect x="4" y="8" width="16" height="8" rx="2"/></svg>
+              </button>
+              <button type="button" data-view-detail="simple" title="เรียบง่าย (Simple)" aria-label="เรียบง่าย" class="view-detail-btn btn-vox bg-white text-[#111111] py-1.5 rounded-lg flex items-center justify-center cursor-pointer">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="5"/></svg>
+              </button>
+            </div>
+          </div>
+          <div>
+            <span class="block text-[10px] font-display font-extrabold text-[#111111]/65 uppercase tracking-wider mb-1">Layout</span>
+            <div class="grid grid-cols-2 gap-1.5">
+              <button type="button" data-view-layout="row" title="แถวแนวนอน (Row)" aria-label="แถวแนวนอน" class="view-layout-btn btn-vox bg-[#111111] text-[#F4D03F] py-1.5 rounded-lg flex items-center justify-center cursor-pointer">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><rect x="3" y="5" width="5" height="14" rx="1.5"/><rect x="10" y="5" width="4" height="14" rx="1.5"/><rect x="16" y="5" width="5" height="14" rx="1.5"/></svg>
+              </button>
+              <button type="button" data-view-layout="grid" title="ตาราง (Grid)" aria-label="ตาราง" class="view-layout-btn btn-vox bg-white text-[#111111] py-1.5 rounded-lg flex items-center justify-center cursor-pointer">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="inline-flex items-center gap-2 bg-[#111111] text-[#F8F6F0] px-2.5 py-0.5 rounded-md font-display font-extrabold text-[11px] sm:text-xs tracking-wider shadow-[2px_2px_0px_#F4D03F]">
+          <span class="relative flex h-2 w-2">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#F4D03F] opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2 w-2 bg-[#F4D03F]"></span>
+          </span>
+          <span>LIVE SCOREBOARD</span>
+        </div>
+        </div>
+
+        <!-- Stage Game Timer Pill -->
+        <div
+          id="stage-timer-pill"
+          class="hidden inline-flex items-center gap-2 bg-[#FFFFFF] text-[#111111] border-[2.5px] border-[#111111] px-3 py-0.5 rounded-xl font-display font-black shadow-[3px_3px_0px_#111111] transition-colors duration-300"
+        >
+          <span id="stage-timer-dot" class="w-2 h-2 rounded-full bg-[#F4D03F] border border-[#111111] shrink-0"></span>
+          <span id="stage-timer-label" class="text-[11px] font-extrabold tracking-wide uppercase opacity-75">TIME</span>
+          <span id="stage-timer-display" class="text-lg sm:text-xl tabular-nums tracking-tight leading-none">03:00</span>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5">
+        <h1
+          id="event-title"
+          class="thai-safe font-display font-black text-2xl sm:text-3xl lg:text-[2.1rem] text-[#111111] tracking-tight break-words"
+        >Event Scoreboard</h1>
+        <p
+          id="event-subtitle"
+          class="thai-safe-tight font-semibold text-xs sm:text-sm text-[#111111]/75 break-words"
+        >Live Score &amp; Activity Tracker</p>
+      </div>
+    </header>
+
+    <!-- CENTER STAGE: Activity List (Left) + Activity Focus/Detail Block (Center/Right) -->
+    <div id="stage-center-grid" class="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+
+      <!-- Activity List Column (Dynamically rendered 1..6 activities, auto-fit zero-scroll) -->
+      <aside id="activity-list-col" class="lg:col-span-4 flex flex-col gap-2 min-h-0 overflow-hidden pb-2 pr-2 bg-[#F8F6F0]/90">
+        <div class="flex-1 min-h-0 flex flex-col gap-2" id="game-cards-row">
+          <!-- Populated dynamically by JS -->
+        </div>
+      </aside>
+
+      <!-- Activity Focus / Detail & Media Block (Shown when an activity is open) -->
+      <section id="activity-focus-col" class="hidden lg:col-span-8 flex-col min-h-0 bg-[#F8F6F0]/90">
+        <!-- Collapsible Accordion Media & Description Block -->
+        <div id="media-accordion" class="media-accordion-wrapper !mt-0 flex-1 min-h-0" aria-hidden="true">
+          <div class="media-accordion-inner pb-1.5 pr-1.5 h-full">
+            <div class="vox-card bg-white p-3.5 sm:p-4 relative h-full flex flex-col">
+              <div class="flex items-center justify-between gap-2 mb-2 shrink-0">
+                <div class="flex items-center gap-2 min-w-0 flex-1">
+                  <span id="accordion-game-dot" class="w-3 h-3 rounded-full border-[1.5px] border-[#111111] shrink-0"></span>
+                  <h3 id="accordion-game-title" class="thai-safe-tight font-display font-extrabold text-sm sm:text-lg text-[#111111] truncate"></h3>
+                </div>
+
+                <div class="accordion-subtle-actions flex items-center gap-1.5 shrink-0">
+                  <button
+                    type="button"
+                    id="accordion-focus-btn"
+                    title="ขยายเต็มกลางจอ / ย่อกลับ"
+                    aria-label="ขยายหรือย่อบล็อกกิจกรรม"
+                    class="w-7 h-7 rounded-lg border-2 border-[#111111] bg-[#F4D03F] hover:bg-[#f2c61d] shadow-[2px_2px_0px_#111111] text-[#111111] flex items-center justify-center transition-colors cursor-pointer"
+                  >
+                    <span id="accordion-focus-icon" class="flex items-center justify-center">
+                      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    id="accordion-close-btn"
+                    aria-label="ปิดหน้าต่างสื่อ"
+                    class="w-7 h-7 rounded-lg border-2 border-[#111111] bg-[#111111] hover:bg-[#E74C3C] shadow-[2px_2px_0px_#111111] text-white font-display font-bold text-xs flex items-center justify-center transition-colors cursor-pointer"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+
+              <!-- Dynamic Description + Media Content Stage -->
+              <div id="media-content-stage" class="media-content-stage flex-1 min-h-0 overflow-y-auto vox-scroll-area"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Team Score Blocks (Fills center-right when no activity is open; moves to bottom strip when an activity is open) -->
+      <section id="leaderboard-list" class="lg:col-span-8 flex flex-col justify-between gap-2.5 sm:gap-3 min-h-0 overflow-y-auto bg-[#F8F6F0]/90">
+        <!-- Team score blocks rendered dynamically by JS -->
+      </section>
+
+    </div>
+
+    <!-- BOTTOM STRIP SLOT: Hosts #leaderboard-list when an activity is open on stage -->
+    <div id="stage-bottom-slot" class="hidden shrink-0"></div>
+
+  </main>
+
+  <!-- ========================================================================
+       PERSISTENT VISUAL HOST ELEMENT (MOVED SEAMLESSLY BETWEEN ACCORDION & ZOOM)
+       Keeps YouTube iframe alive without reload; Vox controls stay hidden until hover
+       ======================================================================== -->
+  <div id="media-visual-host" class="hidden relative isolate w-full">
+    <!-- Animated Visual Pane (YouTube 16:9 or Image/GIF) -->
+    <div id="media-visual-pane" class="media-visual-pane relative z-[1] w-full"></div>
+
+    <!-- Seamless Floating Vox Cutout Controls (Invisible at rest, above iframe in DOM & z-index) -->
+    <div id="media-toolbar-row" class="media-floating-controls absolute top-3 right-3 z-30 flex items-center gap-2">
+      <!-- Video <-> Image/GIF Vox Switcher (Shown when both YouTube & Image/GIF exist) -->
+      <div id="media-switcher-bar" class="hidden inline-flex items-center gap-1 bg-[#F8F6F0] border-2 border-[#111111] rounded-xl p-1 shadow-[3px_3px_0px_#111111]">
+        <button
+          type="button"
+          id="media-nav-prev"
+          aria-label="สื่อก่อนหน้า"
+          class="w-6 h-6 rounded-lg hover:bg-[#F4D03F]/50 border border-transparent hover:border-[#111111] text-[#111111] font-display font-black text-xs flex items-center justify-center cursor-pointer transition-colors"
+        >
+          ‹
+        </button>
+        <button
+          type="button"
+          id="media-pill-video"
+          class="font-display font-bold text-xs px-2.5 py-1 rounded-lg border border-transparent transition-all cursor-pointer flex items-center gap-1"
+        >
+          <span>🎬</span>
+          <span>วิดีโอ</span>
+        </button>
+        <button
+          type="button"
+          id="media-pill-image"
+          class="font-display font-bold text-xs px-2.5 py-1 rounded-lg border border-transparent transition-all cursor-pointer flex items-center gap-1"
+        >
+          <span>🖼️</span>
+          <span>ภาพ/GIF</span>
+        </button>
+        <button
+          type="button"
+          id="media-nav-next"
+          aria-label="สื่อถัดไป"
+          class="w-6 h-6 rounded-lg hover:bg-[#F4D03F]/50 border border-transparent hover:border-[#111111] text-[#111111] font-display font-black text-xs flex items-center justify-center cursor-pointer transition-colors"
+        >
+          ›
+        </button>
+      </div>
+
+      <!-- Vox Zoom In / Zoom Out Trigger -->
+      <button
+        type="button"
+        id="media-zoom-toggle-btn"
+        aria-label="ขยายหรือย่อสื่อ"
+        class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-extrabold text-xs px-3 py-1.5 rounded-xl flex items-center gap-1.5 cursor-pointer"
+      >
+        <span id="media-zoom-btn-icon">🔍</span>
+        <span id="media-zoom-btn-label">ขยาย</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       THEATER MEDIA ZOOM MODAL OVERLAY (SMOOTH SCALE & BACKDROP TRANSITION)
+       ======================================================================== -->
+  <div
+    id="theater-zoom-overlay"
+    class="fixed inset-0 z-50 bg-black/80 backdrop-blur-[4px] flex items-center justify-center p-3 sm:p-6"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="zoom-modal-title"
+  >
+    <div
+      id="theater-zoom-dialog"
+      class="vox-card bg-[#F8F6F0] w-full max-w-5xl max-h-[92vh] p-4 sm:p-6 flex flex-col gap-3.5 overflow-y-auto"
+    >
+      <!-- Zoom Modal Header -->
+      <div class="flex items-center justify-between gap-3 pb-2.5 border-b-[2.5px] border-[#111111]">
+        <div class="flex items-center gap-2.5 min-w-0 flex-1">
+          <span id="zoom-game-dot" class="w-4 h-4 rounded-full border-2 border-[#111111] shrink-0"></span>
+          <h3 id="zoom-modal-title" class="thai-safe-tight font-display font-extrabold text-lg sm:text-2xl text-[#111111] truncate"></h3>
+        </div>
+        <button
+          type="button"
+          id="zoom-close-btn"
+          class="opacity-45 hover:opacity-100 btn-vox bg-[#111111] hover:bg-[#E74C3C] text-white font-display font-bold text-xs sm:text-sm px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 cursor-pointer shrink-0 transition-all"
+        >
+          <span>✕ ย่อกลับ (Esc)</span>
+        </button>
+      </div>
+
+      <!-- Target Slot where #media-visual-host is reparented when zoomed -->
+      <div id="zoom-media-slot" class="w-full"></div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       CENTER-STAGE VOX COUNTDOWN TIMER OVERLAY
+       ======================================================================== -->
+  <div
+    id="center-timer-overlay"
+    class="fixed inset-0 z-50 bg-[#111111]/75 backdrop-blur-[4px] flex items-center justify-center p-4 sm:p-8"
+    role="dialog"
+    aria-modal="true"
+    aria-label="ตัวจับเวลาเกมกลางจอ"
+  >
+    <div
+      id="center-timer-card"
+      class="vox-card bg-[#FFFFFF] w-full max-w-2xl p-6 sm:p-10 flex flex-col items-center gap-6 text-center"
+    >
+      <div class="w-full flex items-center justify-between gap-3 pb-3 border-b-[2.5px] border-[#111111]">
+        <div class="inline-flex items-center gap-2 bg-[#111111] text-[#F8F6F0] px-3 py-1 rounded-md font-display font-extrabold text-xs tracking-wider shadow-[3px_3px_0px_#F4D03F]">
+          <span id="center-timer-dot" class="w-2.5 h-2.5 rounded-full bg-[#F4D03F]"></span>
+          <span id="center-timer-status-text">GAME COUNTDOWN</span>
+        </div>
+        <button
+          type="button"
+          id="center-timer-minimize-btn"
+          class="opacity-45 hover:opacity-100 btn-vox bg-[#F8F6F0] hover:bg-[#F4D03F] text-[#111111] font-display font-bold text-xs px-3 py-1.5 rounded-xl cursor-pointer transition-all"
+        >
+          🗗 ย่อไปมุมจอ
+        </button>
+      </div>
+
+      <div id="center-timer-digits" class="font-display font-black text-7xl sm:text-8xl lg:text-[7.5rem] tabular-nums leading-none tracking-tight select-none">
+        03:00
+      </div>
+
+      <!-- Vox Barber-Pole Drain Progress Bar -->
+      <div class="w-full h-7 sm:h-9 bg-[#F0EDE4] border-[3px] border-[#111111] rounded-xl overflow-hidden p-0.5 shadow-[4px_4px_0px_#111111]">
+        <div id="center-timer-bar" class="infographic-bar-fill h-full rounded-[6px]" style="width: 100%; background-color: #F4D03F; border-right: 2px solid #111111;"></div>
+      </div>
+
+      <div id="center-timer-timesup-badge" class="hidden bg-[#111111] text-[#F4D03F] border-[3px] border-[#111111] px-5 py-2 rounded-xl font-display font-black text-xl sm:text-2xl tracking-wider shadow-[4px_4px_0px_#F4D03F]">
+        ⏱ TIME'S UP! หมดเวลา!
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       HIDDEN INTERNAL CONTROL STORE (Kept hidden; controls moved to Context Menu & Toolbox)
+       ======================================================================== -->
+  <aside
+    id="control-drawer"
+    class="hidden"
+    aria-hidden="true"
+  >
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-5">
+
+      <!-- Drawer Top Bar -->
+      <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-4 border-b-2 border-[#111111]">
+        <div class="flex items-center gap-2.5">
+          <span class="inline-block w-3 h-3 rounded-full bg-[#E74C3C] border border-[#111111]"></span>
+          <h2 class="thai-safe-tight font-display font-bold text-lg sm:text-xl text-[#111111]">แผงควบคุมคะแนน</h2>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2.5">
+          <!-- Announce Victory Button -->
+          <button
+            id="btn-winner"
+            type="button"
+            class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-bold text-sm sm:text-base px-4 py-2 rounded-xl flex items-center gap-1.5 cursor-pointer"
+          >
+            <span>👑</span>
+            <span>ประกาศ VICTORY</span>
+          </button>
+
+          <!-- 2-Step Reset Button -->
+          <button
+            id="btn-reset"
+            type="button"
+            class="btn-vox bg-white hover:bg-red-50 text-[#E74C3C] font-display font-bold text-sm sm:text-base px-4 py-2 rounded-xl cursor-pointer"
+          >
+            รีเซ็ตคะแนน
+          </button>
+
+          <!-- Close Drawer / Switch to Clean Stage View -->
+          <button
+            id="btn-close-drawer"
+            type="button"
+            class="btn-vox bg-[#111111] text-white font-display font-bold text-sm sm:text-base px-4 py-2 rounded-xl cursor-pointer"
+          >
+            ขึ้นจอเต็มตา
+          </button>
+        </div>
+      </div>
+
+      <!-- Game Selector for Desktop Drawer Scoring -->
+      <div id="drawer-score-game-tabs" class="flex flex-wrap gap-2 mb-3.5">
+        <!-- Rendered dynamically by JS -->
+      </div>
+
+      <!-- Team Scoring Control Grid -->
+      <div id="drawer-teams-grid" class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+        <!-- Rendered dynamically by JS -->
+      </div>
+
+      <!-- Event Structure & Team/Activity Count Bar (Secondary Setup) -->
+      <div class="vox-card bg-white p-3.5 mb-6 flex flex-col gap-3">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-1.5">
+            <span class="font-display font-bold text-xs text-[#111111]/70 mr-1">กิจกรรม:</span>
+            <button type="button" id="drawer-remove-game-btn" title="ลดกิจกรรม" aria-label="ลดกิจกรรม" class="btn-vox bg-white hover:bg-red-50 text-[#E74C3C] font-display font-black text-sm w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer">−</button>
+            <span id="drawer-game-count-badge" class="text-xs font-display font-black px-2.5 py-1 rounded-lg border-2 border-[#111111] bg-[#F8F6F0]">3 กิจกรรม</span>
+            <button type="button" id="drawer-add-game-btn" title="เพิ่มกิจกรรม" aria-label="เพิ่มกิจกรรม" class="btn-vox bg-white hover:bg-yellow-50 text-[#111111] font-display font-black text-sm w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer">+</button>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="font-display font-bold text-xs text-[#111111]/70 mr-1">ทีม:</span>
+            <button type="button" id="drawer-remove-team-btn" title="ลดทีม" aria-label="ลดทีม" class="btn-vox bg-white hover:bg-red-50 text-[#E74C3C] font-display font-black text-sm w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer">−</button>
+            <span id="drawer-team-count-badge" class="text-xs font-display font-black px-2.5 py-1 rounded-lg border-2 border-[#111111] bg-[#F4D03F]">3 ทีม</span>
+            <button type="button" id="drawer-add-team-btn" title="เพิ่มทีม" aria-label="เพิ่มทีม" class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-black text-sm w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer">+</button>
+          </div>
+        </div>
+
+        <details class="border-t border-[#111111]/15 pt-2.5 group">
+          <summary class="font-display font-bold text-xs sm:text-sm text-[#111111] cursor-pointer list-none flex items-center justify-between">
+            <span>✏️ แก้ไขชื่องาน / ชื่อกิจกรรม / ชื่อทีม</span>
+            <span class="text-xs text-[#111111]/60 group-open:rotate-180 transition-transform">▼</span>
+          </summary>
+          <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <input id="drawer-input-event-title" type="text" placeholder="ชื่องาน (Event Title)" class="thai-safe-tight bg-[#F8F6F0] border-2 border-[#111111] rounded-xl px-3 py-1.5 font-bold text-sm" />
+            <input id="drawer-input-event-subtitle" type="text" placeholder="คำโปรย (Subtitle)" class="thai-safe-tight bg-[#F8F6F0] border-2 border-[#111111] rounded-xl px-3 py-1.5 font-semibold text-sm" />
+            <div id="drawer-game-names-inputs" class="sm:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-2"></div>
+            <div id="drawer-team-names-inputs" class="sm:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-2"></div>
+          </div>
+        </details>
+      </div>
+
+    </div>
+  </aside>
+
+  <!-- ========================================================================
+       COMPLETE APPLICATION LOGIC (STATE, RENDERING, SYNC, VIDEO CONTROL, ZOOM)
+       ======================================================================== -->
+
+  <script src="assets/js/security.js" defer></script>
+  <script src="assets/js/tos.js" defer></script>
+  <script src="assets/js/mascots.js" defer></script>
+  <script src="assets/js/tutorial.js" defer></script>
+  <script src="assets/js/context-menu.js" defer></script>
+  <script src="assets/js/toolbox.js" defer></script>
+  <script src="assets/js/scoreboard.js" defer></script>
+</body>
+</html>
