@@ -21,15 +21,15 @@
       sections: [
         {
           h: '1. ขอบเขตบริการและความปลอดภัยของข้อมูล (Data Safety)',
-          p: 'HelpDai ให้บริการเครื่องมือจัดกิจกรรม (Stage Scoreboard, Live QR Poll, OpenThai OCR) โดยเชื่อมต่อผ่าน HTTPS/TLS และระบบฐานข้อมูลที่มีการแยกสิทธิ์การเข้าถึงระดับแถว (Row-Level Security) หากใช้งานแบบไม่เข้าสู่ระบบ (Guest) ข้อมูลจะไม่ถูกซิงค์ขึ้นคลาวด์และจะรีเซ็ตเมื่อปิด/รีเฟรชหน้า เว้นแต่ผู้ใช้เลือกบันทึกในเครื่องหรือเข้าสู่ระบบ'
+          p: 'HelpDaiCha ให้บริการเครื่องมือจัดกิจกรรม (Stage Scoreboard, Live QR Poll) โดยเชื่อมต่อผ่าน HTTPS/TLS และระบบฐานข้อมูลที่มีการแยกสิทธิ์การเข้าถึงระดับแถว (Row-Level Security) หากใช้งานแบบไม่เข้าสู่ระบบ (Guest) ข้อมูลจะไม่ถูกซิงค์ขึ้นคลาวด์และจะรีเซ็ตเมื่อปิด/รีเฟรชหน้า เว้นแต่ผู้ใช้เลือกบันทึกในเครื่องหรือเข้าสู่ระบบ'
         },
         {
           h: '2. การคุ้มครองข้อมูลส่วนบุคคล (PDPA ไทย & GDPR/CCPA สากล)',
-          p: 'เมื่อผู้ใช้สมัครหรือเข้าสู่ระบบ (อีเมลหรือ Google OAuth) ระบบจัดเก็บเฉพาะอีเมลและรหัสผู้ใช้เพื่อยืนยันตัวตนและซิงค์ข้อมูลกิจกรรมข้ามอุปกรณ์เท่านั้น ไม่มีการขายข้อมูล ไม่ใช้คุกกี้โฆษณา/ติดตามตัวตน (No Ad/Tracking Cookies) สำหรับเครื่องมือ OpenThai OCR รูปภาพจะถูกประมวลผลบนเบราว์เซอร์ของผู้ใช้โดยตรง ผู้ใช้มีสิทธิ์เข้าถึง ส่งออก (.json) และลบข้อมูลได้ตลอดเวลา'
+          p: 'เมื่อผู้ใช้สมัครหรือเข้าสู่ระบบ (อีเมลหรือ Google OAuth) ระบบจัดเก็บเฉพาะอีเมลและรหัสผู้ใช้เพื่อยืนยันตัวตนและซิงค์ข้อมูลกิจกรรมข้ามอุปกรณ์เท่านั้น ไม่มีการขายข้อมูล ไม่ใช้คุกกี้โฆษณา/ติดตามตัวตน (No Ad/Tracking Cookies) ผู้ใช้มีสิทธิ์เข้าถึง ส่งออก (.json) และลบข้อมูลได้ตลอดเวลา'
         },
         {
           h: '3. บริการภายนอกและสื่อ YouTube (Third-Party Services)',
-          p: 'การเล่นสื่อ YouTube เชื่อมต่อโดยตรงกับบริการของ YouTube/Google ภายใต้ข้อกำหนดของ YouTube (<a href="https://www.youtube.com/t/terms" target="_blank" rel="noopener noreferrer" class="underline font-semibold">youtube.com/t/terms</a>) และ Google Privacy (<a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" class="underline font-semibold">policies.google.com/privacy</a>) รวมถึงระบบยืนยันตัวตน Supabase และ Hugging Face สำหรับดาวน์โหลดไฟล์โมเดล OCR'
+          p: 'การเล่นสื่อ YouTube เชื่อมต่อโดยตรงกับบริการของ YouTube/Google ภายใต้ข้อกำหนดของ YouTube (<a href="https://www.youtube.com/t/terms" target="_blank" rel="noopener noreferrer" class="underline font-semibold">youtube.com/t/terms</a>) และ Google Privacy (<a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" class="underline font-semibold">policies.google.com/privacy</a>) รวมถึงระบบยืนยันตัวตน Supabase'
         },
         {
           h: '4. ความรับผิดชอบต่อเนื้อหาและลิขสิทธิ์',
@@ -55,15 +55,15 @@
       sections: [
         {
           h: '1. Service Scope & Data Safety',
-          p: 'HelpDai provides event tools (Stage Scoreboard, Live QR Poll, OpenThai OCR) served over HTTPS/TLS with Row-Level Security (RLS) isolation. In Guest mode (not signed in), edits are ephemeral and reset on refresh/new tab unless explicitly saved locally or synced via an account.'
+          p: 'HelpDaiCha provides event tools (Stage Scoreboard, Live QR Poll) served over HTTPS/TLS with Row-Level Security (RLS) isolation. In Guest mode (not signed in), edits are ephemeral and reset on refresh/new tab unless explicitly saved locally or synced via an account.'
         },
         {
           h: '2. Privacy & International Data Rights (PDPA / GDPR / CCPA)',
-          p: 'When you sign in via Email or Google OAuth, we process only your email and user ID solely for authentication and syncing your event rooms across devices. We do not sell personal data or use ad/tracking cookies. OpenThai OCR runs locally in your browser without uploading images to our server. You may export (.json) or delete your data anytime.'
+          p: 'When you sign in via Email or Google OAuth, we process only your email and user ID solely for authentication and syncing your event rooms across devices. We do not sell personal data or use ad/tracking cookies. You may export (.json) or delete your data anytime.'
         },
         {
           h: '3. Third-Party Services',
-          p: 'Embedded YouTube playback connects directly to YouTube/Google under YouTube Terms (<a href="https://www.youtube.com/t/terms" target="_blank" rel="noopener noreferrer" class="underline font-semibold">youtube.com/t/terms</a>) and Google Privacy (<a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" class="underline font-semibold">policies.google.com/privacy</a>). Authentication uses Supabase, and client-side OCR weights are fetched from Hugging Face.'
+          p: 'Embedded YouTube playback connects directly to YouTube/Google under YouTube Terms (<a href="https://www.youtube.com/t/terms" target="_blank" rel="noopener noreferrer" class="underline font-semibold">youtube.com/t/terms</a>) and Google Privacy (<a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" class="underline font-semibold">policies.google.com/privacy</a>). Authentication uses Supabase.'
         },
         {
           h: '4. User Content & Copyright',

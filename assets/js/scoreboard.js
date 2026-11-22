@@ -224,38 +224,22 @@
 
       // Load State safely: logged-in or locally-saved users restore their data; guests start fresh
       function loadState() {
-        let st;
         try {
-          if (!isAccountSignedIn() && !isLocallySaved()) {
-            st = cloneDefaultState();
-          } else {
-            const raw = localStorage.getItem(STORAGE_KEY);
-            st = raw ? normalizeState(JSON.parse(raw), null) : cloneDefaultState();
-            if (st.timer && !st.timer.running) {
-              st.timer.visible = false;
-              st.timer.mode = 'corner';
-              st.timer.remainingSec = st.timer.durationSec || 180;
-              st.timer.endAt = null;
-            }
+          if (!isAccountSignedIn() && !isLocallySaved()) return cloneDefaultState();
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return cloneDefaultState();
+          const st = normalizeState(JSON.parse(raw), null);
+          if (st.timer && !st.timer.running) {
+            st.timer.visible = false;
+            st.timer.mode = 'corner';
+            st.timer.remainingSec = st.timer.durationSec || 180;
+            st.timer.endAt = null;
           }
+          return st;
         } catch (err) {
           console.warn('Recovering default state due to storage read error:', err);
-          st = cloneDefaultState();
+          return cloneDefaultState();
         }
-        try {
-          const pendingRaw = localStorage.getItem('vox_pending_ocr_rules_v1');
-          if (pendingRaw) {
-            localStorage.removeItem('vox_pending_ocr_rules_v1');
-            const pending = JSON.parse(pendingRaw);
-            const gIdx = Math.max(0, Math.min(st.games.length - 1, Number(pending?.gameIdx) || 0));
-            if (pending?.text && st.gameMedia[gIdx]) {
-              st.gameMedia[gIdx].description = String(pending.text).slice(0, 4000);
-              st.activeGameAccordion = gIdx;
-              hasUnsavedGuestChanges = !isAccountSignedIn() && !isLocallySaved();
-            }
-          }
-        } catch (_) {}
-        return st;
       }
 
       let state = loadState();

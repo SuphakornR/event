@@ -7,8 +7,6 @@ const { DatabaseSync } = require('node:sqlite');
 
 const PORT = Number(process.env.PORT) || 3000;
 const ADMIN_KEY = process.env.ADMIN_KEY || '';
-const OCR_SERVICE_URL = (process.env.OCR_SERVICE_URL || '').replace(/\/$/, '');
-const OCR_API_KEY = (process.env.OCR_API_KEY || '').trim();
 const SUPABASE_URL = (process.env.SUPABASE_URL || 'https://xhdjseyhavrskswllmgq.supabase.co').replace(/\/$/, '');
 const SUPABASE_KEY = process.env.SUPABASE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || 'sb_publishable_-FC3Athjxn7jB6f0YACydw_laZSAHOn';
 const useSupabase = Boolean(SUPABASE_URL && SUPABASE_KEY);
@@ -480,45 +478,6 @@ const server = http.createServer(async (req, res) => {
       } catch (err) {
         return sendJson(res, 400, { ok: false, error: err.message });
       }
-    }
-  }
-
-  if (pathname === '/api/ocr/status' && req.method === 'GET') {
-    return sendJson(res, 200, { ok: true, configured: Boolean(OCR_SERVICE_URL) });
-  }
-
-  if (pathname === '/api/ocr' && req.method === 'POST') {
-    if (!OCR_SERVICE_URL) {
-      return sendJson(res, 503, { ok: false, error: 'OCR service not configured (set OCR_SERVICE_URL)' });
-    }
-    const clientIp = req.socket?.remoteAddress || 'unknown';
-    if (isRateLimited(clientIp)) return sendJson(res, 429, { ok: false, error: 'Too many requests' });
-    try {
-      const body = await readBody(req, 10 * 1024 * 1024);
-      const imageBase64 = String(body.imageData || body.imageBase64 || '').trim();
-      if (!imageBase64) return sendJson(res, 400, { ok: false, error: 'imageData is required' });
-
-      const headers = { 'Content-Type': 'application/json' };
-      if (OCR_API_KEY) headers.Authorization = `Bearer ${OCR_API_KEY}`;
-
-      const upstream = await fetch(`${OCR_SERVICE_URL}/ocr/base64`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ imageBase64 }),
-        signal: AbortSignal.timeout(30000)
-      });
-      const data = await upstream.json().catch(() => ({}));
-      if (!upstream.ok) {
-        return sendJson(res, upstream.status, { ok: false, error: data.detail || data.error || 'OCR upstream error' });
-      }
-      return sendJson(res, 200, {
-        ok: true,
-        model: data.model || 'OpenThai2.1-OCR-Text',
-        lines: Array.isArray(data.lines) ? data.lines : [],
-        text: String(data.text || '')
-      });
-    } catch (err) {
-      return sendJson(res, 502, { ok: false, error: err.message || 'OCR proxy failed' });
     }
   }
 

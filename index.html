@@ -37,15 +37,17 @@
           <div id="helpdai-auth-slot" class="inline-flex items-center"></div>
           <div id="hub-mascots" class="flex items-end gap-2 ml-1" aria-hidden="true"></div>
         </div>
-        <h1 class="thai-safe font-display font-black text-4xl sm:text-6xl text-[#111111] tracking-tight flex flex-wrap items-center gap-2 sm:gap-2.5 leading-none select-none">
-          <span class="relative inline-flex items-center">
-            <span class="inline-block w-2.5 h-2.5 rounded-full bg-[#2980B9] border-2 border-[#111111] mr-1.5 -translate-y-3"></span>
-            <span>Help</span>
+        <h1 class="thai-safe font-display font-black text-4xl sm:text-6xl text-[#111111] tracking-tight flex flex-wrap items-center gap-1.5 sm:gap-2 leading-none select-none py-1">
+          <span class="relative inline-block px-1">
+            <span class="relative z-10">Help</span>
+            <span class="absolute left-0 right-0 bottom-0.5 h-3 bg-[#F4D03F]/55 -rotate-1 rounded-sm" aria-hidden="true"></span>
           </span>
-          <span class="inline-block bg-[#F4D03F] border-[3px] border-[#111111] px-3 py-0.5 rounded-xl shadow-[5px_5px_0px_#111111] -rotate-2 transition-transform hover:rotate-0">Dai</span>
-          <span class="relative inline-block bg-[#111111] text-[#F4D03F] border-[3px] border-[#111111] px-3 py-0.5 rounded-xl shadow-[5px_5px_0px_#E74C3C] rotate-2 transition-transform hover:rotate-0">
-            Cha
-            <span class="absolute -top-2 -right-2 w-3.5 h-3.5 bg-[#E74C3C] border-2 border-[#111111] rotate-45" aria-hidden="true"></span>
+          <span class="inline-block bg-[#F4D03F] text-[#111111] border-[3px] border-[#111111] px-3 py-0.5 rounded-2xl shadow-[4px_4px_0px_#111111] -rotate-2 transition-all duration-300 hover:-translate-y-0.5 hover:rotate-0">Dai</span>
+          <span class="relative inline-flex items-center bg-[#111111] text-[#F8F6F0] border-[3px] border-[#111111] px-3.5 py-0.5 rounded-2xl shadow-[4px_4px_0px_#2980B9] rotate-1 transition-all duration-300 hover:-translate-y-0.5 hover:rotate-0">
+            <span class="text-[#F4D03F]">C</span><span>ha</span>
+            <svg class="w-4 h-4 ml-1 text-[#E74C3C] shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6L12 2Z"/>
+            </svg>
           </span>
         </h1>
         <p class="thai-safe-tight font-semibold text-sm sm:text-base text-[#111111]/75 mt-2">ชุดเครื่องมือจัดกิจกรรมแบบเรียลไทม์ — ครบ จบ สนุกในหน้าเดียว</p>
@@ -148,16 +150,6 @@
           desc: 'สร้างโพลให้คนในห้องสแกน QR โหวตสดจากมือถือ แสดงกราฟผลเรียลไทม์ (ผู้เข้าร่วมแก้ไขเนื้อหาไม่ได้)',
           actions: [
             { label: 'เปิดใช้งาน', href: 'poll.html', primary: true }
-          ]
-        },
-        {
-          id: 'ocr',
-          status: 'live',
-          shape: 2,
-          title: 'OpenThai OCR',
-          desc: 'สแกนข้อความภาษาไทย-อังกฤษจากรูปภาพหรือคลิปบอร์ด แปลงเป็นข้อความแก้ไขและคัดลอกได้ทันที',
-          actions: [
-            { label: 'เปิดใช้งาน', href: 'ocr.html', primary: true }
           ]
         }
       ];
