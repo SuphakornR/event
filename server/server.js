@@ -7,8 +7,27 @@ const { DatabaseSync } = require('node:sqlite');
 
 const PORT = Number(process.env.PORT) || 3000;
 const ADMIN_KEY = process.env.ADMIN_KEY || '';
+const SUPABASE_URL = (process.env.SUPABASE_URL || 'https://xhdjseyhavrskswllmgq.supabase.co').replace(/\/$/, '');
+const SUPABASE_KEY = process.env.SUPABASE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || 'sb_publishable_-FC3Athjxn7jB6f0YACydw_laZSAHOn';
+const useSupabase = Boolean(SUPABASE_URL && SUPABASE_KEY);
 const ROOT_DIR = path.resolve(__dirname, '..');
 const DATA_DIR = path.join(__dirname, 'data');
+
+async function sbFetch(table, query = '', options = {}) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}${query}`, {
+    ...options,
+    headers: {
+      apikey: SUPABASE_KEY,
+      Authorization: `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': 'application/json',
+      ...(options.headers || {})
+    }
+  });
+  const text = await res.text();
+  let data = null;
+  try { data = text ? JSON.parse(text) : null; } catch {}
+  return { ok: res.ok, status: res.status, data };
+}
 fs.mkdirSync(DATA_DIR, { recursive: true });
 
 // Simple in-memory IP rate limiter for write endpoints (max 60 writes / 60s)
@@ -88,59 +107,158 @@ function sanitizeRoomPayload(raw) {
   };
 }
 
-// Initialize SQLite Database
-const db = new DatabaseSync(path.join(DATA_DIR, 'helpdai.db'));
-db.exec(`
-  PRAGMA journal_mode = WAL;
-  CREATE TABLE IF NOT EXISTS rooms (
-    room_id TEXT PRIMARY KEY,
-    payload TEXT NOT NULL,
-    updated_at TEXT NOT NULL
-  );
-  CREATE TABLE IF NOT EXISTS suggestions (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    category TEXT NOT NULL,
-    message TEXT NOT NULL,
-    created_at TEXT NOT NULL
-  );
-  CREATE TABLE IF NOT EXISTS polls (
-    poll_id TEXT PRIMARY KEY,
-    admin_token TEXT NOT NULL,
-    question TEXT NOT NULL,
-    options TEXT NOT NULL,
-    is_open INTEGER NOT NULL DEFAULT 1,
-    updated_at TEXT NOT NULL
-  );
-  CREATE TABLE IF NOT EXISTS poll_votes (
-    poll_id TEXT NOT NULL,
-    voter_id TEXT NOT NULL,
-    choice_idx INTEGER NOT NULL,
-    created_at TEXT NOT NULL,
-    PRIMARY KEY (poll_id, voter_id)
-  );
-`);
+let db = null;
+let stmtGetRoom, stmtPutRoom, stmtAddSugg, stmtListSugg, stmtGetPoll, stmtUpsertPoll, stmtCountVotes, stmtCastVote, stmtResetVotes;
+if (!useSupabase) {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+  db = new DatabaseSync(path.join(DATA_DIR, 'helpdai.db'));
+  db.exec(`
+    PRAGMA journal_mode = WAL;
+    CREATE TABLE IF NOT EXISTS rooms (
+      room_id TEXT PRIMARY KEY,
+      payload TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS suggestions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      category TEXT NOT NULL,
+      message TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS polls (
+      poll_id TEXT PRIMARY KEY,
+      admin_token TEXT NOT NULL,
+      question TEXT NOT NULL,
+      options TEXT NOT NULL,
+      is_open INTEGER NOT NULL DEFAULT 1,
+      updated_at TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS poll_votes (
+      poll_id TEXT NOT NULL,
+      voter_id TEXT NOT NULL,
+      choice_idx INTEGER NOT NULL,
+      created_at TEXT NOT NULL,
+      PRIMARY KEY (poll_id, voter_id)
+    );
+  `);
 
-const stmtGetRoom = db.prepare('SELECT room_id, payload, updated_at FROM rooms WHERE room_id = ?');
-const stmtPutRoom = db.prepare(`
-  INSERT INTO rooms (room_id, payload, updated_at)
-  VALUES (?, ?, ?)
-  ON CONFLICT(room_id) DO UPDATE SET payload = excluded.payload, updated_at = excluded.updated_at
-`);
-const stmtAddSugg = db.prepare('INSERT INTO suggestions (category, message, created_at) VALUES (?, ?, ?)');
-const stmtListSugg = db.prepare('SELECT id, category, message, created_at FROM suggestions ORDER BY id DESC LIMIT 100');
-const stmtGetPoll = db.prepare('SELECT poll_id, admin_token, question, options, is_open, updated_at FROM polls WHERE poll_id = ?');
-const stmtUpsertPoll = db.prepare(`
-  INSERT INTO polls (poll_id, admin_token, question, options, is_open, updated_at)
-  VALUES (?, ?, ?, ?, ?, ?)
-  ON CONFLICT(poll_id) DO UPDATE SET question = excluded.question, options = excluded.options, is_open = excluded.is_open, updated_at = excluded.updated_at
-`);
-const stmtCountVotes = db.prepare('SELECT choice_idx, COUNT(*) AS cnt FROM poll_votes WHERE poll_id = ? GROUP BY choice_idx');
-const stmtCastVote = db.prepare(`
-  INSERT INTO poll_votes (poll_id, voter_id, choice_idx, created_at)
-  VALUES (?, ?, ?, ?)
-  ON CONFLICT(poll_id, voter_id) DO NOTHING
-`);
-const stmtResetVotes = db.prepare('DELETE FROM poll_votes WHERE poll_id = ?');
+  stmtGetRoom = db.prepare('SELECT room_id, payload, updated_at FROM rooms WHERE room_id = ?');
+  stmtPutRoom = db.prepare(`
+    INSERT INTO rooms (room_id, payload, updated_at)
+    VALUES (?, ?, ?)
+    ON CONFLICT(room_id) DO UPDATE SET payload = excluded.payload, updated_at = excluded.updated_at
+  `);
+  stmtAddSugg = db.prepare('INSERT INTO suggestions (category, message, created_at) VALUES (?, ?, ?)');
+  stmtListSugg = db.prepare('SELECT id, category, message, created_at FROM suggestions ORDER BY id DESC LIMIT 100');
+  stmtGetPoll = db.prepare('SELECT poll_id, admin_token, question, options, is_open, updated_at FROM polls WHERE poll_id = ?');
+  stmtUpsertPoll = db.prepare(`
+    INSERT INTO polls (poll_id, admin_token, question, options, is_open, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?)
+    ON CONFLICT(poll_id) DO UPDATE SET question = excluded.question, options = excluded.options, is_open = excluded.is_open, updated_at = excluded.updated_at
+  `);
+  stmtCountVotes = db.prepare('SELECT choice_idx, COUNT(*) AS cnt FROM poll_votes WHERE poll_id = ? GROUP BY choice_idx');
+  stmtCastVote = db.prepare(`
+    INSERT INTO poll_votes (poll_id, voter_id, choice_idx, created_at)
+    VALUES (?, ?, ?, ?)
+    ON CONFLICT(poll_id, voter_id) DO NOTHING
+  `);
+  stmtResetVotes = db.prepare('DELETE FROM poll_votes WHERE poll_id = ?');
+}
+
+const storage = {
+  async getRoom(roomId) {
+    if (useSupabase) {
+      const r = await sbFetch('helpdai_rooms', `?room_id=eq.${encodeURIComponent(roomId)}&select=room_id,payload,updated_at`);
+      const row = r.data?.[0];
+      return row ? { roomId: row.room_id, payload: row.payload, updatedAt: row.updated_at } : null;
+    }
+    const row = stmtGetRoom.get(roomId);
+    return row ? { roomId: row.room_id, payload: JSON.parse(row.payload), updatedAt: row.updated_at } : null;
+  },
+  async putRoom(roomId, payload, now) {
+    if (useSupabase) {
+      await sbFetch('helpdai_rooms', '?on_conflict=room_id', {
+        method: 'POST',
+        headers: { Prefer: 'resolution=merge-duplicates' },
+        body: JSON.stringify({ room_id: roomId, payload, updated_at: now })
+      });
+      return;
+    }
+    stmtPutRoom.run(roomId, JSON.stringify(payload), now);
+  },
+  async addSuggestion(category, message, now) {
+    if (useSupabase) {
+      await sbFetch('helpdai_suggestions', '', {
+        method: 'POST',
+        body: JSON.stringify({ category, message, created_at: now })
+      });
+      return;
+    }
+    stmtAddSugg.run(category, message, now);
+  },
+  async listSuggestions() {
+    if (useSupabase) {
+      const r = await sbFetch('helpdai_suggestions', '?select=id,category,message,created_at&order=id.desc&limit=100');
+      return Array.isArray(r.data) ? r.data : [];
+    }
+    return stmtListSugg.all();
+  },
+  async getPoll(pollId) {
+    if (useSupabase) {
+      const r = await sbFetch('helpdai_polls', `?poll_id=eq.${encodeURIComponent(pollId)}&select=poll_id,admin_token,question,options,is_open,updated_at`);
+      const row = r.data?.[0];
+      return row ? { ...row, options: Array.isArray(row.options) ? row.options : JSON.parse(row.options), is_open: row.is_open ? 1 : 0 } : null;
+    }
+    const row = stmtGetPoll.get(pollId);
+    return row ? { ...row, options: JSON.parse(row.options) } : null;
+  },
+  async upsertPoll(pollId, adminToken, question, options, isOpen, now) {
+    if (useSupabase) {
+      await sbFetch('helpdai_polls', '?on_conflict=poll_id', {
+        method: 'POST',
+        headers: { Prefer: 'resolution=merge-duplicates' },
+        body: JSON.stringify({ poll_id: pollId, admin_token: adminToken, question, options, is_open: Boolean(isOpen), updated_at: now })
+      });
+      return;
+    }
+    stmtUpsertPoll.run(pollId, adminToken, question, JSON.stringify(options), isOpen ? 1 : 0, now);
+  },
+  async getVoteCounts(pollId, optLen) {
+    const counts = Array.from({ length: optLen }, () => 0);
+    if (useSupabase) {
+      const r = await sbFetch('helpdai_poll_votes', `?poll_id=eq.${encodeURIComponent(pollId)}&select=choice_idx`);
+      if (Array.isArray(r.data)) {
+        for (const v of r.data) {
+          if (v.choice_idx >= 0 && v.choice_idx < counts.length) counts[v.choice_idx]++;
+        }
+      }
+      return counts;
+    }
+    for (const r of stmtCountVotes.all(pollId)) {
+      if (r.choice_idx >= 0 && r.choice_idx < counts.length) counts[r.choice_idx] = Number(r.cnt) || 0;
+    }
+    return counts;
+  },
+  async castVote(pollId, voterId, choiceIdx, now) {
+    if (useSupabase) {
+      const r = await sbFetch('helpdai_poll_votes', '?on_conflict=poll_id,voter_id', {
+        method: 'POST',
+        headers: { Prefer: 'resolution=ignore-duplicates,return=representation' },
+        body: JSON.stringify({ poll_id: pollId, voter_id: voterId, choice_idx: choiceIdx, created_at: now })
+      });
+      return Array.isArray(r.data) ? r.data.length === 0 : false;
+    }
+    const info = stmtCastVote.run(pollId, voterId, choiceIdx, now);
+    return info.changes === 0;
+  },
+  async resetVotes(pollId) {
+    if (useSupabase) {
+      await sbFetch('helpdai_poll_votes', `?poll_id=eq.${encodeURIComponent(pollId)}`, { method: 'DELETE' });
+      return;
+    }
+    stmtResetVotes.run(pollId);
+  }
+};
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -203,7 +321,7 @@ const server = http.createServer(async (req, res) => {
 
   // API Routes
   if (pathname === '/api/health' && req.method === 'GET') {
-    return sendJson(res, 200, { ok: true, service: 'helpdai-backend', db: 'sqlite' });
+    return sendJson(res, 200, { ok: true, service: 'helpdai-backend', db: useSupabase ? 'supabase' : 'sqlite' });
   }
 
   if (pathname === '/api/yt-search' && req.method === 'GET') {
@@ -236,9 +354,9 @@ const server = http.createServer(async (req, res) => {
     if (!roomId) return sendJson(res, 400, { ok: false, error: 'Invalid room ID' });
 
     if (req.method === 'GET') {
-      const row = stmtGetRoom.get(roomId);
+      const row = await storage.getRoom(roomId);
       if (!row) return sendJson(res, 404, { ok: false, error: 'Room not found' });
-      return sendJson(res, 200, { ok: true, roomId: row.room_id, payload: JSON.parse(row.payload), updatedAt: row.updated_at });
+      return sendJson(res, 200, { ok: true, roomId: row.roomId, payload: row.payload, updatedAt: row.updatedAt });
     }
 
     if (req.method === 'PUT') {
@@ -251,7 +369,7 @@ const server = http.createServer(async (req, res) => {
           return sendJson(res, 400, { ok: false, error: 'Invalid or corrupt scoreboard payload' });
         }
         const now = new Date().toISOString();
-        stmtPutRoom.run(roomId, JSON.stringify(cleanPayload), now);
+        await storage.putRoom(roomId, cleanPayload, now);
         return sendJson(res, 200, { ok: true, roomId, updatedAt: now });
       } catch (err) {
         return sendJson(res, 400, { ok: false, error: err.message });
@@ -266,53 +384,48 @@ const server = http.createServer(async (req, res) => {
     if (!pollId) return sendJson(res, 400, { ok: false, error: 'Invalid poll ID' });
 
     if (req.method === 'GET' && !subAction) {
-      const row = stmtGetPoll.get(pollId);
+      const row = await storage.getPoll(pollId);
       if (!row) return sendJson(res, 404, { ok: false, error: 'Poll not found' });
-      const opts = JSON.parse(row.options);
-      const counts = opts.map(() => 0);
-      for (const r of stmtCountVotes.all(pollId)) {
-        if (r.choice_idx >= 0 && r.choice_idx < counts.length) counts[r.choice_idx] = Number(r.cnt) || 0;
-      }
+      const counts = await storage.getVoteCounts(pollId, row.options.length);
       const totalVotes = counts.reduce((a, b) => a + b, 0);
-      return sendJson(res, 200, { ok: true, pollId: row.poll_id, question: row.question, options: opts, counts, totalVotes, isOpen: Boolean(row.is_open) });
+      return sendJson(res, 200, { ok: true, pollId: row.poll_id, question: row.question, options: row.options, counts, totalVotes, isOpen: Boolean(row.is_open) });
     }
 
     const clientIp = req.socket?.remoteAddress || 'unknown';
     if (isRateLimited(clientIp)) return sendJson(res, 429, { ok: false, error: 'Too many requests' });
 
     if (req.method === 'POST' && subAction === 'vote') {
-      const row = stmtGetPoll.get(pollId);
+      const row = await storage.getPoll(pollId);
       if (!row) return sendJson(res, 404, { ok: false, error: 'Poll not found' });
       if (!row.is_open) return sendJson(res, 403, { ok: false, error: 'Poll is closed' });
       try {
         const body = await readBody(req, 8 * 1024);
-        const opts = JSON.parse(row.options);
         const choiceIdx = Number(body.choiceIndex);
         const voterId = String(body.voterId || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 48);
-        if (!Number.isInteger(choiceIdx) || choiceIdx < 0 || choiceIdx >= opts.length || voterId.length < 8) {
+        if (!Number.isInteger(choiceIdx) || choiceIdx < 0 || choiceIdx >= row.options.length || voterId.length < 8) {
           return sendJson(res, 400, { ok: false, error: 'Invalid vote' });
         }
-        const info = stmtCastVote.run(pollId, voterId, choiceIdx, new Date().toISOString());
-        return sendJson(res, 200, { ok: true, alreadyVoted: info.changes === 0 });
+        const alreadyVoted = await storage.castVote(pollId, voterId, choiceIdx, new Date().toISOString());
+        return sendJson(res, 200, { ok: true, alreadyVoted });
       } catch (err) {
         return sendJson(res, 400, { ok: false, error: err.message });
       }
     }
 
     if (req.method === 'POST' && subAction === 'reset') {
-      const row = stmtGetPoll.get(pollId);
+      const row = await storage.getPoll(pollId);
       if (!row) return sendJson(res, 404, { ok: false, error: 'Poll not found' });
       if ((req.headers['x-poll-admin'] || '') !== row.admin_token) {
         return sendJson(res, 403, { ok: false, error: 'Admin permission required' });
       }
-      stmtResetVotes.run(pollId);
+      await storage.resetVotes(pollId);
       return sendJson(res, 200, { ok: true });
     }
 
     if (req.method === 'POST' && !subAction) {
       try {
         const body = await readBody(req, 16 * 1024);
-        const existing = stmtGetPoll.get(pollId);
+        const existing = await storage.getPoll(pollId);
         const token = String(req.headers['x-poll-admin'] || body.adminToken || '').trim();
         if (existing) {
           if (!token || token !== existing.admin_token) {
@@ -329,7 +442,7 @@ const server = http.createServer(async (req, res) => {
           return sendJson(res, 400, { ok: false, error: 'Question and at least 2 options required' });
         }
         const isOpen = body.isOpen === false ? 0 : 1;
-        stmtUpsertPoll.run(pollId, existing ? existing.admin_token : token, question, JSON.stringify(options), isOpen, new Date().toISOString());
+        await storage.upsertPoll(pollId, existing ? existing.admin_token : token, question, options, isOpen, new Date().toISOString());
         return sendJson(res, 200, { ok: true, pollId });
       } catch (err) {
         return sendJson(res, 400, { ok: false, error: err.message });
@@ -342,7 +455,7 @@ const server = http.createServer(async (req, res) => {
       if (ADMIN_KEY && req.headers['x-admin-key'] !== ADMIN_KEY) {
         return sendJson(res, 401, { ok: false, error: 'Unauthorized' });
       }
-      return sendJson(res, 200, { ok: true, items: stmtListSugg.all() });
+      return sendJson(res, 200, { ok: true, items: await storage.listSuggestions() });
     }
     if (req.method === 'POST') {
       const clientIp = req.socket?.remoteAddress || 'unknown';
@@ -353,7 +466,7 @@ const server = http.createServer(async (req, res) => {
         const message = String(body.message || '').replace(/[\u0000-\u001F\u007F]/g, '').trim().slice(0, 500);
         if (!message) return sendJson(res, 400, { ok: false, error: 'Message required' });
         const now = new Date().toISOString();
-        stmtAddSugg.run(category, message, now);
+        await storage.addSuggestion(category, message, now);
         return sendJson(res, 201, { ok: true, category, message, createdAt: now });
       } catch (err) {
         return sendJson(res, 400, { ok: false, error: err.message });

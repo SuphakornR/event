@@ -7,7 +7,7 @@ window.HELPDAI_CONFIG = {
   // 2. Optional external Suggestion Box Endpoint (e.g. Formspree) when no backend is used
   suggestionEndpoint: '',
 
-  // 3. Optional Supabase Cloud Database Sync
-  supabaseUrl: '',
-  supabaseAnonKey: ''
+  // 3. Optional Supabase Cloud Database Sync (Publishable anon key)
+  supabaseUrl: 'https://xhdjseyhavrskswllmgq.supabase.co',
+  supabaseAnonKey: 'sb_publishable_-FC3Athjxn7jB6f0YACydw_laZSAHOn'
 };
