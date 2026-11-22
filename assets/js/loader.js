@@ -57,19 +57,31 @@
 
   let fontsDone = false;
   let domDone = document.readyState === 'interactive' || document.readyState === 'complete';
+  const needsStageReady = () => Boolean(document.getElementById('stage-container'));
+  let stageDone = !needsStageReady() || Boolean(window.__voxStageReady);
 
   const checkDone = () => {
-    if (fontsDone && domDone) {
+    if (fontsDone && domDone && stageDone) {
       requestAnimationFrame(() => requestAnimationFrame(finish));
     }
   };
 
+  if (!stageDone) {
+    window.addEventListener('vox-stage-ready', () => {
+      stageDone = true;
+      setProgress(90);
+      checkDone();
+    }, { once: true });
+  }
+
   if (domDone) {
+    if (!needsStageReady()) stageDone = true;
     setProgress(75);
   } else {
     document.addEventListener('DOMContentLoaded', () => {
       domDone = true;
-      setProgress(75);
+      if (!needsStageReady() || window.__voxStageReady) stageDone = true;
+      setProgress(stageDone ? 85 : 70);
       checkDone();
     }, { once: true });
   }

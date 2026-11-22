@@ -3733,5 +3733,7 @@
       // INITIALIZE IMMEDIATELY
       // ========================================================================
       switchRoleView(initialRole);
+      window.__voxStageReady = true;
+      window.dispatchEvent(new Event('vox-stage-ready'));
     })();
   
