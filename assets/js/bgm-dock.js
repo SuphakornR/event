@@ -277,24 +277,21 @@
     const syncUi = () => {
       syncEngineIframe();
       const st = readBgm();
-      const hasTrack = Boolean(st.videoId);
+      const isPlaying = Boolean(st.videoId && st.playing);
 
-      toggleBtn.classList.toggle('hidden', !hasTrack);
-      toggleBtn.classList.toggle('flex', hasTrack);
-      stopBtn.classList.toggle('hidden', !hasTrack);
-      stopBtn.classList.toggle('flex', hasTrack);
-      dotEl.classList.toggle('hidden', !(hasTrack && st.playing));
+      // Show compact music box inside lower-right of Stage Scoreboard card ONLY when music is on & playing
+      slot.classList.toggle('hidden', !isPlaying);
+      if (!isPlaying) return;
 
-      if (hasTrack) {
-        thumbWrap.innerHTML = `<img src="https://i.ytimg.com/vi/${st.videoId}/hqdefault.jpg" alt="" class="w-full h-full object-cover" />`;
-        titleEl.textContent = st.title || `YouTube (${st.videoId})`;
-        toggleBtn.innerHTML = st.playing
-          ? '<svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>'
-          : '<svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l15 8-15 8V4z"/></svg>';
-      } else {
-        thumbWrap.innerHTML = '<svg class="w-3.5 h-3.5 text-[#111111]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>';
-        titleEl.textContent = 'คลิกขวาเลือกเพลง';
-      }
+      toggleBtn.classList.remove('hidden');
+      toggleBtn.classList.add('flex');
+      stopBtn.classList.remove('hidden');
+      stopBtn.classList.add('flex');
+      dotEl.classList.remove('hidden');
+
+      thumbWrap.innerHTML = `<img src="https://i.ytimg.com/vi/${st.videoId}/hqdefault.jpg" alt="" class="w-full h-full object-cover" />`;
+      titleEl.textContent = st.title || `YouTube (${st.videoId})`;
+      toggleBtn.innerHTML = '<svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>';
     };
 
     const handleSearchOrUrl = async () => {

@@ -260,8 +260,13 @@
     }
   };
 
+  const emitSyncState = (status) => {
+    window.dispatchEvent(new CustomEvent('helpdai-sync-state', { detail: { status } }));
+  };
+
   const pushToServer = async (raw, keepalive = false) => {
     if (!raw || isDisplayViewer) return;
+    emitSyncState('syncing');
     sendRealtimeEvent('sync_state', { raw });
 
     let parsed = null;
@@ -272,6 +277,8 @@
 
     const shareRoomKey = `share-${shareCode}`;
     const roomsToPush = roomId && roomId !== shareRoomKey ? [roomId, shareRoomKey] : [shareRoomKey];
+    let anyOk = sbJoined;
+    let hadError = false;
 
     if (backendOnline && apiBase) {
       for (const rId of roomsToPush) {
@@ -282,8 +289,9 @@
             body: JSON.stringify({ payload: parsed }),
             keepalive
           });
-          if (res.ok) lastServerRaw = raw;
-        } catch (_) {}
+          if (res.ok) { lastServerRaw = raw; anyOk = true; }
+          else hadError = true;
+        } catch (_) { hadError = true; }
       }
     }
 
@@ -297,16 +305,21 @@
       };
       for (const rId of roomsToPush) {
         try {
-          await fetch(endpoint, {
+          const res = await fetch(endpoint, {
             method: 'POST',
             headers,
             body: JSON.stringify({ room_id: rId, payload: parsed, updated_at: new Date().toISOString() }),
             keepalive
           });
-          lastServerRaw = raw;
-        } catch (_) {}
+          if (res.ok) { lastServerRaw = raw; anyOk = true; }
+          else hadError = true;
+        } catch (_) { hadError = true; }
       }
     }
+
+    if (anyOk) emitSyncState('success');
+    else if (hadError) emitSyncState('error');
+    else emitSyncState('success');
   };
 
   const initSyncLoop = async () => {

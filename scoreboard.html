@@ -122,8 +122,9 @@
       </div>
 
       <!-- Top-Right Big Image Banner (Right-Click to Edit Banner Image) -->
-      <aside id="stage-top-banner" title="คลิกขวาเพื่อเปลี่ยนภาพแบนเนอร์" class="w-full lg:w-[31rem] xl:w-[37rem] h-24 sm:h-[6.25rem] shrink-0 rounded-xl border-[2.5px] border-[#111111] shadow-[4px_4px_0px_#111111] bg-[#111111] relative overflow-hidden select-none" aria-label="แบนเนอร์เวที">
+      <aside id="stage-top-banner" title="คลิกขวาเพื่อเปลี่ยนภาพแบนเนอร์" class="group w-full lg:w-[31rem] xl:w-[37rem] h-24 sm:h-[6.25rem] shrink-0 rounded-xl border-[2.5px] border-[#111111] shadow-[4px_4px_0px_#111111] bg-[#111111] relative overflow-hidden select-none" aria-label="แบนเนอร์เวที">
         <div id="stage-banner-track" class="flex w-full h-full transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"></div>
+        <span id="stage-banner-size-badge" class="opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none absolute top-2 left-2 z-20 bg-[#111111]/85 text-[#F4D03F] border border-white/25 px-2 py-0.5 rounded-md font-display font-bold text-[10px] tabular-nums shadow-sm"></span>
 
         <div class="absolute top-2 right-2 z-20 flex items-center gap-1">
           <div id="stage-banner-dots" class="flex items-center gap-1 bg-[#111111]/75 backdrop-blur-sm px-1.5 py-1 rounded-md border border-white/20"></div>
@@ -429,7 +430,7 @@
         {
           tag: 'STAGE TOOLS',
           accent: '#2980B9',
-          title: 'แถบเครื่องมือเวที: สุ่มทีม • นาฬิกาคลื่นน้ำ • โหวตสด QR • เพลง YouTube',
+          title: 'แถบเครื่องมือเวที: สุ่มทีม • นาฬิกาคลื่นน้ำ • เพลง YouTube • โหวตสด QR • แชร์จอห้องใหญ่',
           art: `<svg class="w-full h-full object-cover" viewBox="0 0 600 110" xmlns="http://www.w3.org/2000/svg">
             <rect width="600" height="110" fill="#112233"/>
             <g opacity="0.14" stroke="#FFFFFF" stroke-width="1"><path d="M0 28h600M0 56h600M0 84h600M100 0v110M200 0v110M300 0v110M400 0v110M500 0v110"/></g>
@@ -448,9 +449,9 @@
           </svg>`
         },
         {
-          tag: 'QUICK TEMPLATE',
+          tag: 'MENU & SYNC',
           accent: '#E74C3C',
-          title: 'คลิกขวาพื้นหลังเพื่อเลือกเทมเพลต 1 คลิก หรือบันทึก/โหลดไฟล์งาน (.json)',
+          title: 'กดปุ่ม เมนู ด้านบนเพื่อบันทึกงาน สร้างงานใหม่ หรือเลือกเทมเพลตเริ่มไว 1 คลิก',
           art: `<svg class="w-full h-full object-cover" viewBox="0 0 600 110" xmlns="http://www.w3.org/2000/svg">
             <rect width="600" height="110" fill="#24161E"/>
             <g opacity="0.14" stroke="#FFFFFF" stroke-width="1"><path d="M0 28h600M0 56h600M0 84h600M100 0v110M200 0v110M300 0v110M400 0v110M500 0v110"/></g>
@@ -478,7 +479,7 @@
           clearInterval(timerId);
           trackEl.style.transform = 'translateX(0%)';
           trackEl.innerHTML = `<div class="w-full h-full shrink-0 relative"><img src="${customImg}" alt="Event Banner" class="w-full h-full object-cover" /></div>`;
-          dotsEl.innerHTML = `<span class="text-[9px] font-display font-black text-[#F4D03F] px-1">CUSTOM</span>`;
+          dotsEl.innerHTML = '';
           return;
         }
 
@@ -534,9 +535,11 @@
         }
         const hasCustom = Boolean(getCustomImg());
         m.innerHTML = `
-          <button type="button" data-sbc="upload" class="w-full text-left px-2.5 py-1.5 rounded-lg font-display font-bold text-xs text-[#111111] hover:bg-[#F4D03F] cursor-pointer">🖼️ เปลี่ยนภาพแบนเนอร์</button>
-          <button type="button" data-sbc="next" class="w-full text-left px-2.5 py-1.5 rounded-lg font-display font-bold text-xs text-[#111111] hover:bg-[#F4D03F] cursor-pointer">› สไลด์ถัดไป</button>
-          ${hasCustom ? '<button type="button" data-sbc="reset" class="w-full text-left px-2.5 py-1.5 rounded-lg font-display font-bold text-xs text-[#E74C3C] hover:bg-red-50 cursor-pointer">↺ คืนค่าแบนเนอร์เริ่มต้น</button>' : ''}
+          <button type="button" data-sbc="upload" class="w-full text-left px-2.5 py-1.5 rounded-lg font-display font-bold text-xs text-[#111111] hover:bg-[#F4D03F] cursor-pointer flex items-center gap-2">
+            <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2.5" y="3.5" width="19" height="17" rx="3" fill="#111111"/><circle cx="8" cy="9" r="2" fill="#F4D03F"/><path d="M5 17.5l4.5-4.5 3 3 3.5-4 3 5.5H5z" fill="#F8F6F0"/></svg>
+            <span>เปลี่ยนภาพแบนเนอร์</span>
+          </button>
+          ${hasCustom ? `<button type="button" data-sbc="reset" class="w-full text-left px-2.5 py-1.5 rounded-lg font-display font-bold text-xs text-[#E74C3C] hover:bg-red-50 cursor-pointer flex items-center gap-2"><svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg><span>คืนค่าแบนเนอร์เริ่มต้น</span></button>` : ''}
         `;
         m.querySelector('[data-sbc="upload"]')?.addEventListener('click', () => { m.classList.add('hidden'); fileInp?.click(); });
         m.querySelector('[data-sbc="next"]')?.addEventListener('click', () => { m.classList.add('hidden'); go(idx + 1); });
@@ -561,6 +564,18 @@
         };
         reader.readAsDataURL(f);
       });
+
+      const stageSizeBadge = document.getElementById('stage-banner-size-badge');
+      const syncStageBannerSize = () => {
+        if (!bannerEl || !stageSizeBadge) return;
+        const r = bannerEl.getBoundingClientRect();
+        if (r.width > 0 && r.height > 0) {
+          stageSizeBadge.textContent = `${Math.round(r.width)} × ${Math.round(r.height)} px`;
+        }
+      };
+      bannerEl?.addEventListener('pointerenter', syncStageBannerSize);
+      window.addEventListener('resize', syncStageBannerSize);
+      syncStageBannerSize();
 
       renderSlides();
     })();

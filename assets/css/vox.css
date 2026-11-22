@@ -989,17 +989,16 @@
       z-index: 80;
     }
 
-    /* Custom Vox Auto-Sync Bent Arrows Animation */
+    /* Custom Vox Auto-Sync Bent Arrows Animation (spins only while actively syncing) */
     @keyframes voxAutoSyncSpin {
-      0% { transform: rotate(0deg); }
-      65% { transform: rotate(360deg); }
-      100% { transform: rotate(360deg); }
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
     }
     .vox-autosync-spin {
-      animation: voxAutoSyncSpin 4.2s cubic-bezier(0.22, 1, 0.36, 1) infinite;
       transform-origin: center;
+      transition: color 0.2s ease, transform 0.25s ease;
     }
-    .vox-autosync-spin.is-syncing-fast {
-      animation-duration: 1.1s;
+    .vox-autosync-spin.is-syncing {
+      animation: voxAutoSyncSpin 0.9s linear infinite;
     }
   

@@ -306,33 +306,73 @@
         }
       }
 
-      function syncStageSyncPill() {
+      const SYNC_SVGS = {
+        arrows: '<path d="M21 12a9 9 0 0 0-15.5-6.36L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 15.5 6.36L21 16"/><path d="M16 16h5v5"/>',
+        success: '<circle cx="12" cy="12" r="9"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/>',
+        fail: '<path d="M12 3L2 20h20L12 3z"/><path d="M12 9v4"/><circle cx="12" cy="16.5" r="0.8" fill="currentColor"/>'
+      };
+      let lastRemoteSyncStatus = 'idle';
+
+      function applySyncIconState(status) {
+        lastRemoteSyncStatus = status;
         const iconEl = document.getElementById('stage-autosync-icon');
+        if (!iconEl) return;
+        const signedIn = isAccountSignedIn();
+        const savedLocal = isLocallySaved();
+        if (status === 'syncing') {
+          iconEl.innerHTML = SYNC_SVGS.arrows;
+          iconEl.setAttribute('class', 'vox-autosync-spin is-syncing w-3.5 h-3.5 shrink-0 text-[#2980B9]');
+        } else if (status === 'error') {
+          iconEl.innerHTML = SYNC_SVGS.fail;
+          iconEl.setAttribute('class', 'vox-autosync-spin w-3.5 h-3.5 shrink-0 text-[#E74C3C]');
+        } else if (status === 'success') {
+          iconEl.innerHTML = SYNC_SVGS.success;
+          iconEl.setAttribute('class', 'vox-autosync-spin w-3.5 h-3.5 shrink-0 text-[#10B981]');
+        } else {
+          iconEl.innerHTML = SYNC_SVGS.arrows;
+          const colorCls = signedIn ? 'text-[#10B981]' : (savedLocal ? 'text-[#2980B9]' : (hasUnsavedGuestChanges ? 'text-[#E74C3C]' : 'text-[#111111]/65'));
+          iconEl.setAttribute('class', `vox-autosync-spin w-3.5 h-3.5 shrink-0 ${colorCls}`);
+        }
+      }
+
+      window.addEventListener('helpdai-sync-state', (e) => {
+        const st = e.detail?.status || 'idle';
+        applySyncIconState(st);
+      });
+
+      function syncStageSyncPill() {
         const labelEl = document.getElementById('stage-sync-label');
         const btnEl = document.getElementById('stage-menu-btn');
-        if (!iconEl || !labelEl) return;
+        if (!labelEl) return;
         const signedIn = isAccountSignedIn();
         const savedLocal = isLocallySaved();
         if (signedIn) {
           const slot = window.VoxCloudSync?.getSlot?.() || 1;
-          iconEl.className = 'vox-autosync-spin w-3.5 h-3.5 shrink-0 text-[#10B981]';
           labelEl.textContent = `ซิงค์ ${slot}`;
           if (btnEl) btnEl.title = 'เมนูงาน • ซิงค์บัญชีอัตโนมัติ';
         } else if (savedLocal) {
-          iconEl.className = 'vox-autosync-spin w-3.5 h-3.5 shrink-0 text-[#2980B9]';
           labelEl.textContent = 'ในเครื่อง';
           if (btnEl) btnEl.title = 'เมนูงาน • บันทึกในเครื่องอัตโนมัติ';
         } else {
-          iconEl.className = `vox-autosync-spin w-3.5 h-3.5 shrink-0 ${hasUnsavedGuestChanges ? 'text-[#E74C3C]' : 'text-[#111111]/65'}`;
           labelEl.textContent = hasUnsavedGuestChanges ? 'ยังไม่เซฟ' : 'Guest';
           if (btnEl) btnEl.title = 'เมนูงาน • โหมดทดลองใช้ (คลิกเพื่อบันทึกหรือเข้าสู่ระบบ)';
         }
+        applySyncIconState(lastRemoteSyncStatus);
       }
 
       (() => {
         const menuBtn = document.getElementById('stage-menu-btn');
         const popEl = document.getElementById('stage-menu-popover');
         if (!menuBtn || !popEl) return;
+
+        const MENU_ICONS = {
+          save: '<svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg>',
+          plus: '<svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+          quiz: '<svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></svg>',
+          sport: '<svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4a2 2 0 0 1-2-2V5h4M18 9h2a2 2 0 0 0 2-2V5h-4M6 4h12v6a6 6 0 0 1-12 0V4zM12 16v4M8 20h8"/></svg>',
+          group: '<svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg>',
+          user: '<svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'
+        };
 
         const closeStageMenu = () => {
           popEl.classList.add('hidden');
@@ -344,14 +384,22 @@
           const signedIn = isAccountSignedIn();
           const curSlot = window.VoxCloudSync?.getSlot?.() || 1;
           const userEmail = window.HelpDaiAuth?.getSession?.()?.user?.email || '';
-          const syncText = signedIn
-            ? `ซิงค์บัญชีอัตโนมัติ (งาน ${curSlot})`
-            : (isLocallySaved() ? 'บันทึกในเบราว์เซอร์อัตโนมัติ' : 'Guest Mode (ยังไม่บันทึก)');
+          const syncText = lastRemoteSyncStatus === 'error'
+            ? 'ซิงค์ไม่สำเร็จ (ตรวจสอบเน็ต)'
+            : signedIn
+              ? `ซิงค์บัญชีอัตโนมัติ (งาน ${curSlot})`
+              : (isLocallySaved() ? 'บันทึกในเบราว์เซอร์อัตโนมัติ' : 'Guest Mode (ยังไม่บันทึก)');
+          const statusSvg = lastRemoteSyncStatus === 'error'
+            ? SYNC_SVGS.fail
+            : (lastRemoteSyncStatus === 'success' ? SYNC_SVGS.success : SYNC_SVGS.arrows);
+          const statusColor = lastRemoteSyncStatus === 'error'
+            ? 'text-[#E74C3C]'
+            : (signedIn || lastRemoteSyncStatus === 'success' ? 'text-[#10B981]' : 'text-[#2980B9]');
 
           popEl.innerHTML = `
             <div class="flex items-center justify-between gap-2 bg-white border-2 border-[#111111] rounded-xl px-2.5 py-2 shadow-[2px_2px_0px_#111111]">
               <div class="flex items-center gap-2 min-w-0">
-                <svg class="vox-autosync-spin w-4 h-4 shrink-0 ${signedIn ? 'text-[#10B981]' : 'text-[#2980B9]'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-15.5-6.36L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 15.5 6.36L21 16"/><path d="M16 16h5v5"/></svg>
+                <svg class="w-4 h-4 shrink-0 ${statusColor} ${lastRemoteSyncStatus === 'syncing' ? 'vox-autosync-spin is-syncing' : ''}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">${statusSvg}</svg>
                 <div class="min-w-0">
                   <div class="font-display font-extrabold text-[11px] text-[#111111] truncate">${syncText}</div>
                   ${userEmail ? `<div class="text-[9px] font-semibold text-[#111111]/60 truncate">${userEmail}</div>` : ''}
@@ -367,27 +415,23 @@
 
             <div class="flex flex-col gap-1 pt-1 border-t border-[#111111]/15">
               <span class="text-[9px] font-display font-extrabold uppercase tracking-wider text-[#111111]/55 px-1">ไฟล์งาน (File)</span>
-              <button type="button" data-sm-act="save" class="w-full text-left px-2.5 py-1.5 rounded-lg bg-white hover:bg-[#F4D03F] border border-[#111111] font-display font-bold text-xs text-[#111111] cursor-pointer flex items-center justify-between"><span>💾 บันทึกงาน (Save)</span></button>
-              <button type="button" data-sm-act="new" class="w-full text-left px-2.5 py-1.5 rounded-lg bg-white hover:bg-[#F4D03F] border border-[#111111] font-display font-bold text-xs text-[#111111] cursor-pointer flex items-center justify-between"><span>✨ สร้างงานใหม่ (New)</span></button>
-              <div class="grid grid-cols-2 gap-1">
-                <button type="button" data-sm-act="export" class="px-2 py-1.5 rounded-lg bg-white hover:bg-[#F4D03F] border border-[#111111] font-display font-bold text-[11px] text-[#111111] cursor-pointer">📤 ส่งออก .json</button>
-                <button type="button" data-sm-act="import" class="px-2 py-1.5 rounded-lg bg-white hover:bg-[#F4D03F] border border-[#111111] font-display font-bold text-[11px] text-[#111111] cursor-pointer">📥 นำเข้า .json</button>
-              </div>
+              <button type="button" data-sm-act="save" class="w-full text-left px-2.5 py-1.5 rounded-lg bg-white hover:bg-[#F4D03F] border border-[#111111] font-display font-bold text-xs text-[#111111] cursor-pointer flex items-center gap-2">${MENU_ICONS.save}<span>บันทึกงาน (Save)</span></button>
+              <button type="button" data-sm-act="new" class="w-full text-left px-2.5 py-1.5 rounded-lg bg-white hover:bg-[#F4D03F] border border-[#111111] font-display font-bold text-xs text-[#111111] cursor-pointer flex items-center gap-2">${MENU_ICONS.plus}<span>สร้างงานใหม่ (New)</span></button>
             </div>
 
             <div class="flex flex-col gap-1 pt-1 border-t border-[#111111]/15">
               <span class="text-[9px] font-display font-extrabold uppercase tracking-wider text-[#111111]/55 px-1">เทมเพลตเริ่มไว (Presets)</span>
               <div class="grid grid-cols-3 gap-1">
-                <button type="button" data-sm-preset="quiz" class="px-1.5 py-1 rounded-lg bg-white hover:bg-[#F4D03F] border border-[#111111] font-display font-bold text-[10px] text-[#111111] cursor-pointer">🎯 Quiz</button>
-                <button type="button" data-sm-preset="sport" class="px-1.5 py-1 rounded-lg bg-white hover:bg-[#F4D03F] border border-[#111111] font-display font-bold text-[10px] text-[#111111] cursor-pointer">🏅 Sport</button>
-                <button type="button" data-sm-preset="workshop" class="px-1.5 py-1 rounded-lg bg-white hover:bg-[#F4D03F] border border-[#111111] font-display font-bold text-[10px] text-[#111111] cursor-pointer">🧩 Group</button>
+                <button type="button" data-sm-preset="quiz" class="px-1.5 py-1.5 rounded-lg bg-white hover:bg-[#F4D03F] border border-[#111111] font-display font-bold text-[10px] text-[#111111] cursor-pointer flex items-center justify-center gap-1">${MENU_ICONS.quiz}<span>Quiz</span></button>
+                <button type="button" data-sm-preset="sport" class="px-1.5 py-1.5 rounded-lg bg-white hover:bg-[#F4D03F] border border-[#111111] font-display font-bold text-[10px] text-[#111111] cursor-pointer flex items-center justify-center gap-1">${MENU_ICONS.sport}<span>Sport</span></button>
+                <button type="button" data-sm-preset="workshop" class="px-1.5 py-1.5 rounded-lg bg-white hover:bg-[#F4D03F] border border-[#111111] font-display font-bold text-[10px] text-[#111111] cursor-pointer flex items-center justify-center gap-1">${MENU_ICONS.group}<span>Group</span></button>
               </div>
             </div>
 
             <div class="pt-1 border-t border-[#111111]/15">
               ${signedIn
                 ? `<button type="button" data-sm-act="logout" class="w-full px-2.5 py-1.5 rounded-lg bg-white hover:bg-red-50 border border-[#111111] font-display font-bold text-xs text-[#E74C3C] cursor-pointer">ออกจากระบบ</button>`
-                : `<button type="button" data-sm-act="login" class="w-full btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] py-1.5 rounded-xl font-display font-extrabold text-xs text-[#111111] cursor-pointer">🔑 เข้าสู่ระบบเพื่อซิงค์ข้ามเครื่อง</button>`
+                : `<button type="button" data-sm-act="login" class="w-full btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] py-1.5 rounded-xl font-display font-extrabold text-xs text-[#111111] cursor-pointer flex items-center justify-center gap-1.5">${MENU_ICONS.user}<span>เข้าสู่ระบบเพื่อซิงค์ข้ามเครื่อง</span></button>`
               }
             </div>
           `;
@@ -433,14 +477,6 @@
             syncHeaderTexts();
             renderLeaderboard(true);
             renderDrawerControls();
-            closeStageMenu();
-          });
-          popEl.querySelector('[data-sm-act="export"]')?.addEventListener('click', () => {
-            window.VoxCloudSync?.exportEventJson?.();
-            closeStageMenu();
-          });
-          popEl.querySelector('[data-sm-act="import"]')?.addEventListener('click', () => {
-            window.VoxCloudSync?.importEventJson?.();
             closeStageMenu();
           });
           popEl.querySelector('[data-sm-act="login"]')?.addEventListener('click', () => {
@@ -3537,6 +3573,7 @@
       resizeConfettiCanvas();
 
       let drumrollTimerId = null;
+      let drumStartTimerId = null;
       let spotlightRafId = null;
       let confettiWaveTimers = [];
 
@@ -3544,6 +3581,10 @@
         if (drumrollTimerId) {
           clearTimeout(drumrollTimerId);
           drumrollTimerId = null;
+        }
+        if (drumStartTimerId) {
+          clearTimeout(drumStartTimerId);
+          drumStartTimerId = null;
         }
         if (spotlightRafId) {
           cancelAnimationFrame(spotlightRafId);
@@ -3559,8 +3600,15 @@
 
       function triggerVictorySequence() {
         hideVictorySpotlight();
+        const SEARCH_MS = 3200;
         const DRUMROLL_MS = 2120;
-        playDrumroll(DRUMROLL_MS);
+        // Start drumroll so its final hit lands right as the slow spotlight locks on the Winner card
+        drumStartTimerId = setTimeout(() => {
+          drumStartTimerId = null;
+          if (state.winnerAnnounced && document.getElementById('victory-drumroll-overlay')) {
+            playDrumroll(DRUMROLL_MS);
+          }
+        }, Math.max(0, SEARCH_MS - DRUMROLL_MS));
 
         // Determine ranked winner card coordinates + decoy spotlight stops
         const ranked = state.teams
@@ -3592,9 +3640,9 @@
           : { x: vw * (0.22 + Math.random() * 0.56), y: vh * (0.24 + Math.random() * 0.52) };
 
         const waypoints = [
-          { x: vw * 0.25, y: vh * 0.28 },
+          { x: vw * 0.22, y: vh * 0.26 },
           pickRandomPt(),
-          { x: vw * (0.3 + Math.random() * 0.45), y: vh * (0.35 + Math.random() * 0.35) },
+          { x: vw * (0.28 + Math.random() * 0.44), y: vh * (0.34 + Math.random() * 0.34) },
           pickRandomPt(),
           winnerPt
         ];
@@ -3603,10 +3651,10 @@
         drumOverlay.id = 'victory-drumroll-overlay';
         drumOverlay.className = 'fixed inset-0 z-[76] pointer-events-auto overflow-hidden';
         drumOverlay.innerHTML = `
-          <div id="victory-spotlight-mask" class="absolute inset-0 transition-opacity duration-200" style="background: radial-gradient(circle 135px at 50% 50%, rgba(255,255,255,0.06) 0%, rgba(56,189,248,0.22) 52%, rgba(41,128,185,0.58) 68%, rgba(5,7,13,0.93) 86%, rgba(5,7,13,0.96) 100%);"></div>
-          <div id="victory-spotlight-ring" class="pointer-events-none fixed -translate-x-1/2 -translate-y-1/2 w-[260px] h-[260px] rounded-full border-[3px] border-[#38BDF8]/75 shadow-[0_0_55px_18px_rgba(41,128,185,0.65),inset_0_0_32px_rgba(56,189,248,0.35)]"></div>
-          <div class="fixed top-5 left-1/2 -translate-x-1/2 z-10 inline-flex items-center gap-2 bg-[#111111]/90 text-[#F4D03F] border-2 border-[#38BDF8] px-4 py-1.5 rounded-full shadow-[0_0_24px_rgba(56,189,248,0.45)] font-display font-black text-xs sm:text-sm tracking-wider">
-            <span class="w-2.5 h-2.5 rounded-full bg-[#38BDF8] animate-ping"></span>
+          <div id="victory-spotlight-mask" class="absolute inset-0" style="background: radial-gradient(circle 155px at 50% 50%, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.06) 54%, rgba(255,255,255,0.22) 68%, rgba(4,4,6,0.93) 82%, rgba(4,4,6,0.97) 100%);"></div>
+          <div id="victory-spotlight-ring" class="pointer-events-none fixed -translate-x-1/2 -translate-y-1/2 w-[310px] h-[310px] rounded-full border-2 border-white/70 shadow-[0_0_64px_20px_rgba(255,255,255,0.38),inset_0_0_36px_rgba(255,255,255,0.22)]"></div>
+          <div class="fixed top-5 left-1/2 -translate-x-1/2 z-10 inline-flex items-center gap-2 bg-[#111111]/90 text-white border-2 border-white/75 px-4 py-1.5 rounded-full shadow-[0_0_24px_rgba(255,255,255,0.25)] font-display font-black text-xs sm:text-sm tracking-wider">
+            <span class="w-2.5 h-2.5 rounded-full bg-white animate-ping"></span>
             <span>กำลังค้นหาผู้ชนะ...</span>
           </div>
         `;
@@ -3618,23 +3666,24 @@
 
         const animateSpotlight = (now) => {
           const elapsed = now - startTime;
-          const totalProgress = Math.min(1, elapsed / DRUMROLL_MS);
+          const totalProgress = Math.min(1, elapsed / SEARCH_MS);
           const segCount = waypoints.length - 1;
           const segFloat = totalProgress * segCount;
           const segIdx = Math.min(segCount - 1, Math.floor(segFloat));
           const localT = segFloat - segIdx;
-          // Smooth easeInOutCubic per segment
-          const easeT = localT < 0.5 ? 4 * localT * localT * localT : 1 - Math.pow(-2 * localT + 2, 3) / 2;
+          // Slower dramatic easeInOutQuart per segment (lingers slightly at each stop)
+          const easeT = localT < 0.5
+            ? 8 * localT * localT * localT * localT
+            : 1 - Math.pow(-2 * localT + 2, 4) / 2;
 
           const p0 = waypoints[segIdx];
           const p1 = waypoints[segIdx + 1];
           const cx = p0.x + (p1.x - p0.x) * easeT;
           const cy = p0.y + (p1.y - p0.y) * easeT;
-          // Tighten spotlight slightly as it locks onto the winner card
-          const radius = Math.round(145 - (totalProgress > 0.75 ? (totalProgress - 0.75) * 90 : 0));
+          const radius = Math.round(158 - (totalProgress > 0.78 ? (totalProgress - 0.78) * 115 : 0));
 
           if (maskEl) {
-            maskEl.style.background = `radial-gradient(circle ${radius}px at ${Math.round(cx)}px ${Math.round(cy)}px, rgba(255,255,255,0.04) 0%, rgba(56,189,248,0.22) 52%, rgba(41,128,185,0.62) 69%, rgba(5,7,13,0.93) 86%, rgba(5,7,13,0.97) 100%)`;
+            maskEl.style.background = `radial-gradient(circle ${radius}px at ${Math.round(cx)}px ${Math.round(cy)}px, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.06) 54%, rgba(255,255,255,0.22) 68%, rgba(4,4,6,0.93) 82%, rgba(4,4,6,0.97) 100%)`;
           }
           if (ringEl) {
             ringEl.style.left = `${Math.round(cx)}px`;
@@ -3666,7 +3715,7 @@
             setTimeout(() => flash.remove(), 650);
             launchConfetti();
           }
-        }, DRUMROLL_MS);
+        }, SEARCH_MS);
       }
 
       function showVictorySpotlight() {
