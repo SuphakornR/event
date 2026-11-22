@@ -228,13 +228,33 @@
       let selectedG = Math.max(0, Math.min(st.games.length - 1, Number(rawActiveG) || 0));
       const getTotal = () => (team.scores || []).reduce((a, b) => a + (Number(b) || 0), 0);
 
+      const GAME_COLORS = ['#F4D03F', '#E74C3C', '#2980B9', '#10B981', '#8E44AD', '#F39C12'];
+      const escCm = (v) => String(v || '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
       const items = `
         <div class="px-1 py-1">
           ${st.games.length > 1 ? `
-            <select id="cm-team-game-sel" class="w-full mb-1.5 bg-[#F8F6F0] border-2 border-[#111111] rounded-lg px-2 py-1 text-[11px] font-display font-bold text-[#111111]">
-              ${st.games.map((g, gi) => `<option value="${gi}" ${gi === selectedG ? 'selected' : ''}>${g} (${team.scores[gi] || 0})</option>`).join('')}
-            </select>
-          ` : `<div id="cm-team-single-g" class="text-[10px] font-bold text-[#111111]/60 mb-1 truncate">${st.games[selectedG] || 'Activity'} (${team.scores[selectedG] || 0})</div>`}
+            <div id="cm-team-game-dropdown" class="relative mb-1.5">
+              <button type="button" id="cm-team-game-trigger" class="w-full bg-white hover:bg-[#FFFDF5] border-2 border-[#111111] rounded-lg px-2.5 py-1.5 shadow-[2px_2px_0px_#111111] flex items-center justify-between gap-2 text-[11px] font-display font-bold text-[#111111] cursor-pointer transition-colors">
+                <span class="flex items-center gap-1.5 min-w-0">
+                  <span id="cm-team-game-dot" class="w-2.5 h-2.5 rounded-full border border-[#111111] shrink-0" style="background:${GAME_COLORS[selectedG % GAME_COLORS.length]};"></span>
+                  <span id="cm-team-game-label" class="truncate">${escCm(st.games[selectedG])} (${team.scores[selectedG] || 0})</span>
+                </span>
+                <span id="cm-team-game-chev" class="text-[10px] text-[#111111]/70 transition-transform duration-200 shrink-0">▾</span>
+              </button>
+              <div id="cm-team-game-list" class="hidden mt-1 bg-[#F8F6F0] border-2 border-[#111111] rounded-xl p-1 shadow-[3px_3px_0px_#111111] flex-col gap-0.5 max-h-44 overflow-y-auto vox-panel-enter">
+                ${st.games.map((g, gi) => `
+                  <button type="button" data-cm-game-opt="${gi}" class="w-full text-left px-2 py-1.5 rounded-lg border-2 ${gi === selectedG ? 'bg-[#F4D03F] border-[#111111]' : 'bg-transparent border-transparent hover:bg-white hover:border-[#111111]'} font-display font-bold text-[11px] text-[#111111] flex items-center justify-between gap-2 cursor-pointer transition-colors">
+                    <span class="flex items-center gap-1.5 min-w-0">
+                      <span class="w-2.5 h-2.5 rounded-full border border-[#111111] shrink-0" style="background:${GAME_COLORS[gi % GAME_COLORS.length]};"></span>
+                      <span class="truncate">${escCm(g)}</span>
+                    </span>
+                    <span data-cm-opt-score="${gi}" class="px-1.5 py-0.5 rounded bg-white border border-[#111111] text-[10px] font-black tabular-nums shrink-0">${team.scores[gi] || 0}</span>
+                  </button>
+                `).join('')}
+              </div>
+            </div>
+          ` : `<div id="cm-team-single-g" class="text-[10px] font-bold text-[#111111]/60 mb-1 truncate">${escCm(st.games[selectedG] || 'Activity')} (${team.scores[selectedG] || 0})</div>`}
           <div class="grid grid-cols-5 gap-1">
             <button type="button" data-cm-score="-5" class="btn-vox bg-white hover:bg-red-50 text-[#E74C3C] font-display font-black text-[11px] py-1.5 rounded-lg cursor-pointer">−5</button>
             <button type="button" data-cm-score="-1" class="btn-vox bg-white hover:bg-red-50 text-[#E74C3C] font-display font-black text-[11px] py-1.5 rounded-lg cursor-pointer">−1</button>
@@ -249,21 +269,47 @@
       `;
 
       showMenuAt(x, y, `${team.name} • ${getTotal()}`, items, (m) => {
+        const triggerBtn = m.querySelector('#cm-team-game-trigger');
+        const listEl = m.querySelector('#cm-team-game-list');
+        const chevEl = m.querySelector('#cm-team-game-chev');
+        const dotEl = m.querySelector('#cm-team-game-dot');
+        const labelEl = m.querySelector('#cm-team-game-label');
+
+        const toggleDropdown = (open) => {
+          if (!listEl) return;
+          const next = open === undefined ? listEl.classList.contains('hidden') : open;
+          listEl.classList.toggle('hidden', !next);
+          listEl.classList.toggle('flex', next);
+          if (chevEl) chevEl.style.transform = next ? 'rotate(180deg)' : '';
+        };
+
         const refreshMenuScores = () => {
           const hdr = m.querySelector('span');
           if (hdr) hdr.textContent = `${team.name} • ${getTotal()}`;
-          const sel = m.querySelector('#cm-team-game-sel');
-          if (sel) {
-            Array.from(sel.options).forEach((opt, gi) => {
-              opt.textContent = `${st.games[gi]} (${team.scores[gi] || 0})`;
-            });
-          }
+          if (dotEl) dotEl.style.backgroundColor = GAME_COLORS[selectedG % GAME_COLORS.length];
+          if (labelEl) labelEl.textContent = `${st.games[selectedG] || 'Activity'} (${team.scores[selectedG] || 0})`;
+          m.querySelectorAll('[data-cm-game-opt]').forEach(optBtn => {
+            const gi = Number(optBtn.dataset.cmGameOpt);
+            const active = gi === selectedG;
+            optBtn.className = `w-full text-left px-2 py-1.5 rounded-lg border-2 ${active ? 'bg-[#F4D03F] border-[#111111]' : 'bg-transparent border-transparent hover:bg-white hover:border-[#111111]'} font-display font-bold text-[11px] text-[#111111] flex items-center justify-between gap-2 cursor-pointer transition-colors`;
+            const scEl = optBtn.querySelector(`[data-cm-opt-score="${gi}"]`);
+            if (scEl) scEl.textContent = String(team.scores[gi] || 0);
+          });
           const singleEl = m.querySelector('#cm-team-single-g');
           if (singleEl) singleEl.textContent = `${st.games[selectedG] || 'Activity'} (${team.scores[selectedG] || 0})`;
         };
 
-        m.querySelector('#cm-team-game-sel')?.addEventListener('change', (e) => {
-          selectedG = Number(e.target.value) || 0;
+        triggerBtn?.addEventListener('click', (e) => {
+          e.stopPropagation();
+          toggleDropdown();
+        });
+        m.querySelectorAll('[data-cm-game-opt]').forEach(optBtn => {
+          optBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            selectedG = Number(optBtn.dataset.cmGameOpt) || 0;
+            toggleDropdown(false);
+            refreshMenuScores();
+          });
         });
         m.querySelectorAll('[data-cm-score]').forEach(btn => {
           btn.addEventListener('click', (e) => {
