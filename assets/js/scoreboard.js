@@ -213,9 +213,19 @@
         return base;
       }
 
-      // Load State safely from LocalStorage (clean up stale expired/fullscreen timers on page entry)
+      const LOCAL_SAVED_KEY = 'vox_local_saved_v1';
+      const isAccountSignedIn = () => {
+        try { return Boolean(JSON.parse(localStorage.getItem('helpdai_auth_v1') || 'null')?.user?.id); } catch (_) { return false; }
+      };
+      const isLocallySaved = () => {
+        try { return localStorage.getItem(LOCAL_SAVED_KEY) === '1'; } catch (_) { return false; }
+      };
+      let hasUnsavedGuestChanges = false;
+
+      // Load State safely: logged-in or locally-saved users restore their data; guests start fresh
       function loadState() {
         try {
+          if (!isAccountSignedIn() && !isLocallySaved()) return cloneDefaultState();
           const raw = localStorage.getItem(STORAGE_KEY);
           if (!raw) return cloneDefaultState();
           const st = normalizeState(JSON.parse(raw), null);
@@ -289,18 +299,34 @@
         }
       }
 
-      function saveAndBroadcast(options = { broadcast: true }) {
-        state.updatedAt = Date.now();
+      function persistStateToStorage() {
         try {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
         } catch (err) {
           console.warn('LocalStorage write warning:', err);
+        }
+      }
+
+      function saveAndBroadcast(options = { broadcast: true }) {
+        state.updatedAt = Date.now();
+        if (isAccountSignedIn() || isLocallySaved()) {
+          hasUnsavedGuestChanges = false;
+          persistStateToStorage();
+        } else {
+          hasUnsavedGuestChanges = true;
         }
 
         if (options.broadcast) {
           broadcastPayload({ type: 'SYNC_STATE', state });
         }
       }
+
+      window.addEventListener('helpdai-auth-change', () => {
+        if (isAccountSignedIn()) {
+          hasUnsavedGuestChanges = false;
+          persistStateToStorage();
+        }
+      });
 
       // Authoritative Stage Reducer for Concurrent Multi-User Score Actions
       function applyAtomicAction(msg) {
@@ -3699,8 +3725,75 @@
           syncAccordionFromState();
           renderLeaderboard(true);
           renderDrawerControls();
-        }
+        },
+        saveLocally: () => {
+          try { localStorage.setItem(LOCAL_SAVED_KEY, '1'); } catch (_) {}
+          hasUnsavedGuestChanges = false;
+          persistStateToStorage();
+        },
+        isSaved: () => isAccountSignedIn() || isLocallySaved()
       };
+
+      // Warn Guest users if leaving/refreshing with unsaved changes (neither logged in nor saved locally)
+      const needsUnsavedGuard = () => hasUnsavedGuestChanges && !isAccountSignedIn() && !isLocallySaved();
+
+      window.addEventListener('beforeunload', (e) => {
+        if (!needsUnsavedGuard()) return;
+        e.preventDefault();
+        e.returnValue = '';
+      });
+
+      document.addEventListener('click', (e) => {
+        const link = e.target.closest('a[href]');
+        if (!link || !needsUnsavedGuard()) return;
+        const href = link.getAttribute('href') || '';
+        if (!href || href.startsWith('#') || link.target === '_blank') return;
+
+        e.preventDefault();
+        let modal = document.getElementById('vox-unsaved-modal');
+        if (!modal) {
+          modal = document.createElement('div');
+          modal.id = 'vox-unsaved-modal';
+          modal.className = 'fixed inset-0 z-[185] flex items-center justify-center p-4 bg-black/60 backdrop-blur-[2px]';
+          modal.innerHTML = `
+            <div class="vox-panel-enter vox-card bg-[#F8F6F0] w-full max-w-sm p-5 flex flex-col gap-3">
+              <h3 class="font-display font-black text-base text-[#111111]">ยังไม่ได้บันทึกข้อมูล</h3>
+              <p class="text-xs text-[#111111]/75 leading-relaxed">คุณยังไม่ได้เข้าสู่ระบบหรือบันทึกลงเครื่อง หากออกจากหน้านี้การแก้ไขทั้งหมดจะหายไป</p>
+              <div class="flex flex-col gap-2 pt-1">
+                <button type="button" id="vox-unsaved-login" class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-extrabold text-xs py-2 rounded-xl cursor-pointer">เข้าสู่ระบบเพื่อซิงค์ออนไลน์</button>
+                <button type="button" id="vox-unsaved-local" class="btn-vox bg-white hover:bg-[#F4D03F]/40 text-[#111111] font-display font-bold text-xs py-2 rounded-xl cursor-pointer">บันทึกไว้ในเครื่องนี้</button>
+                <div class="grid grid-cols-2 gap-2">
+                  <button type="button" id="vox-unsaved-discard" class="btn-vox bg-white hover:bg-red-50 text-[#E74C3C] font-display font-bold text-xs py-2 rounded-xl cursor-pointer">ออกโดยไม่บันทึก</button>
+                  <button type="button" id="vox-unsaved-stay" class="btn-vox bg-[#111111] text-white font-display font-bold text-xs py-2 rounded-xl cursor-pointer">อยู่หน้านี้ต่อ</button>
+                </div>
+              </div>
+            </div>
+          `;
+          document.body.appendChild(modal);
+        } else {
+          modal.classList.remove('hidden');
+          modal.classList.add('flex');
+        }
+
+        const hideModal = () => { modal.classList.add('hidden'); modal.classList.remove('flex'); };
+        document.getElementById('vox-unsaved-stay').onclick = hideModal;
+        document.getElementById('vox-unsaved-discard').onclick = () => {
+          hasUnsavedGuestChanges = false;
+          window.location.href = href;
+        };
+        document.getElementById('vox-unsaved-local').onclick = () => {
+          window.VoxScoreboardAPI.saveLocally();
+          window.location.href = href;
+        };
+        document.getElementById('vox-unsaved-login').onclick = () => {
+          hideModal();
+          if (window.HelpDaiAuth?.openLogin) {
+            window.HelpDaiAuth.openLogin();
+          } else {
+            window.location.href = 'index.html';
+          }
+        };
+      });
 
       // ========================================================================
       // INITIALIZE IMMEDIATELY

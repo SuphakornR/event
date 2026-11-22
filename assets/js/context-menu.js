@@ -424,7 +424,8 @@
           <button type="button" data-cm-tpl="sports" class="btn-vox bg-white hover:bg-[#F4D03F] font-display font-bold text-[10px] py-1 rounded-lg cursor-pointer">สี 6 ทีม</button>
         </div>
       </div>
-      ${menuBtn('export-json', CM_ICONS.download, 'บันทึกไฟล์งาน (.json)')}
+      ${menuBtn('save-local', CM_ICONS.download, api.isSaved?.() ? '✓ บันทึกข้อมูลแล้ว' : 'บันทึกไว้ในเครื่องนี้')}
+      ${menuBtn('export-json', CM_ICONS.download, 'ส่งออกไฟล์ (.json)')}
       ${menuBtn('import-json', CM_ICONS.upload, 'โหลดไฟล์งาน (.json)')}
       ${menuBtn('reset-scores', CM_ICONS.reset, 'รีเซ็ตคะแนนทั้งหมด', true)}
     `;
@@ -432,6 +433,7 @@
       m.querySelectorAll('[data-cm-tpl]').forEach(btn => {
         btn.addEventListener('click', () => { closeMenu(); api.applyTemplate(btn.dataset.cmTpl); });
       });
+      m.querySelector('[data-cm-action="save-local"]')?.addEventListener('click', () => { closeMenu(); api.saveLocally?.(); });
       m.querySelector('[data-cm-action="export-json"]')?.addEventListener('click', () => { closeMenu(); window.VoxCloudSync?.exportEventJson(); });
       m.querySelector('[data-cm-action="import-json"]')?.addEventListener('click', () => { closeMenu(); window.VoxCloudSync?.importEventJson(); });
       m.querySelector('[data-cm-action="reset-scores"]')?.addEventListener('click', () => { closeMenu(); api.resetScores(); });

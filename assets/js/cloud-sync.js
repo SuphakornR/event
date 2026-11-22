@@ -45,15 +45,14 @@
   }
 
   const cfg = window.HELPDAI_CONFIG || {};
-  const baseRoom = new URLSearchParams(window.location.search).get('room') || 'default';
+  const explicitRoom = new URLSearchParams(window.location.search).get('room') || '';
   const getScopedRoomId = () => {
+    if (explicitRoom) return explicitRoom;
     let uid = window.HelpDaiAuth?.getSession()?.user?.id;
     if (!uid) {
       try { uid = JSON.parse(localStorage.getItem('helpdai_auth_v1') || 'null')?.user?.id; } catch (_) {}
     }
-    return uid && !new URLSearchParams(window.location.search).get('room')
-      ? `u-${uid.slice(0, 12)}`
-      : baseRoom;
+    return uid ? `u-${uid.slice(0, 12)}` : null;
   };
   let roomId = getScopedRoomId();
   const defaultApiBase = (!location.hostname.endsWith('github.io') && location.protocol.startsWith('http')) ? location.origin : '';
@@ -76,7 +75,7 @@
     };
 
     const pullFromServer = async () => {
-      if (!backendOnline) return;
+      if (!backendOnline || !roomId) return;
       try {
         const res = await fetch(`${apiBase}/api/rooms/${encodeURIComponent(roomId)}`);
         if (!res.ok) return;
@@ -93,7 +92,7 @@
     };
 
     const pushToServer = async (raw, keepalive = false) => {
-      if (!backendOnline || !raw || raw === lastServerRaw) return;
+      if (!backendOnline || !roomId || !raw || raw === lastServerRaw) return;
       try {
         const parsed = JSON.parse(raw);
         if (!parsed || !Array.isArray(parsed.teams)) return;
@@ -148,6 +147,7 @@
 
     let lastSyncedRaw = '';
     const pullRoom = async () => {
+      if (!roomId) return;
       try {
         const res = await fetch(`${endpoint}?room_id=eq.${encodeURIComponent(roomId)}&select=payload`, { headers });
         if (!res.ok) return;
