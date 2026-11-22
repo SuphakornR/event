@@ -2,6 +2,7 @@
 const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
+const zlib = require('node:zlib');
 const { DatabaseSync } = require('node:sqlite');
 
 const PORT = Number(process.env.PORT) || 3000;
@@ -102,6 +103,21 @@ db.exec(`
     message TEXT NOT NULL,
     created_at TEXT NOT NULL
   );
+  CREATE TABLE IF NOT EXISTS polls (
+    poll_id TEXT PRIMARY KEY,
+    admin_token TEXT NOT NULL,
+    question TEXT NOT NULL,
+    options TEXT NOT NULL,
+    is_open INTEGER NOT NULL DEFAULT 1,
+    updated_at TEXT NOT NULL
+  );
+  CREATE TABLE IF NOT EXISTS poll_votes (
+    poll_id TEXT NOT NULL,
+    voter_id TEXT NOT NULL,
+    choice_idx INTEGER NOT NULL,
+    created_at TEXT NOT NULL,
+    PRIMARY KEY (poll_id, voter_id)
+  );
 `);
 
 const stmtGetRoom = db.prepare('SELECT room_id, payload, updated_at FROM rooms WHERE room_id = ?');
@@ -112,6 +128,19 @@ const stmtPutRoom = db.prepare(`
 `);
 const stmtAddSugg = db.prepare('INSERT INTO suggestions (category, message, created_at) VALUES (?, ?, ?)');
 const stmtListSugg = db.prepare('SELECT id, category, message, created_at FROM suggestions ORDER BY id DESC LIMIT 100');
+const stmtGetPoll = db.prepare('SELECT poll_id, admin_token, question, options, is_open, updated_at FROM polls WHERE poll_id = ?');
+const stmtUpsertPoll = db.prepare(`
+  INSERT INTO polls (poll_id, admin_token, question, options, is_open, updated_at)
+  VALUES (?, ?, ?, ?, ?, ?)
+  ON CONFLICT(poll_id) DO UPDATE SET question = excluded.question, options = excluded.options, is_open = excluded.is_open, updated_at = excluded.updated_at
+`);
+const stmtCountVotes = db.prepare('SELECT choice_idx, COUNT(*) AS cnt FROM poll_votes WHERE poll_id = ? GROUP BY choice_idx');
+const stmtCastVote = db.prepare(`
+  INSERT INTO poll_votes (poll_id, voter_id, choice_idx, created_at)
+  VALUES (?, ?, ?, ?)
+  ON CONFLICT(poll_id, voter_id) DO NOTHING
+`);
+const stmtResetVotes = db.prepare('DELETE FROM poll_votes WHERE poll_id = ?');
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -133,10 +162,11 @@ const SEC_HEADERS = {
 const sendJson = (res, status, data) => {
   res.writeHead(status, {
     ...SEC_HEADERS,
+    'Cache-Control': 'no-store',
     'Content-Type': 'application/json; charset=utf-8',
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Key'
+    'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Key, X-Poll-Admin'
   });
   res.end(JSON.stringify(data));
 };
@@ -229,6 +259,84 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
+  if (pathname.startsWith('/api/polls/')) {
+    const parts = pathname.slice('/api/polls/'.length).split('/');
+    const pollId = decodeURIComponent(parts[0] || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 32);
+    const subAction = parts[1] || '';
+    if (!pollId) return sendJson(res, 400, { ok: false, error: 'Invalid poll ID' });
+
+    if (req.method === 'GET' && !subAction) {
+      const row = stmtGetPoll.get(pollId);
+      if (!row) return sendJson(res, 404, { ok: false, error: 'Poll not found' });
+      const opts = JSON.parse(row.options);
+      const counts = opts.map(() => 0);
+      for (const r of stmtCountVotes.all(pollId)) {
+        if (r.choice_idx >= 0 && r.choice_idx < counts.length) counts[r.choice_idx] = Number(r.cnt) || 0;
+      }
+      const totalVotes = counts.reduce((a, b) => a + b, 0);
+      return sendJson(res, 200, { ok: true, pollId: row.poll_id, question: row.question, options: opts, counts, totalVotes, isOpen: Boolean(row.is_open) });
+    }
+
+    const clientIp = req.socket?.remoteAddress || 'unknown';
+    if (isRateLimited(clientIp)) return sendJson(res, 429, { ok: false, error: 'Too many requests' });
+
+    if (req.method === 'POST' && subAction === 'vote') {
+      const row = stmtGetPoll.get(pollId);
+      if (!row) return sendJson(res, 404, { ok: false, error: 'Poll not found' });
+      if (!row.is_open) return sendJson(res, 403, { ok: false, error: 'Poll is closed' });
+      try {
+        const body = await readBody(req, 8 * 1024);
+        const opts = JSON.parse(row.options);
+        const choiceIdx = Number(body.choiceIndex);
+        const voterId = String(body.voterId || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 48);
+        if (!Number.isInteger(choiceIdx) || choiceIdx < 0 || choiceIdx >= opts.length || voterId.length < 8) {
+          return sendJson(res, 400, { ok: false, error: 'Invalid vote' });
+        }
+        const info = stmtCastVote.run(pollId, voterId, choiceIdx, new Date().toISOString());
+        return sendJson(res, 200, { ok: true, alreadyVoted: info.changes === 0 });
+      } catch (err) {
+        return sendJson(res, 400, { ok: false, error: err.message });
+      }
+    }
+
+    if (req.method === 'POST' && subAction === 'reset') {
+      const row = stmtGetPoll.get(pollId);
+      if (!row) return sendJson(res, 404, { ok: false, error: 'Poll not found' });
+      if ((req.headers['x-poll-admin'] || '') !== row.admin_token) {
+        return sendJson(res, 403, { ok: false, error: 'Admin permission required' });
+      }
+      stmtResetVotes.run(pollId);
+      return sendJson(res, 200, { ok: true });
+    }
+
+    if (req.method === 'POST' && !subAction) {
+      try {
+        const body = await readBody(req, 16 * 1024);
+        const existing = stmtGetPoll.get(pollId);
+        const token = String(req.headers['x-poll-admin'] || body.adminToken || '').trim();
+        if (existing) {
+          if (!token || token !== existing.admin_token) {
+            return sendJson(res, 403, { ok: false, error: 'Only the poll admin can edit this poll' });
+          }
+        } else if (token.length < 16) {
+          return sendJson(res, 400, { ok: false, error: 'Admin token required' });
+        }
+        const question = String(body.question || '').replace(/[\u0000-\u001F\u007F]/g, '').trim().slice(0, 160);
+        const options = Array.isArray(body.options)
+          ? body.options.slice(0, 6).map(o => String(o || '').replace(/[\u0000-\u001F\u007F]/g, '').trim().slice(0, 60)).filter(Boolean)
+          : [];
+        if (!question || options.length < 2) {
+          return sendJson(res, 400, { ok: false, error: 'Question and at least 2 options required' });
+        }
+        const isOpen = body.isOpen === false ? 0 : 1;
+        stmtUpsertPoll.run(pollId, existing ? existing.admin_token : token, question, JSON.stringify(options), isOpen, new Date().toISOString());
+        return sendJson(res, 200, { ok: true, pollId });
+      } catch (err) {
+        return sendJson(res, 400, { ok: false, error: err.message });
+      }
+    }
+  }
+
   if (pathname === '/api/suggestions') {
     if (req.method === 'GET') {
       if (ADMIN_KEY && req.headers['x-admin-key'] !== ADMIN_KEY) {
@@ -267,8 +375,30 @@ const server = http.createServer(async (req, res) => {
   }
 
   const ext = path.extname(fullPath).toLowerCase();
-  res.writeHead(200, { ...SEC_HEADERS, 'Content-Type': MIME[ext] || 'application/octet-stream' });
-  fs.createReadStream(fullPath).pipe(res);
+  const mimeType = MIME[ext] || 'application/octet-stream';
+  const cacheControl = safePath.startsWith('/assets/') || safePath.startsWith('\\assets\\')
+    ? 'public, max-age=3600'
+    : 'no-cache';
+  const isCompressible = ['.html', '.css', '.js', '.json', '.svg'].includes(ext);
+  const acceptsGzip = /\bgzip\b/i.test(req.headers['accept-encoding'] || '');
+
+  if (isCompressible && acceptsGzip) {
+    res.writeHead(200, {
+      ...SEC_HEADERS,
+      'Content-Type': mimeType,
+      'Content-Encoding': 'gzip',
+      'Cache-Control': cacheControl,
+      Vary: 'Accept-Encoding'
+    });
+    fs.createReadStream(fullPath).pipe(zlib.createGzip()).pipe(res);
+  } else {
+    res.writeHead(200, {
+      ...SEC_HEADERS,
+      'Content-Type': mimeType,
+      'Cache-Control': cacheControl
+    });
+    fs.createReadStream(fullPath).pipe(res);
+  }
 });
 
 server.listen(PORT, () => {

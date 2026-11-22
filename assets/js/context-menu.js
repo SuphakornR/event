@@ -224,24 +224,23 @@
       const teamId = teamRow.dataset.teamId;
       const team = st.teams.find(t => t.id === teamId);
       if (!team) return;
-      const activeG = api.getActiveGameIdx();
-      const gTitle = st.games[activeG] || 'Activity';
-
-      let selectedG = activeG;
+      const rawActiveG = api.getActiveGameIdx();
+      let selectedG = Math.max(0, Math.min(st.games.length - 1, Number(rawActiveG) || 0));
+      const getTotal = () => (team.scores || []).reduce((a, b) => a + (Number(b) || 0), 0);
 
       const items = `
         <div class="px-1 py-1">
           ${st.games.length > 1 ? `
             <select id="cm-team-game-sel" class="w-full mb-1.5 bg-[#F8F6F0] border-2 border-[#111111] rounded-lg px-2 py-1 text-[11px] font-display font-bold text-[#111111]">
-              ${st.games.map((g, gi) => `<option value="${gi}" ${gi === selectedG ? 'selected' : ''}>${g}</option>`).join('')}
+              ${st.games.map((g, gi) => `<option value="${gi}" ${gi === selectedG ? 'selected' : ''}>${g} (${team.scores[gi] || 0})</option>`).join('')}
             </select>
-          ` : `<div class="text-[10px] font-bold text-[#111111]/60 mb-1 truncate">${gTitle}</div>`}
+          ` : `<div id="cm-team-single-g" class="text-[10px] font-bold text-[#111111]/60 mb-1 truncate">${st.games[selectedG] || 'Activity'} (${team.scores[selectedG] || 0})</div>`}
           <div class="grid grid-cols-5 gap-1">
-            <button type="button" data-cm-score="-5" class="btn-vox bg-white hover:bg-red-50 text-[#E74C3C] font-display font-black text-[11px] py-1 rounded-lg cursor-pointer">−5</button>
-            <button type="button" data-cm-score="-1" class="btn-vox bg-white hover:bg-red-50 text-[#E74C3C] font-display font-black text-[11px] py-1 rounded-lg cursor-pointer">−1</button>
-            <button type="button" data-cm-score="1" class="btn-vox bg-white hover:bg-yellow-100 text-[#111111] font-display font-black text-[11px] py-1 rounded-lg cursor-pointer">+1</button>
-            <button type="button" data-cm-score="5" class="btn-vox bg-white hover:bg-yellow-100 text-[#111111] font-display font-black text-[11px] py-1 rounded-lg cursor-pointer">+5</button>
-            <button type="button" data-cm-score="10" class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-black text-[11px] py-1 rounded-lg cursor-pointer">+10</button>
+            <button type="button" data-cm-score="-5" class="btn-vox bg-white hover:bg-red-50 text-[#E74C3C] font-display font-black text-[11px] py-1.5 rounded-lg cursor-pointer">−5</button>
+            <button type="button" data-cm-score="-1" class="btn-vox bg-white hover:bg-red-50 text-[#E74C3C] font-display font-black text-[11px] py-1.5 rounded-lg cursor-pointer">−1</button>
+            <button type="button" data-cm-score="1" class="btn-vox bg-white hover:bg-yellow-100 text-[#111111] font-display font-black text-[11px] py-1.5 rounded-lg cursor-pointer">+1</button>
+            <button type="button" data-cm-score="5" class="btn-vox bg-white hover:bg-yellow-100 text-[#111111] font-display font-black text-[11px] py-1.5 rounded-lg cursor-pointer">+5</button>
+            <button type="button" data-cm-score="10" class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-black text-[11px] py-1.5 rounded-lg cursor-pointer">+10</button>
           </div>
         </div>
         ${menuBtn('rename-team', CM_ICONS.edit, 'เปลี่ยนชื่อทีม')}
@@ -249,14 +248,28 @@
         ${st.teams.length > 2 ? menuBtn('remove-team', '−', 'ลบทีมนี้', true) : ''}
       `;
 
-      showMenuAt(x, y, team.name, items, (m) => {
+      showMenuAt(x, y, `${team.name} • ${getTotal()}`, items, (m) => {
+        const refreshMenuScores = () => {
+          const hdr = m.querySelector('span');
+          if (hdr) hdr.textContent = `${team.name} • ${getTotal()}`;
+          const sel = m.querySelector('#cm-team-game-sel');
+          if (sel) {
+            Array.from(sel.options).forEach((opt, gi) => {
+              opt.textContent = `${st.games[gi]} (${team.scores[gi] || 0})`;
+            });
+          }
+          const singleEl = m.querySelector('#cm-team-single-g');
+          if (singleEl) singleEl.textContent = `${st.games[selectedG] || 'Activity'} (${team.scores[selectedG] || 0})`;
+        };
+
         m.querySelector('#cm-team-game-sel')?.addEventListener('change', (e) => {
           selectedG = Number(e.target.value) || 0;
         });
         m.querySelectorAll('[data-cm-score]').forEach(btn => {
-          btn.addEventListener('click', () => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
             api.adjustScore(teamId, selectedG, Number(btn.dataset.cmScore));
-            closeMenu();
+            refreshMenuScores();
           });
         });
         m.querySelector('[data-cm-action="rename-team"]')?.addEventListener('click', () => {

@@ -816,9 +816,14 @@
         } catch (_) {}
       }
 
+      let lastTimerRenderKey = '';
+
       function renderTimerUI() {
         const t = state.timer || defaultState.timer;
         const sec = getLiveRemainingSec();
+        const renderKey = `${sec}:${t.running}:${t.visible}:${t.mode}:${t.durationSec}`;
+        if (renderKey === lastTimerRenderKey) return;
+        lastTimerRenderKey = renderKey;
         const formatted = formatTimeMMSS(sec);
 
         if (t.running && sec > 0) {
@@ -2073,14 +2078,27 @@
       function adjustTeamGameScore(teamId, gameIdx, delta) {
         const team = state.teams.find(t => t.id === teamId);
         if (!team) return;
-        team.scores[gameIdx] = Math.max(0, (Number(team.scores[gameIdx]) || 0) + delta);
+        const idx = Math.max(0, Math.min(state.games.length - 1, Number(gameIdx) || 0));
+        const cur = Number(team.scores[idx]) || 0;
+        if (delta < 0 && cur === 0) {
+          // If selected activity is 0, deduct from the highest-scoring activity so minus always works smoothly
+          let bestIdx = idx;
+          let bestVal = 0;
+          team.scores.forEach((s, i) => {
+            const v = Number(s) || 0;
+            if (v > bestVal) { bestVal = v; bestIdx = i; }
+          });
+          team.scores[bestIdx] = Math.max(0, bestVal + delta);
+        } else {
+          team.scores[idx] = Math.max(0, cur + delta);
+        }
         if (currentRole === 'stage') {
           saveAndBroadcast();
           renderLeaderboard(true);
           renderDrawerControls();
         } else {
           // Send atomic delta so concurrent mobile controllers never overwrite each other
-          broadcastPayload({ type: 'ACTION', op: 'ADJUST_SCORE', teamId, gameIdx, delta });
+          broadcastPayload({ type: 'ACTION', op: 'ADJUST_SCORE', teamId, gameIdx: idx, delta });
           if (!adminConnection?.open) saveAndBroadcast({ broadcast: false });
           renderAdminUI();
         }
