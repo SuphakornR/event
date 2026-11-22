@@ -120,6 +120,11 @@
     return data;
   }
 
+  function signInWithGoogle() {
+    const redirectTo = `${window.location.origin}${window.location.pathname}`;
+    window.location.href = `${sbUrl}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(redirectTo)}`;
+  }
+
   function openAuthModal() {
     let modal = document.getElementById('helpdai-auth-modal');
     if (!modal) {
@@ -156,6 +161,20 @@
           <!-- Sign-In / Sign-Up View -->
           <div id="auth-guest-view" class="flex flex-col gap-3">
             <p class="text-[11px] text-[#111111]/75 leading-relaxed">เข้าสู่ระบบเพื่อซิงค์คะแนนและกิจกรรมข้ามเครื่องอัตโนมัติ (หรือใช้งานฟรีแบบไม่ต้องล็อกอินได้ทันที)</p>
+            <button type="button" id="auth-google-btn" class="btn-vox w-full bg-white hover:bg-[#F4D03F]/30 text-[#111111] font-display font-extrabold text-xs py-2.5 rounded-xl flex items-center justify-center gap-2 cursor-pointer">
+              <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17Z"/>
+                <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.11-6.72-4.96H1.29v3.14C3.26 21.3 7.31 24 12 24Z"/>
+                <path fill="#FBBC05" d="M5.28 14.24c-.24-.72-.38-1.49-.38-2.24s.14-1.52.38-2.24V6.62H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.38l3.99-3.14Z"/>
+                <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.62l3.99 3.14c.95-2.85 3.6-4.96 6.72-4.96Z"/>
+              </svg>
+              <span>ดำเนินการต่อด้วย Google</span>
+            </button>
+            <div class="flex items-center gap-2 text-[10px] font-display font-bold text-[#111111]/45 uppercase">
+              <span class="flex-1 h-px bg-[#111111]/15"></span>
+              <span>หรือใช้อีเมล</span>
+              <span class="flex-1 h-px bg-[#111111]/15"></span>
+            </div>
             <div class="grid grid-cols-2 gap-1.5 bg-white border-2 border-[#111111] rounded-xl p-1">
               <button type="button" id="auth-tab-signin" class="font-display font-extrabold text-xs py-1.5 rounded-lg transition-colors cursor-pointer bg-[#F4D03F] text-[#111111]">เข้าสู่ระบบ</button>
               <button type="button" id="auth-tab-signup" class="font-display font-bold text-xs py-1.5 rounded-lg transition-colors cursor-pointer text-[#111111]/70 hover:text-[#111111]">สมัครสมาชิก</button>
@@ -217,6 +236,7 @@
         passInput.type = passInput.type === 'password' ? 'text' : 'password';
       });
 
+      document.getElementById('auth-google-btn').addEventListener('click', signInWithGoogle);
       document.getElementById('auth-signout-btn').addEventListener('click', () => {
         writeSession(null);
         hide();
@@ -318,6 +338,7 @@
   window.HelpDaiAuth = Object.freeze({
     getSession: readSession,
     openLogin: openAuthModal,
+    signInWithGoogle,
     refresh: refreshSessionIfNeeded,
     signOut: () => writeSession(null)
   });
