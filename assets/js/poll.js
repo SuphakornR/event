@@ -325,15 +325,15 @@
       document.execCommand('copy');
       tmp.remove();
     }
-    btn.style.transition = 'background-color 0.3s ease, color 0.3s ease, transform 0.28s cubic-bezier(0.22,1,0.36,1)';
-    btn.classList.remove('bg-[#F8F6F0]', 'text-[#111111]');
-    btn.classList.add('bg-[#10B981]', 'text-white', 'scale-105');
-    btn.textContent = '✓ คัดลอกลิงก์แล้ว! ส่งให้ผู้โหวตได้เลย';
+    btn.style.transition = 'background-color 0.28s ease, color 0.28s ease, transform 0.28s cubic-bezier(0.22,1,0.36,1)';
+    btn.classList.remove('bg-[#F8F6F0]');
+    btn.classList.add('bg-[#F4D03F]', 'text-[#111111]', 'scale-105', 'inline-flex', 'items-center', 'gap-1.5');
+    btn.innerHTML = `<svg class="w-4 h-4 shrink-0 text-[#111111]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span>Copied!</span>`;
     setTimeout(() => {
-      btn.classList.remove('bg-[#10B981]', 'text-white', 'scale-105');
-      btn.classList.add('bg-[#F8F6F0]', 'text-[#111111]');
+      btn.classList.remove('bg-[#F4D03F]', 'scale-105');
+      btn.classList.add('bg-[#F8F6F0]');
       btn.textContent = 'คัดลอกลิงก์โหวต';
-    }, 2200);
+    }, 2000);
   });
 
   renderOptionInputs();
