@@ -561,7 +561,7 @@
       }
     };
 
-    const loadYoutubeTrack = (videoId) => {
+    const loadYoutubeTrack = (videoId, title = '', syncShared = true) => {
       if (!videoId) return;
       currentTrackId = videoId;
       musicMuted = false;
@@ -577,13 +577,21 @@
           allowfullscreen></iframe>
       `;
       syncMusicBtnBadge();
+      if (syncShared) window.HelpDaiBgm?.setTrack?.(videoId, title, true);
     };
 
-    const stopYoutubeTrack = () => {
+    const stopYoutubeTrack = (syncShared = true) => {
       currentTrackId = '';
       ytHost.innerHTML = '';
       syncMusicBtnBadge();
+      if (syncShared) window.HelpDaiBgm?.stop?.();
     };
+
+    // Auto-resume shared YouTube track if playing from Hub or previous page
+    const sharedBgm = window.HelpDaiBgm?.getState?.();
+    if (sharedBgm?.videoId && sharedBgm.playing) {
+      loadYoutubeTrack(sharedBgm.videoId, sharedBgm.title || '', false);
+    }
 
     const searchYoutubeInApp = async (query) => {
       const cfg = window.HELPDAI_CONFIG || {};
