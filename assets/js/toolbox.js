@@ -266,11 +266,11 @@
           <button type="button" id="tb-rand-team" class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-extrabold text-xs py-2 rounded-xl cursor-pointer">สุ่มทีม</button>
           <button type="button" id="tb-rand-num" class="btn-vox bg-white hover:bg-[#F4D03F] text-[#111111] font-display font-extrabold text-xs py-2 rounded-xl cursor-pointer">สุ่ม 1–100</button>
         </div>
-      `, () => {
-        const boxEl = document.getElementById('tb-rand-box');
-        const resEl = document.getElementById('tb-rand-result');
-        const barWrap = document.getElementById('tb-rand-bar-wrap');
-        const barEl = document.getElementById('tb-rand-bar');
+      `, (winEl) => {
+        const boxEl = winEl.querySelector('#tb-rand-box');
+        const resEl = winEl.querySelector('#tb-rand-result');
+        const barWrap = winEl.querySelector('#tb-rand-bar-wrap');
+        const barEl = winEl.querySelector('#tb-rand-bar');
         let spinning = false;
 
         const playSpinTick = (progress) => {
@@ -343,11 +343,21 @@
           nextTick();
         };
 
-        document.getElementById('tb-rand-team').addEventListener('click', () => {
-          const teams = window.VoxScoreboardAPI?.getState()?.teams || [];
-          if (teams.length) spin(teams, true);
+        winEl.querySelector('#tb-rand-team')?.addEventListener('click', () => {
+          let teams = window.VoxScoreboardAPI?.getState()?.teams || [];
+          if (!teams.length) {
+            try {
+              const saved = JSON.parse(localStorage.getItem('vox_scoreboard_clean_v3') || 'null');
+              if (Array.isArray(saved?.teams)) teams = saved.teams;
+            } catch (_) {}
+          }
+          if (!teams.length) {
+            if (resEl) resEl.textContent = 'ไม่พบทีม';
+            return;
+          }
+          spin(teams, true);
         });
-        document.getElementById('tb-rand-num').addEventListener('click', () => {
+        winEl.querySelector('#tb-rand-num')?.addEventListener('click', () => {
           spin(Array.from({ length: 100 }, (_, i) => String(i + 1)), false);
         });
       });

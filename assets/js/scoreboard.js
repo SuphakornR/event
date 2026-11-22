@@ -120,18 +120,21 @@
         const incVer = Number(incT.timerVersion) || 0;
         const prevVer = Number(prevTimer?.timerVersion) || 0;
         const rem = Math.max(0, Number(incT.remainingSec ?? incT.durationSec ?? 180));
-        const isRun = Boolean(incT.running);
+        const incEndAt = Number(incT.endAt) || 0;
+        const expired = (rem <= 0) || (incEndAt > 0 && incEndAt <= Date.now());
+        const stoppedSameVer = Boolean(prevTimer && incVer === prevVer && !prevTimer.running && prevTimer.remainingSec === 0);
+        const isRun = Boolean(incT.running) && !expired && !stoppedSameVer;
         let nextEndAt = null;
         if (isRun) {
           if (prevTimer && incVer === prevVer && prevTimer.endAt) {
             nextEndAt = prevTimer.endAt;
           } else {
-            nextEndAt = prevTimer ? Date.now() + rem * 1000 : (Number(incT.endAt) || Date.now() + rem * 1000);
+            nextEndAt = incEndAt > Date.now() ? incEndAt : (Date.now() + rem * 1000);
           }
         }
         return {
           durationSec: Math.max(10, Number(incT.durationSec) || 180),
-          remainingSec: rem,
+          remainingSec: expired ? 0 : rem,
           running: isRun,
           endAt: nextEndAt,
           visible: Boolean(incT.visible),
@@ -856,7 +859,12 @@
           t.running = false;
           t.remainingSec = 0;
           t.endAt = null;
-          try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) {}
+          t.timerVersion = Date.now();
+          if (window.__voxLiquidRaf) {
+            cancelAnimationFrame(window.__voxLiquidRaf);
+            window.__voxLiquidRaf = null;
+          }
+          saveAndBroadcast();
           if (currentRole === 'stage' && !timerChimePlayed) {
             timerChimePlayed = true;
             playTimerChime();

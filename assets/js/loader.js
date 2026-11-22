@@ -56,16 +56,31 @@
   }
 
   let fontsDone = false;
-  let winDone = document.readyState === 'complete';
+  let domDone = document.readyState === 'interactive' || document.readyState === 'complete';
 
   const checkDone = () => {
-    if (fontsDone && winDone) finish();
+    if (fontsDone && domDone) {
+      requestAnimationFrame(() => requestAnimationFrame(finish));
+    }
   };
 
+  if (domDone) {
+    setProgress(75);
+  } else {
+    document.addEventListener('DOMContentLoaded', () => {
+      domDone = true;
+      setProgress(75);
+      checkDone();
+    }, { once: true });
+  }
+
   if (document.fonts?.ready) {
-    document.fonts.ready.then(() => {
+    Promise.race([
+      document.fonts.ready,
+      new Promise((resolve) => setTimeout(resolve, 600))
+    ]).then(() => {
       fontsDone = true;
-      setProgress(winDone ? 100 : 85);
+      setProgress(domDone ? 100 : 85);
       checkDone();
     }).catch(() => {
       fontsDone = true;
@@ -73,21 +88,11 @@
     });
   } else {
     fontsDone = true;
-  }
-
-  if (winDone) {
-    setProgress(85);
     checkDone();
-  } else {
-    window.addEventListener('load', () => {
-      winDone = true;
-      setProgress(fontsDone ? 100 : 85);
-      checkDone();
-    }, { once: true });
   }
 
   // Safety timeout in case a slow external CDN/font hangs
-  setTimeout(finish, 6000);
+  setTimeout(finish, 1800);
 
   // Auto-hide custom Vox cursor after 2.8s of mouse inactivity
   let idleCursorTimer = null;
