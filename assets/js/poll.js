@@ -83,7 +83,7 @@
           const color = BAR_COLORS[idx % BAR_COLORS.length];
           if (hasVoted || !data.isOpen) {
             return `
-              <div class="border-2 border-[#111111] rounded-xl p-3 bg-[#F8F6F0]">
+              <div class="vox-stagger-in border-2 border-[#111111] rounded-xl p-3 bg-[#F8F6F0]" style="animation-delay:${idx * 45}ms">
                 <div class="flex items-center justify-between gap-2 font-display font-bold text-sm mb-1.5">
                   <span>${esc(opt)}</span>
                   <span class="tabular-nums">${pct}% (${cnt})</span>
@@ -95,7 +95,7 @@
             `;
           }
           return `
-            <button type="button" data-vote-idx="${idx}" class="btn-vox bg-white hover:bg-[#F4D03F] text-left px-4 py-3 rounded-xl font-display font-extrabold text-sm sm:text-base text-[#111111] flex items-center justify-between cursor-pointer">
+            <button type="button" data-vote-idx="${idx}" style="animation-delay:${idx * 45}ms" class="vox-stagger-in btn-vox bg-white hover:bg-[#F4D03F] text-left px-4 py-3 rounded-xl font-display font-extrabold text-sm sm:text-base text-[#111111] flex items-center justify-between cursor-pointer">
               <span>${esc(opt)}</span>
               <span class="w-3.5 h-3.5 rounded-full border-2 border-[#111111]" style="background:${color};"></span>
             </button>
@@ -171,7 +171,7 @@
   function renderOptionInputs() {
     inQ.value = hostCfg.question;
     inOptsWrap.innerHTML = hostCfg.options.map((opt, i) => `
-      <div class="flex items-center gap-1.5">
+      <div class="vox-stagger-in flex items-center gap-1.5" style="animation-delay:${i * 35}ms">
         <span class="w-3 h-3 rounded-full border border-[#111111] shrink-0" style="background:${BAR_COLORS[i % BAR_COLORS.length]};"></span>
         <input data-poll-opt="${i}" type="text" maxlength="60" value="${esc(opt)}" class="thai-safe-tight flex-1 bg-[#F8F6F0] border-2 border-[#111111] rounded-lg px-2.5 py-1 text-xs font-bold" />
         ${hostCfg.options.length > 2 ? `<button type="button" data-poll-del="${i}" class="w-6 h-6 rounded border border-[#111111] bg-white hover:bg-red-50 text-[#E74C3C] font-black text-xs cursor-pointer">−</button>` : ''}
@@ -221,7 +221,7 @@
         if (previewKey !== lastHostRenderKey) {
           lastHostRenderKey = previewKey;
           hostBarsEl.innerHTML = hostCfg.options.map((opt, idx) => `
-            <div data-poll-bar="${idx}" class="flex flex-col gap-1">
+            <div data-poll-bar="${idx}" style="animation-delay:${idx * 45}ms" class="vox-stagger-in flex flex-col gap-1">
               <div class="flex items-center justify-between gap-2 font-display font-extrabold text-sm sm:text-base text-[#111111]">
                 <span data-poll-lbl>${esc(opt)}</span>
                 <span data-poll-stat class="tabular-nums">0% (0)</span>
@@ -262,7 +262,7 @@
         const pct = Math.round((cnt / total) * 100);
         const color = BAR_COLORS[idx % BAR_COLORS.length];
         return `
-          <div data-poll-bar="${idx}" class="flex flex-col gap-1">
+          <div data-poll-bar="${idx}" style="animation-delay:${idx * 45}ms" class="vox-stagger-in flex flex-col gap-1">
             <div class="flex items-center justify-between gap-2 font-display font-extrabold text-sm sm:text-base text-[#111111]">
               <span data-poll-lbl>${esc(opt)}</span>
               <span data-poll-stat class="tabular-nums">${pct}% (${cnt})</span>

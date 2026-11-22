@@ -396,6 +396,32 @@
     });
   }
 
+  function openMediaEditor(gIdx) {
+    const api = window.VoxScoreboardAPI;
+    if (!api) return;
+    const st = api.getState();
+    const gTitle = st.games[gIdx] || `Activity ${gIdx + 1}`;
+    const media = st.gameMedia[gIdx] || {};
+    openQuickEditDialog({
+      title: `กติกา & สื่อ: ${gTitle}`,
+      fields: [
+        { label: 'กติกา / คำอธิบาย', type: 'textarea', value: media.description || '', placeholder: 'พิมพ์รายละเอียดหรือกติกา...' },
+        { label: 'ลิงก์ YouTube (ถ้ามี)', type: 'url', value: media.youtubeUrl || '', placeholder: 'https://youtu.be/...' },
+        { label: 'ลิงก์รูปภาพ / GIF หรืออัปโหลดรูป', type: 'image', value: media.imageData || '', placeholder: 'https://... หรือกดเลือกรูป' }
+      ],
+      onSave: ([description, youtubeUrl, imageData]) => {
+        const clean = window.VoxSecurity ? window.VoxSecurity.sanitizeUrl : (v => v.trim());
+        api.updateGameMedia(gIdx, {
+          description: description.trim(),
+          youtubeUrl: clean(youtubeUrl),
+          imageData: clean(imageData)
+        });
+      }
+    });
+  }
+
+  window.VoxContextMenu = Object.freeze({ openMediaEditor });
+
   const stage = document.getElementById('stage-container');
   if (stage) {
     // Right-click anywhere on stage

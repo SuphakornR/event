@@ -1355,7 +1355,7 @@
             </div>
           `;
           const quickBtn = mediaContentStageEl.querySelector('[data-open-wrench]');
-          if (quickBtn) quickBtn.addEventListener('click', () => openMediaConfigModal(gameIdx));
+          if (quickBtn) quickBtn.addEventListener('click', () => window.VoxContextMenu?.openMediaEditor(gameIdx));
           return;
         }
 
@@ -1977,6 +1977,7 @@
           }
 
           const isNewRow = !rowEl.parentElement;
+          if (isNewRow) rowEl.classList.add('vox-stagger-in');
           const expectedChild = leaderboardListEl.children[rankIdx] || null;
           const needsDomMove = isNewRow || expectedChild !== rowEl;
           if (needsDomMove) {
