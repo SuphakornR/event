@@ -9,6 +9,7 @@
   const readSession = () => {
     try { return JSON.parse(localStorage.getItem(AUTH_KEY) || 'null'); } catch (_) { return null; }
   };
+
   const writeSession = (s) => {
     try {
       if (s) localStorage.setItem(AUTH_KEY, JSON.stringify(s));
@@ -17,12 +18,74 @@
     window.dispatchEvent(new CustomEvent('helpdai-auth-change', { detail: s }));
   };
 
+  function friendlyAuthError(rawMsg) {
+    const m = String(rawMsg || '').toLowerCase();
+    if (m.includes('invalid login credentials')) return 'อีเมลหรือรหัสผ่านไม่ถูกต้อง';
+    if (m.includes('already registered') || m.includes('already exists')) return 'อีเมลนี้สมัครสมาชิกไว้แล้ว กรุณาเข้าสู่ระบบ';
+    if (m.includes('email not confirmed')) return 'กรุณายืนยันอีเมลจากกล่องจดหมายก่อนเข้าสู่ระบบ';
+    if (m.includes('rate limit') || m.includes('too many')) return 'ส่งคำขอบ่อยเกินไป กรุณารอสักครู่แล้วลองใหม่';
+    if (m.includes('expired') || m.includes('otp_expired')) return 'ลิงก์ยืนยันหมดอายุแล้ว กรุณาส่งใหม่อีกครั้ง';
+    if (m.includes('password') && m.includes('6')) return 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร';
+    return rawMsg || 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ';
+  }
+
+  async function refreshSessionIfNeeded() {
+    const s = readSession();
+    if (!s?.refreshToken) return s;
+    const now = Date.now();
+    if (s.expiresAt && s.expiresAt - now > 120_000) return s;
+    try {
+      const res = await fetch(`${sbUrl}/auth/v1/token?grant_type=refresh_token`, {
+        method: 'POST',
+        headers: { apikey: sbKey, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: s.refreshToken })
+      });
+      if (!res.ok) {
+        if (res.status === 400 || res.status === 401) writeSession(null);
+        return null;
+      }
+      const data = await res.json();
+      if (data?.access_token && data?.user) {
+        const next = {
+          accessToken: data.access_token,
+          refreshToken: data.refresh_token || s.refreshToken,
+          expiresAt: Date.now() + (Number(data.expires_in) || 3600) * 1000,
+          user: { id: data.user.id, email: data.user.email }
+        };
+        writeSession(next);
+        return next;
+      }
+    } catch (_) {}
+    return s;
+  }
+
   async function consumeHashSession() {
     const hash = window.location.hash || '';
-    if (!hash.includes('access_token=')) return;
+    if (!hash.includes('access_token=') && !hash.includes('error=')) return;
     const params = new URLSearchParams(hash.slice(1));
+    const errDesc = params.get('error_description') || params.get('error');
     const accessToken = params.get('access_token');
     const refreshToken = params.get('refresh_token') || '';
+    const expiresIn = Number(params.get('expires_in')) || 3600;
+
+    try {
+      history.replaceState(null, '', window.location.pathname + window.location.search);
+    } catch (_) {}
+
+    if (errDesc) {
+      const openWithErr = () => {
+        openAuthModal();
+        const msgEl = document.getElementById('auth-msg');
+        if (msgEl) {
+          msgEl.textContent = friendlyAuthError(errDesc);
+          msgEl.className = 'text-xs font-bold rounded-lg px-2.5 py-1.5 border border-[#111111] bg-[#FFE8E6] text-[#E74C3C]';
+        }
+      };
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', openWithErr, { once: true });
+      else openWithErr();
+      return;
+    }
+
     if (!accessToken) return;
     try {
       const res = await fetch(`${sbUrl}/auth/v1/user`, {
@@ -31,12 +94,14 @@
       if (res.ok) {
         const user = await res.json();
         if (user?.id && user?.email) {
-          writeSession({ accessToken, refreshToken, user: { id: user.id, email: user.email } });
+          writeSession({
+            accessToken,
+            refreshToken,
+            expiresAt: Date.now() + expiresIn * 1000,
+            user: { id: user.id, email: user.email }
+          });
         }
       }
-    } catch (_) {}
-    try {
-      history.replaceState(null, '', window.location.pathname + window.location.search);
     } catch (_) {}
   }
 
@@ -51,7 +116,7 @@
       body: JSON.stringify(body)
     });
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.error_description || data.msg || data.message || 'Authentication failed');
+    if (!res.ok) throw new Error(friendlyAuthError(data.error_description || data.msg || data.message));
     return data;
   }
 
@@ -173,11 +238,17 @@
             : await authReq('token?grant_type=password', { email, password });
 
           if (data.access_token && data.user) {
-            writeSession({ accessToken: data.access_token, refreshToken: data.refresh_token, user: { id: data.user.id, email: data.user.email } });
+            writeSession({
+              accessToken: data.access_token,
+              refreshToken: data.refresh_token || '',
+              expiresAt: Date.now() + (Number(data.expires_in) || 3600) * 1000,
+              user: { id: data.user.id, email: data.user.email }
+            });
             showMsg('✓ เข้าสู่ระบบสำเร็จ!', true);
             setTimeout(hide, 650);
           } else {
-            showMsg('✓ สมัครสำเร็จ! กรุณาเช็กอีเมลยืนยัน', true);
+            passInput.value = '';
+            showMsg('✓ ส่งลิงก์ยืนยันไปที่อีเมลแล้ว กรุณาเช็กกล่องจดหมาย', true);
           }
         } catch (err) {
           showMsg(err.message);
@@ -213,18 +284,16 @@
   }
 
   function mountAuthBadge() {
-    // Don't show login button on Voter-only mobile poll view
-    if (new URLSearchParams(window.location.search).get('vote')) return;
+    // Only render the visible login/account button on pages that opt in via #helpdai-auth-slot (Hub)
     const slot = document.getElementById('helpdai-auth-slot');
+    if (!slot) return;
     let btn = document.getElementById('helpdai-auth-btn');
     if (!btn) {
       btn = document.createElement('button');
       btn.id = 'helpdai-auth-btn';
       btn.type = 'button';
-      btn.className = slot
-        ? 'inline-flex items-center gap-1.5 border-2 border-[#111111] px-2.5 py-0.5 rounded-md font-display font-extrabold text-[11px] shadow-[2px_2px_0px_#111111] transition-colors cursor-pointer whitespace-nowrap'
-        : 'fixed top-3 right-3 z-40 btn-vox bg-white hover:bg-[#F4D03F] text-[#111111] font-display font-bold text-[11px] px-2.5 py-1 rounded-lg inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap';
-      (slot || document.body).appendChild(btn);
+      btn.className = 'inline-flex items-center gap-1.5 border-2 border-[#111111] px-2.5 py-0.5 rounded-md font-display font-extrabold text-[11px] shadow-[2px_2px_0px_#111111] transition-colors cursor-pointer whitespace-nowrap';
+      slot.appendChild(btn);
       btn.addEventListener('click', openAuthModal);
     }
 
@@ -249,10 +318,12 @@
   window.HelpDaiAuth = Object.freeze({
     getSession: readSession,
     openLogin: openAuthModal,
+    refresh: refreshSessionIfNeeded,
     signOut: () => writeSession(null)
   });
 
   consumeHashSession();
+  refreshSessionIfNeeded();
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', mountAuthBadge, { once: true });

@@ -47,12 +47,15 @@
   const cfg = window.HELPDAI_CONFIG || {};
   const baseRoom = new URLSearchParams(window.location.search).get('room') || 'default';
   const getScopedRoomId = () => {
-    const uid = window.HelpDaiAuth?.getSession()?.user?.id;
+    let uid = window.HelpDaiAuth?.getSession()?.user?.id;
+    if (!uid) {
+      try { uid = JSON.parse(localStorage.getItem('helpdai_auth_v1') || 'null')?.user?.id; } catch (_) {}
+    }
     return uid && !new URLSearchParams(window.location.search).get('room')
       ? `u-${uid.slice(0, 12)}`
       : baseRoom;
   };
-  const roomId = getScopedRoomId();
+  let roomId = getScopedRoomId();
   const defaultApiBase = (!location.hostname.endsWith('github.io') && location.protocol.startsWith('http')) ? location.origin : '';
   const apiBase = (cfg.apiBase || defaultApiBase).replace(/\/$/, '');
 
@@ -113,6 +116,15 @@
       }
     };
 
+    window.addEventListener('helpdai-auth-change', () => {
+      const nextRoom = getScopedRoomId();
+      if (nextRoom !== roomId) {
+        roomId = nextRoom;
+        lastServerRaw = '';
+        pullFromServer();
+      }
+    });
+
     checkAndStart();
   } else if (cfg.supabaseUrl && cfg.supabaseAnonKey) {
     // 2. Fallback: Optional Supabase Cloud Sync
@@ -140,6 +152,15 @@
         }
       } catch (_) {}
     };
+
+    window.addEventListener('helpdai-auth-change', () => {
+      const nextRoom = getScopedRoomId();
+      if (nextRoom !== roomId) {
+        roomId = nextRoom;
+        lastSyncedRaw = '';
+        pullRoom();
+      }
+    });
 
     setInterval(pullRoom, 3000);
     pullRoom();

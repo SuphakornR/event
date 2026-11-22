@@ -89,10 +89,10 @@
     };
 
     bar.innerHTML = `
-      <button type="button" id="tb-random-btn" title="สุ่มทีม / สุ่มเลข" aria-label="สุ่มทีมหรือตัวเลข" class="btn-vox w-9 h-9 bg-white hover:bg-[#F4D03F] text-[#111111] rounded-lg flex items-center justify-center cursor-pointer">${TB_ICONS.dice}</button>
-      <button type="button" id="tb-timer-btn" title="ตัวจับเวลา" aria-label="ตัวจับเวลา" class="btn-vox w-9 h-9 bg-white hover:bg-[#F4D03F] text-[#111111] rounded-lg flex items-center justify-center cursor-pointer">${TB_ICONS.timer}</button>
-      <button type="button" id="tb-music-btn" title="เพลง YouTube" aria-label="เครื่องเล่นเพลง YouTube" class="btn-vox w-9 h-9 bg-white hover:bg-[#F4D03F] text-[#111111] rounded-lg flex items-center justify-center cursor-pointer">${TB_ICONS.music}</button>
-      <button type="button" id="tb-victory-btn" title="ประกาศผู้ชนะ" aria-label="ประกาศผู้ชนะ" class="btn-vox w-9 h-9 bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] rounded-lg flex items-center justify-center cursor-pointer">${TB_ICONS.crown}</button>
+      <button type="button" id="tb-random-btn" title="สุ่มทีม / สุ่มเลข" aria-label="สุ่มทีมหรือตัวเลข" class="btn-vox w-9 h-9 bg-white hover:bg-[#F4D03F] text-[#111111] rounded-lg flex items-center justify-center cursor-pointer transition-colors">${TB_ICONS.dice}</button>
+      <button type="button" id="tb-timer-btn" title="ตัวจับเวลา" aria-label="ตัวจับเวลา" class="btn-vox w-9 h-9 bg-white hover:bg-[#F4D03F] text-[#111111] rounded-lg flex items-center justify-center cursor-pointer transition-colors">${TB_ICONS.timer}</button>
+      <button type="button" id="tb-music-btn" title="เพลง YouTube" aria-label="เครื่องเล่นเพลง YouTube" class="relative btn-vox w-9 h-9 bg-white hover:bg-[#F4D03F] text-[#111111] rounded-lg flex items-center justify-center cursor-pointer transition-colors">${TB_ICONS.music}<span id="tb-music-dot" class="hidden absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-[#10B981] border-[1.5px] border-[#111111] animate-pulse"></span></button>
+      <button type="button" id="tb-victory-btn" title="ประกาศผู้ชนะ" aria-label="ประกาศผู้ชนะ" class="btn-vox w-9 h-9 bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] rounded-lg flex items-center justify-center cursor-pointer transition-colors">${TB_ICONS.crown}</button>
       <div class="h-px bg-[#111111]/20 my-0.5"></div>
       <button type="button" id="tb-flip-btn" title="ย้ายแถบเครื่องมือ ซ้าย ⇄ ขวา" aria-label="สลับฝั่งแถบเครื่องมือ" class="btn-vox w-9 h-9 bg-[#111111] text-[#F4D03F] rounded-lg flex items-center justify-center cursor-pointer">${TB_ICONS.flip}</button>
     `;
@@ -106,6 +106,10 @@
     const positionPopover = () => {
       if (customPopPos) {
         pop.classList.remove('left-16', 'right-16', 'top-1/2', '-translate-y-1/2');
+        const maxL = Math.max(8, window.innerWidth - (pop.offsetWidth || 288) - 8);
+        const maxT = Math.max(8, window.innerHeight - (pop.offsetHeight || 220) - 8);
+        customPopPos.left = Math.max(8, Math.min(maxL, customPopPos.left));
+        customPopPos.top = Math.max(8, Math.min(maxT, customPopPos.top));
         pop.style.left = `${customPopPos.left}px`;
         pop.style.top = `${customPopPos.top}px`;
       } else {
@@ -116,6 +120,9 @@
         pop.classList.add(side === 'left' ? 'left-16' : 'right-16');
       }
     };
+    window.addEventListener('resize', () => {
+      if (customPopPos && !pop.classList.contains('hidden')) positionPopover();
+    });
     positionPopover();
 
     document.body.appendChild(bar);
@@ -139,6 +146,25 @@
 
     let timerPollId = null;
     let activeTool = null;
+    const syncActiveDockBtns = () => {
+      const map = {
+        'สุ่ม (Random)': 'tb-random-btn',
+        'ตัวจับเวลา (Timer)': 'tb-timer-btn',
+        'YouTube Music': 'tb-music-btn'
+      };
+      Object.entries(map).forEach(([name, id]) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const isOpen = activeTool === name;
+        el.classList.toggle('ring-2', isOpen);
+        el.classList.toggle('ring-[#111111]', isOpen);
+        if (id !== 'tb-music-btn') {
+          el.classList.toggle('bg-[#F4D03F]', isOpen);
+          el.classList.toggle('bg-white', !isOpen);
+        }
+      });
+    };
+
     const closePop = () => {
       if (timerPollId) {
         clearInterval(timerPollId);
@@ -146,6 +172,7 @@
       }
       parkYtHost();
       activeTool = null;
+      syncActiveDockBtns();
       pop.classList.add('hidden');
       pop.classList.remove('flex');
     };
@@ -191,12 +218,16 @@
       }
       parkYtHost();
       activeTool = toolName;
+      syncActiveDockBtns();
       positionPopover();
       pop.classList.toggle('w-72', toolName.includes('YouTube'));
       pop.classList.toggle('w-64', !toolName.includes('YouTube'));
       pop.innerHTML = `
         <div id="tb-pop-drag" title="กดค้างเพื่อลากย้ายตำแหน่ง" class="flex items-center justify-between pb-2 border-b-2 border-[#111111] select-none">
-          <span class="font-display font-extrabold text-xs uppercase tracking-wider text-[#111111]">${toolName}</span>
+          <span class="inline-flex items-center gap-1.5 font-display font-extrabold text-xs uppercase tracking-wider text-[#111111]">
+            <svg class="w-3 h-3 opacity-45 shrink-0" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="5" cy="4" r="1.3"/><circle cx="11" cy="4" r="1.3"/><circle cx="5" cy="8" r="1.3"/><circle cx="11" cy="8" r="1.3"/><circle cx="5" cy="12" r="1.3"/><circle cx="11" cy="12" r="1.3"/></svg>
+            <span>${toolName}</span>
+          </span>
           <button type="button" id="tb-pop-close" class="w-6 h-6 rounded-md hover:bg-[#E74C3C] hover:text-white text-xs font-black flex items-center justify-center cursor-pointer transition-colors">✕</button>
         </div>
         ${html}
@@ -455,9 +486,14 @@
 
     const syncMusicBtnBadge = () => {
       const btn = document.getElementById('tb-music-btn');
-      if (!btn) return;
-      btn.classList.toggle('bg-[#F4D03F]', Boolean(currentTrackId));
-      btn.classList.toggle('bg-white', !currentTrackId);
+      const dot = document.getElementById('tb-music-dot');
+      if (btn) {
+        btn.classList.toggle('bg-[#F4D03F]', Boolean(currentTrackId));
+        btn.classList.toggle('bg-white', !currentTrackId);
+      }
+      if (dot) {
+        dot.classList.toggle('hidden', !currentTrackId);
+      }
     };
 
     const loadYoutubeTrack = (videoId) => {
