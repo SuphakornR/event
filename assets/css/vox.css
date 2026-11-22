@@ -41,14 +41,21 @@
       cursor: text !important;
     }
 
-    /* Vox Style Open Hand (hover draggable) & Closed Grabbing Hand (active drag) */
+    /* Vox Style Open Hand (hover draggable) & Yellow Holding Hand (holding click / dragging) */
     .vox-grab {
-      cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Cpath d='M9 13V6.5a1.5 1.5 0 0 1 3 0V11m0-5.5a1.5 1.5 0 0 1 3 0V11m0-4.5a1.5 1.5 0 0 1 3 0V12m0-3.5a1.5 1.5 0 0 1 3 0V16c0 4.5-3 7.5-7.5 7.5-3.2 0-5.4-1.5-7-4.5L5 15.5a1.5 1.5 0 0 1 2.5-1.5L9 16v-3Z' transform='translate(1.5 1.5)' fill='%23111111'/%3E%3Cpath d='M9 13V6.5a1.5 1.5 0 0 1 3 0V11m0-5.5a1.5 1.5 0 0 1 3 0V11m0-4.5a1.5 1.5 0 0 1 3 0V12m0-3.5a1.5 1.5 0 0 1 3 0V16c0 4.5-3 7.5-7.5 7.5-3.2 0-5.4-1.5-7-4.5L5 15.5a1.5 1.5 0 0 1 2.5-1.5L9 16v-3Z' fill='%23F4D03F' stroke='%23111111' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") 14 14, grab !important;
+      cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Cpath d='M9 15V7.5a1.5 1.5 0 0 1 3 0V13V5.5a1.5 1.5 0 0 1 3 0V13V6.5a1.5 1.5 0 0 1 3 0V13V9a1.5 1.5 0 0 1 3 0v7.5c0 4.4-2.8 7.5-7 7.5-3.1 0-5.4-1.5-7-4.3L5 15.8a1.5 1.5 0 0 1 2.4-1.7L9 16v-1Z' transform='translate(1.5 1.5)' fill='%23111111'/%3E%3Cpath d='M9 15V7.5a1.5 1.5 0 0 1 3 0V13V5.5a1.5 1.5 0 0 1 3 0V13V6.5a1.5 1.5 0 0 1 3 0V13V9a1.5 1.5 0 0 1 3 0v7.5c0 4.4-2.8 7.5-7 7.5-3.1 0-5.4-1.5-7-4.3L5 15.8a1.5 1.5 0 0 1 2.4-1.7L9 16v-1Z' fill='%23F4D03F' stroke='%23111111' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E") 14 14, grab !important;
+    }
+
+    html.vox-grabbing,
+    html.vox-grabbing *,
+    html.vox-holding-click,
+    html.vox-holding-click *,
+    .vox-grab:active {
+      cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Cpath d='M8.5 14v-2.2a1.6 1.6 0 0 1 3.2 0v.7v-2a1.6 1.6 0 0 1 3.2 0v2v-1.5a1.6 1.6 0 0 1 3.2 0v1.8v-1a1.5 1.5 0 0 1 3 0V17c0 4.2-2.7 7-6.8 7-3 0-5.1-1.4-6.6-4.1L5.4 16.5a1.45 1.45 0 0 1 2.4-1.5L8.5 16v-2Z' transform='translate(1.5 1.5)' fill='%23111111'/%3E%3Cpath d='M8.5 14v-2.2a1.6 1.6 0 0 1 3.2 0v.7v-2a1.6 1.6 0 0 1 3.2 0v2v-1.5a1.6 1.6 0 0 1 3.2 0v1.8v-1a1.5 1.5 0 0 1 3 0V17c0 4.2-2.7 7-6.8 7-3 0-5.1-1.4-6.6-4.1L5.4 16.5a1.45 1.45 0 0 1 2.4-1.5L8.5 16v-2Z' fill='%23F4D03F' stroke='%23111111' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E") 14 14, grabbing !important;
     }
 
     html.vox-grabbing,
     html.vox-grabbing * {
-      cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Cpath d='M9 13v-2a1.5 1.5 0 0 1 3 0v1m0-2a1.5 1.5 0 0 1 3 0v2m0-1.5a1.5 1.5 0 0 1 3 0V13m0-1.5a1.5 1.5 0 0 1 3 0V17c0 4.2-2.8 6.8-7 6.8-3 0-5.1-1.3-6.6-4l-1.5-2.8a1.4 1.4 0 0 1 2.4-1.4L9 16v-3Z' transform='translate(1.5 1.5)' fill='%23111111'/%3E%3Cpath d='M9 13v-2a1.5 1.5 0 0 1 3 0v1m0-2a1.5 1.5 0 0 1 3 0v2m0-1.5a1.5 1.5 0 0 1 3 0V13m0-1.5a1.5 1.5 0 0 1 3 0V17c0 4.2-2.8 6.8-7 6.8-3 0-5.1-1.3-6.6-4l-1.5-2.8a1.4 1.4 0 0 1 2.4-1.4L9 16v-3Z' fill='%23F4D03F' stroke='%23111111' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") 14 14, grabbing !important;
       user-select: none !important;
     }
 
@@ -437,6 +444,49 @@
     #theater-zoom-overlay.is-zoomed #theater-zoom-dialog {
       transform: scale(1) translateY(0);
       opacity: 1;
+    }
+
+    /* True Edge-to-Edge Fullscreen Media inside Theater Zoom */
+    #theater-zoom-overlay #media-visual-host,
+    #theater-zoom-overlay #media-visual-pane {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #theater-zoom-overlay #media-switcher-bar {
+      position: absolute;
+      bottom: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 25;
+      background: rgba(17, 17, 17, 0.78);
+      border: 1.5px solid rgba(255, 255, 255, 0.25);
+      padding: 4px 8px;
+      border-radius: 12px;
+    }
+
+    #theater-zoom-overlay #media-visual-pane > div {
+      width: 100vw !important;
+      height: 100vh !important;
+      max-height: 100vh !important;
+      aspect-ratio: auto !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+      background: #000000 !important;
+    }
+
+    #theater-zoom-overlay #stage-zoomable-image-box img {
+      max-width: 100vw !important;
+      max-height: 100vh !important;
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: contain !important;
+      border-radius: 0 !important;
     }
 
     /* ==========================================================================

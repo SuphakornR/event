@@ -1186,7 +1186,7 @@
         const mediaSignature = resolvedType === 'video'
           ? ytId
           : `${imgSrc.length}:${imgSrc.slice(0, 48)}:${imgSrc.slice(-24)}`;
-        const nextKey = `${gameIdx}:${resolvedType}:${mediaSignature}:${state.isMediaZoomed}`;
+        const nextKey = `${gameIdx}:${resolvedType}:${mediaSignature}`;
         if (nextKey === currentRenderedPaneKey && mediaVisualPaneEl.innerHTML !== '') {
           return;
         }
@@ -1349,6 +1349,11 @@
 
       function setTheaterZoom(zoomed) {
         state.isMediaZoomed = Boolean(zoomed) && state.activeGameAccordion !== null;
+        if (state.isMediaZoomed) {
+          syncNativeFullscreen(true);
+        } else if (!state.isActivityFocused) {
+          syncNativeFullscreen(false);
+        }
         saveAndBroadcast();
         if (currentRole === 'stage') {
           syncTheaterZoomState();
@@ -1517,10 +1522,19 @@
 
       function handleNativeFullscreenChange() {
         const isFs = Boolean(document.fullscreenElement || document.webkitFullscreenElement);
-        if (wasNativeFullscreen && !isFs && state.isActivityFocused) {
-          state.isActivityFocused = false;
-          saveAndBroadcast();
-          syncActivityFocusLayout();
+        if (wasNativeFullscreen && !isFs) {
+          let changed = false;
+          if (state.isMediaZoomed) {
+            state.isMediaZoomed = false;
+            syncTheaterZoomState();
+            changed = true;
+          }
+          if (state.isActivityFocused) {
+            state.isActivityFocused = false;
+            syncActivityFocusLayout();
+            changed = true;
+          }
+          if (changed) saveAndBroadcast();
         }
         wasNativeFullscreen = isFs;
       }

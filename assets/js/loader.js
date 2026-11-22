@@ -108,4 +108,15 @@
     window.addEventListener(evt, resetIdleCursor, { passive: true });
   });
   resetIdleCursor();
+
+  // Show yellow Vox holding hand whenever user holds primary mouse click
+  window.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0 || e.pointerType === 'touch') return;
+    if (e.target?.closest?.('input[type="text"], input[type="email"], input[type="password"], input[type="number"], input[type="url"], textarea, [contenteditable="true"], select')) return;
+    document.documentElement.classList.add('vox-holding-click');
+  }, { passive: true });
+  const releaseHoldCursor = () => document.documentElement.classList.remove('vox-holding-click');
+  ['pointerup', 'pointercancel', 'blur'].forEach((evt) => {
+    window.addEventListener(evt, releaseHoldCursor, { passive: true });
+  });
 })();

@@ -686,7 +686,14 @@
       try { localStorage.setItem(SIDE_KEY, side); } catch (_) {}
       applySide();
       Object.values(subWindows).forEach((w) => {
-        if (!w.customPos) positionSubWindow(w, w.offset);
+        const isOpen = !w.el.classList.contains('hidden');
+        if (isOpen && !w.customPos) {
+          const r = w.el.getBoundingClientRect();
+          w.customPos = { left: r.left, top: r.top };
+          positionSubWindow(w, w.offset);
+        } else if (!isOpen && !w.customPos) {
+          positionSubWindow(w, w.offset);
+        }
       });
       const last = bar.getBoundingClientRect();
       const dx = first.left - last.left;

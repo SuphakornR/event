@@ -244,36 +244,36 @@
   </div>
 
   <!-- ========================================================================
-       THEATER MEDIA ZOOM MODAL OVERLAY (SMOOTH SCALE & BACKDROP TRANSITION)
+       THEATER MEDIA FULLSCREEN OVERLAY (TRUE 100VW × 100VH CINEMA STAGE)
        ======================================================================== -->
   <div
     id="theater-zoom-overlay"
-    class="fixed inset-0 z-50 bg-black/80 backdrop-blur-[4px] flex items-center justify-center p-3 sm:p-6"
+    class="fixed inset-0 z-[190] bg-black flex items-center justify-center p-0"
     role="dialog"
     aria-modal="true"
     aria-labelledby="zoom-modal-title"
   >
     <div
       id="theater-zoom-dialog"
-      class="vox-card bg-[#F8F6F0] w-full max-w-5xl max-h-[92vh] p-4 sm:p-6 flex flex-col gap-3.5 overflow-y-auto"
+      class="w-full h-full bg-black flex flex-col relative overflow-hidden"
     >
-      <!-- Zoom Modal Header -->
-      <div class="flex items-center justify-between gap-3 pb-2.5 border-b-[2.5px] border-[#111111]">
-        <div class="flex items-center gap-2.5 min-w-0 flex-1">
-          <span id="zoom-game-dot" class="w-4 h-4 rounded-full border-2 border-[#111111] shrink-0"></span>
-          <h3 id="zoom-modal-title" class="thai-safe-tight font-display font-extrabold text-lg sm:text-2xl text-[#111111] truncate"></h3>
+      <!-- Floating Top HUD (subtle at rest, solid on hover) -->
+      <div class="absolute top-3 inset-x-4 z-20 flex items-center justify-between gap-3 pointer-events-none">
+        <div class="pointer-events-auto inline-flex items-center gap-2 bg-[#111111]/80 backdrop-blur-sm border-2 border-white/25 px-3 py-1 rounded-xl max-w-[70vw]">
+          <span id="zoom-game-dot" class="w-3 h-3 rounded-full border border-white/60 shrink-0"></span>
+          <h3 id="zoom-modal-title" class="thai-safe-tight font-display font-extrabold text-xs sm:text-sm text-white truncate"></h3>
         </div>
         <button
           type="button"
           id="zoom-close-btn"
-          class="opacity-45 hover:opacity-100 btn-vox bg-[#111111] hover:bg-[#E74C3C] text-white font-display font-bold text-xs sm:text-sm px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 cursor-pointer shrink-0 transition-all"
+          class="pointer-events-auto opacity-75 hover:opacity-100 btn-vox bg-[#111111]/90 hover:bg-[#E74C3C] text-white border-white/40 font-display font-bold text-xs sm:text-sm px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 cursor-pointer shrink-0 transition-all"
         >
           <span>✕ ย่อกลับ (Esc)</span>
         </button>
       </div>
 
-      <!-- Target Slot where #media-visual-host is reparented when zoomed -->
-      <div id="zoom-media-slot" class="w-full"></div>
+      <!-- Target Slot where #media-visual-host is reparented edge-to-edge when zoomed -->
+      <div id="zoom-media-slot" class="w-full h-full flex-1 flex items-center justify-center"></div>
     </div>
   </div>
 
