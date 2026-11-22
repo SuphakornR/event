@@ -289,10 +289,7 @@
         }
       }
 
-      let hasSessionChanges = false;
-
       function saveAndBroadcast(options = { broadcast: true }) {
-        hasSessionChanges = true;
         state.updatedAt = Date.now();
         try {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -3702,63 +3699,8 @@
           syncAccordionFromState();
           renderLeaderboard(true);
           renderDrawerControls();
-        },
-        markSaved: () => { hasSessionChanges = false; }
-      };
-
-      // Unsaved / Modified Session Guard (Internal links + Browser leave/refresh)
-      window.addEventListener('beforeunload', (e) => {
-        if (!hasSessionChanges) return;
-        e.preventDefault();
-        e.returnValue = '';
-      });
-
-      document.addEventListener('click', (e) => {
-        const link = e.target.closest('a[href]');
-        if (!link || !hasSessionChanges) return;
-        const href = link.getAttribute('href') || '';
-        if (!href || href.startsWith('#') || link.target === '_blank') return;
-
-        e.preventDefault();
-        let leaveModal = document.getElementById('vox-leave-modal');
-        if (!leaveModal) {
-          leaveModal = document.createElement('div');
-          leaveModal.id = 'vox-leave-modal';
-          leaveModal.className = 'fixed inset-0 z-[185] flex items-center justify-center p-4 bg-black/60 backdrop-blur-[2px]';
-          leaveModal.innerHTML = `
-            <div class="vox-panel-enter vox-card bg-[#F8F6F0] w-full max-w-sm p-5 flex flex-col gap-3">
-              <h3 class="font-display font-black text-base text-[#111111]">มีการแก้ไขที่ยังไม่ได้สำรองไฟล์</h3>
-              <p class="text-xs text-[#111111]/75 leading-relaxed">ข้อมูลของคุณถูกจำไว้ในเบราว์เซอร์แล้ว แต่หากต้องการนำไฟล์ไปใช้ต่อที่เครื่องอื่น แนะนำให้บันทึกไฟล์ (.json) ก่อนออก</p>
-              <div class="flex flex-col gap-2 pt-1">
-                <button type="button" id="vox-leave-save" class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-extrabold text-xs py-2 rounded-xl cursor-pointer">บันทึกไฟล์ (.json) แล้วออก</button>
-                <div class="grid grid-cols-2 gap-2">
-                  <button type="button" id="vox-leave-go" class="btn-vox bg-white hover:bg-red-50 text-[#E74C3C] font-display font-bold text-xs py-2 rounded-xl cursor-pointer">ออกเลย</button>
-                  <button type="button" id="vox-leave-stay" class="btn-vox bg-[#111111] text-white font-display font-bold text-xs py-2 rounded-xl cursor-pointer">อยู่หน้านี้ต่อ</button>
-                </div>
-              </div>
-            </div>
-          `;
-          document.body.appendChild(leaveModal);
-        } else {
-          leaveModal.classList.remove('hidden');
-          leaveModal.classList.add('flex');
         }
-
-        const hideLeave = () => {
-          leaveModal.classList.add('hidden');
-          leaveModal.classList.remove('flex');
-        };
-        document.getElementById('vox-leave-stay').onclick = hideLeave;
-        document.getElementById('vox-leave-go').onclick = () => {
-          hasSessionChanges = false;
-          window.location.href = href;
-        };
-        document.getElementById('vox-leave-save').onclick = () => {
-          window.VoxCloudSync?.exportEventJson();
-          hasSessionChanges = false;
-          setTimeout(() => { window.location.href = href; }, 180);
-        };
-      });
+      };
 
       // ========================================================================
       // INITIALIZE IMMEDIATELY

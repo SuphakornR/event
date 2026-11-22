@@ -92,7 +92,7 @@
       } catch (_) {}
     };
 
-    const pushToServer = async (raw) => {
+    const pushToServer = async (raw, keepalive = false) => {
       if (!backendOnline || !raw || raw === lastServerRaw) return;
       try {
         const parsed = JSON.parse(raw);
@@ -100,11 +100,21 @@
         const res = await fetch(`${apiBase}/api/rooms/${encodeURIComponent(roomId)}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ payload: parsed })
+          body: JSON.stringify({ payload: parsed }),
+          keepalive
         });
         if (res.ok) lastServerRaw = raw;
       } catch (_) {}
     };
+
+    const flushOnline = () => {
+      const curRaw = localStorage.getItem(STATE_KEY) || '';
+      if (curRaw && curRaw !== lastServerRaw) {
+        lastLocalRaw = curRaw;
+        pushToServer(curRaw, true);
+      }
+    };
+    window.addEventListener('pagehide', flushOnline);
 
     const syncTick = async () => {
       const curRaw = localStorage.getItem(STATE_KEY) || '';
