@@ -1454,6 +1454,35 @@
         });
       }
 
+      let wasNativeFullscreen = Boolean(document.fullscreenElement || document.webkitFullscreenElement);
+      function syncNativeFullscreen(shouldBeFullscreen) {
+        const fsEl = document.fullscreenElement || document.webkitFullscreenElement;
+        if (shouldBeFullscreen && !fsEl) {
+          const root = document.documentElement;
+          const req = root.requestFullscreen || root.webkitRequestFullscreen;
+          if (req) {
+            Promise.resolve(req.call(root)).catch(() => {});
+          }
+        } else if (!shouldBeFullscreen && fsEl) {
+          const exit = document.exitFullscreen || document.webkitExitFullscreen;
+          if (exit) {
+            Promise.resolve(exit.call(document)).catch(() => {});
+          }
+        }
+      }
+
+      function handleNativeFullscreenChange() {
+        const isFs = Boolean(document.fullscreenElement || document.webkitFullscreenElement);
+        if (wasNativeFullscreen && !isFs && state.isActivityFocused) {
+          state.isActivityFocused = false;
+          saveAndBroadcast();
+          syncActivityFocusLayout();
+        }
+        wasNativeFullscreen = isFs;
+      }
+      document.addEventListener('fullscreenchange', handleNativeFullscreenChange);
+      document.addEventListener('webkitfullscreenchange', handleNativeFullscreenChange);
+
       function syncActivityFocusLayout() {
         const listCol = document.getElementById('activity-list-col');
         const focusCol = document.getElementById('activity-focus-col');
@@ -1572,6 +1601,7 @@
           state.activeGameAccordion = null;
           state.isMediaZoomed = false;
           state.isActivityFocused = false;
+          syncNativeFullscreen(false);
         } else {
           state.activeGameAccordion = gameIdx;
         }
@@ -1584,6 +1614,7 @@
         accordionFocusBtn.addEventListener('click', () => {
           if (state.activeGameAccordion === null) return;
           state.isActivityFocused = !state.isActivityFocused;
+          syncNativeFullscreen(state.isActivityFocused);
           saveAndBroadcast();
           syncActivityFocusLayout();
         });
@@ -1593,6 +1624,7 @@
         state.activeGameAccordion = null;
         state.isMediaZoomed = false;
         state.isActivityFocused = false;
+        syncNativeFullscreen(false);
         saveAndBroadcast();
         syncAccordionFromState();
       });
@@ -2487,6 +2519,7 @@
           }
           if (state.isActivityFocused) {
             state.isActivityFocused = false;
+            syncNativeFullscreen(false);
             saveAndBroadcast();
             syncActivityFocusLayout();
             return;
@@ -3427,6 +3460,7 @@
           } else {
             state.isActivityFocused = !state.isActivityFocused;
           }
+          syncNativeFullscreen(state.isActivityFocused);
           saveAndBroadcast();
           syncAccordionFromState();
         },
@@ -3440,6 +3474,7 @@
             state.activeGameAccordion = null;
             state.isActivityFocused = false;
             state.isMediaZoomed = false;
+            syncNativeFullscreen(false);
           } else if (state.activeGameAccordion > gIdx) {
             state.activeGameAccordion -= 1;
           }
