@@ -3708,12 +3708,19 @@
             </div>
 
             ${runnersUp.length ? `
-              <div class="w-full pt-3.5 mt-1 border-t-2 border-dashed border-[#111111]/25 grid grid-cols-2 gap-2.5">
+              <div class="w-full pt-3.5 mt-1 border-t-2 border-dashed border-[#111111]/25 grid ${runnersUp.length === 1 ? 'grid-cols-1 max-w-xs mx-auto' : 'grid-cols-2'} gap-2.5">
                 ${runnersUp.map((r, i) => `
-                  <div class="bg-white border-2 border-[#111111] rounded-xl px-3 py-2 flex items-center justify-between gap-2 shadow-[3px_3px_0px_#111111]">
-                    <span class="font-display font-black text-xs px-1.5 py-0.5 rounded bg-[#F8F6F0] border border-[#111111]">#${i + 2}</span>
-                    <span class="thai-safe font-display font-extrabold text-xs sm:text-sm text-[#111111] truncate flex-1 text-left">${r.name}</span>
-                    <span class="font-display font-black text-sm tabular-nums text-[#111111]">${r.total}</span>
+                  <div class="bg-white border-2 border-[#111111] rounded-xl px-3 py-2 flex items-center gap-2.5 shadow-[3px_3px_0px_#111111]">
+                    <div class="victory-mascot-idle w-11 h-11 sm:w-12 sm:h-12 rounded-xl border-2 border-[#111111] shadow-[2px_2px_0px_#111111] flex items-center justify-center shrink-0" style="background:${r.color}; animation-delay:${i * 0.45}s">
+                      ${getTeamMascotSvg(r.originalIndex, r.color, 'w-9 h-9 sm:w-10 sm:h-10')}
+                    </div>
+                    <div class="min-w-0 flex-1 text-left">
+                      <div class="flex items-center gap-1.5">
+                        <span class="font-display font-black text-[10px] px-1.5 py-0.5 rounded bg-[#F8F6F0] border border-[#111111]">#${i + 2}</span>
+                        <span class="font-display font-black text-xs sm:text-sm tabular-nums text-[#111111]">${r.total} <span class="text-[10px] font-bold text-[#111111]/60">PTS</span></span>
+                      </div>
+                      <p class="thai-safe font-display font-extrabold text-xs sm:text-sm text-[#111111] truncate mt-0.5">${escapeHtml(r.name)}</p>
+                    </div>
                   </div>
                 `).join('')}
               </div>

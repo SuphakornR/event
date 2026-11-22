@@ -604,6 +604,18 @@
       transform-origin: 50% 100%;
     }
 
+    @keyframes victoryMascotIdle {
+      0%, 100% { transform: translateY(0) scale(1, 1) rotate(0deg); }
+      25% { transform: translateY(-3px) scale(1.02, 0.98) rotate(-2deg); }
+      50% { transform: translateY(0) scale(0.99, 1.02) rotate(0deg); }
+      75% { transform: translateY(-2px) scale(1.02, 0.98) rotate(2deg); }
+    }
+
+    .victory-mascot-idle {
+      animation: victoryMascotIdle 2.2s ease-in-out infinite;
+      transform-origin: 50% 100%;
+    }
+
     .victory-card-slam {
       animation: victoryCardSlam 0.68s cubic-bezier(0.22, 1, 0.36, 1) forwards;
     }
