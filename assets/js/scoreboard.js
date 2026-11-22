@@ -1680,6 +1680,31 @@
         if (!row) return;
         const dense = state.games.length >= 5;
         row.className = `flex-1 min-h-0 flex flex-col ${dense ? 'gap-1.5' : 'gap-2'} overflow-y-auto pr-0.5`;
+        const nextSig = JSON.stringify(state.games.map((t, idx) => {
+          const m = state.gameMedia[idx];
+          return [
+            t,
+            (m?.description || '').trim(),
+            Boolean(extractYouTubeId(m?.youtubeUrl) || (m?.imageData || '').trim())
+          ];
+        }));
+
+        if (row.dataset.renderSig === nextSig && row.querySelectorAll('[data-game-index]').length === state.games.length) {
+          row.querySelectorAll('[data-game-index]').forEach((card) => {
+            const idx = Number(card.dataset.gameIndex);
+            const isOpen = state.activeGameAccordion === idx;
+            card.classList.toggle('is-active', isOpen);
+            card.setAttribute('aria-expanded', String(isOpen));
+            const drawer = document.getElementById(`game-rules-${idx}`);
+            if (drawer) {
+              drawer.classList.toggle('is-open', isOpen);
+              drawer.setAttribute('aria-hidden', String(!isOpen));
+            }
+          });
+          return;
+        }
+
+        row.dataset.renderSig = nextSig;
         row.innerHTML = state.games.map((title, idx) => {
           const isOpen = state.activeGameAccordion === idx;
           const color = GAME_COLORS[idx % GAME_COLORS.length];
@@ -1711,11 +1736,15 @@
                 </div>
               </div>
               ${descText ? `
-                <div class="mx-1 mt-1 bg-[#F8F6F0] border-2 border-[#111111] rounded-lg px-2.5 py-2 shadow-[2px_2px_0px_#111111]">
-                  <div class="inline-flex items-center gap-1 mb-1">
-                    <span class="px-1.5 py-0.5 rounded bg-[#111111] text-[#F4D03F] font-display font-extrabold text-[10px] tracking-wide">กติกา / รายละเอียด</span>
+                <div id="game-rules-${idx}" class="game-rules-drawer ${isOpen ? 'is-open' : ''}" aria-hidden="${!isOpen}">
+                  <div class="game-rules-drawer-inner">
+                    <div class="mx-1 mb-0.5 bg-[#F8F6F0] border-2 border-[#111111] rounded-lg px-2.5 py-2 shadow-[2px_2px_0px_#111111]">
+                      <div class="inline-flex items-center gap-1 mb-1">
+                        <span class="px-1.5 py-0.5 rounded bg-[#111111] text-[#F4D03F] font-display font-extrabold text-[10px] tracking-wide">กติกา / รายละเอียด</span>
+                      </div>
+                      <p class="thai-safe text-xs font-medium text-[#111111] whitespace-pre-line break-words leading-snug">${escapeHtml(descText)}</p>
+                    </div>
                   </div>
-                  <p class="thai-safe text-xs font-medium text-[#111111] whitespace-pre-line break-words leading-snug">${escapeHtml(descText)}</p>
                 </div>
               ` : ''}
             </div>
