@@ -441,21 +441,59 @@
       syncMusicBtnBadge();
     };
 
+    const searchYoutubeInApp = async (query) => {
+      const q = encodeURIComponent(query);
+      const mirrors = [
+        { url: `https://pipedapi.kavin.rocks/search?q=${q}&filter=videos`, type: 'piped' },
+        { url: `https://pipedapi.adminforge.de/search?q=${q}&filter=videos`, type: 'piped' },
+        { url: `https://inv.nadeko.net/api/v1/search?q=${q}&type=video`, type: 'invidious' },
+        { url: `https://yewtu.be/api/v1/search?q=${q}&type=video`, type: 'invidious' }
+      ];
+
+      for (const m of mirrors) {
+        const ctrl = new AbortController();
+        const tid = setTimeout(() => ctrl.abort(), 3500);
+        try {
+          const res = await fetch(m.url, { signal: ctrl.signal });
+          clearTimeout(tid);
+          if (!res.ok) continue;
+          const data = await res.json();
+          const list = m.type === 'piped' ? (data?.items || []) : (Array.isArray(data) ? data : []);
+          const normalized = list
+            .map(item => {
+              if (m.type === 'piped') {
+                const id = extractYoutubeId(item.url || '');
+                return id ? { id, title: item.title || '', author: item.uploaderName || '', thumb: item.thumbnail || '' } : null;
+              }
+              return item.videoId ? {
+                id: item.videoId,
+                title: item.title || '',
+                author: item.author || '',
+                thumb: item.videoThumbnails?.[0]?.url || ''
+              } : null;
+            })
+            .filter(Boolean)
+            .slice(0, 4);
+          if (normalized.length) return normalized;
+        } catch (_) {
+          clearTimeout(tid);
+        }
+      }
+      return [];
+    };
+
     document.getElementById('tb-music-btn').addEventListener('click', () => {
       const renderMusicBody = () => `
         <div class="flex flex-col gap-2">
           <div id="tb-yt-slot" class="w-full aspect-video bg-[#111111] rounded-lg border-2 border-[#111111] overflow-hidden flex items-center justify-center text-[11px] text-white/60 font-display text-center px-3">
-            ${currentTrackId ? '' : 'วางลิงก์ YouTube หรือพิมพ์ชื่อเพลง'}
+            ${currentTrackId ? '' : 'วางลิงก์ YouTube หรือพิมพ์ชื่อเพลงแล้วกด Enter'}
           </div>
           <div class="flex gap-1.5">
-            <input id="tb-yt-input" type="text" placeholder="วางลิงก์ YouTube หรือชื่อเพลง..." class="flex-1 min-w-0 bg-white border-2 border-[#111111] rounded-lg px-2.5 py-1.5 text-xs font-semibold" />
-            <button type="button" id="tb-yt-load" title="เล่น" aria-label="เล่นเพลง" class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] px-2.5 py-1 rounded-lg flex items-center justify-center cursor-pointer">${TB_ICONS.play}</button>
+            <input id="tb-yt-input" type="text" placeholder="พิมพ์ชื่อเพลง หรือวางลิงก์ YouTube..." class="flex-1 min-w-0 bg-white border-2 border-[#111111] rounded-lg px-2.5 py-1.5 text-xs font-semibold" />
+            <button type="button" id="tb-yt-load" title="ค้นหา / เล่น" aria-label="ค้นหาหรือเล่นเพลง" class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] px-2.5 py-1 rounded-lg flex items-center justify-center cursor-pointer">${TB_ICONS.play}</button>
             <button type="button" id="tb-yt-stop" title="หยุด" aria-label="หยุดเพลง" class="btn-vox bg-white hover:bg-red-100 text-[#E74C3C] px-2.5 py-1 rounded-lg flex items-center justify-center cursor-pointer">${TB_ICONS.stop}</button>
           </div>
-          <a id="tb-yt-ext-search" href="#" target="_blank" rel="noopener noreferrer" class="hidden items-center justify-between bg-white hover:bg-[#F4D03F] border-2 border-[#111111] rounded-lg px-2.5 py-1.5 text-[11px] font-display font-bold text-[#111111] transition-colors">
-            <span class="flex items-center gap-1.5 min-w-0">${TB_ICONS.search}<span id="tb-yt-ext-label" class="truncate">ค้นหาบน YouTube</span></span>
-            <span class="shrink-0 ml-1">↗</span>
-          </a>
+          <div id="tb-yt-results" class="hidden flex-col gap-1.5 pt-1 border-t border-[#111111]/15"></div>
         </div>
       `;
 
@@ -470,39 +508,55 @@
         };
         mountYtIntoSlot();
 
-        const handleInputAction = () => {
-          const inp = document.getElementById('tb-yt-input');
-          const raw = (inp?.value || '').trim();
+        const resultsEl = document.getElementById('tb-yt-results');
+        const inpEl = document.getElementById('tb-yt-input');
+
+        const handleInputAction = async () => {
+          const raw = (inpEl?.value || '').trim();
           if (!raw) return;
           const id = extractYoutubeId(raw);
           if (id) {
             loadYoutubeTrack(id);
             mountYtIntoSlot();
-            if (inp) inp.value = '';
-            document.getElementById('tb-yt-ext-search')?.classList.add('hidden');
-          } else {
-            window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(raw)}`, '_blank', 'noopener,noreferrer');
+            if (inpEl) inpEl.value = '';
+            resultsEl?.classList.add('hidden');
+            resultsEl?.classList.remove('flex');
+            return;
           }
+
+          if (resultsEl) {
+            resultsEl.classList.remove('hidden');
+            resultsEl.classList.add('flex');
+            resultsEl.innerHTML = `<div class="text-[11px] font-display font-bold text-[#111111]/60 py-1 text-center">กำลังค้นหา "${raw.replace(/[<>&"]/g, '')}"...</div>`;
+          }
+
+          const items = await searchYoutubeInApp(raw);
+          if (!resultsEl) return;
+          if (!items.length) {
+            resultsEl.innerHTML = `<div class="text-[11px] font-semibold text-[#E74C3C] py-1 text-center">ไม่พบผลการค้นหา ลองวางลิงก์ YouTube โดยตรง</div>`;
+            return;
+          }
+
+          resultsEl.innerHTML = items.map(item => `
+            <button type="button" data-yt-pick="${item.id}" class="w-full text-left bg-white hover:bg-[#F4D03F] border-2 border-[#111111] rounded-lg p-1.5 flex items-center gap-2 transition-colors cursor-pointer">
+              ${item.thumb ? `<img src="${item.thumb}" alt="" class="w-10 h-7 object-cover rounded border border-[#111111] shrink-0" />` : ''}
+              <div class="min-w-0 flex-1">
+                <div class="font-display font-bold text-[11px] text-[#111111] truncate">${item.title.replace(/[<>&"]/g, '')}</div>
+                <div class="text-[9px] text-[#111111]/60 truncate">${item.author.replace(/[<>&"]/g, '')}</div>
+              </div>
+            </button>
+          `).join('');
+
+          resultsEl.querySelectorAll('[data-yt-pick]').forEach(btn => {
+            btn.addEventListener('click', () => {
+              loadYoutubeTrack(btn.dataset.ytPick);
+              mountYtIntoSlot();
+              resultsEl.classList.add('hidden');
+              resultsEl.classList.remove('flex');
+            });
+          });
         };
 
-        const inpEl = document.getElementById('tb-yt-input');
-        const extLink = document.getElementById('tb-yt-ext-search');
-        const extLabel = document.getElementById('tb-yt-ext-label');
-        inpEl?.addEventListener('input', () => {
-          const q = inpEl.value.trim();
-          const isUrlOrId = Boolean(extractYoutubeId(q));
-          if (extLink && extLabel) {
-            if (q && !isUrlOrId) {
-              extLink.href = `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`;
-              extLabel.textContent = `ค้นหา "${q}" บน YouTube`;
-              extLink.classList.remove('hidden');
-              extLink.classList.add('flex');
-            } else {
-              extLink.classList.add('hidden');
-              extLink.classList.remove('flex');
-            }
-          }
-        });
         inpEl?.addEventListener('keydown', (e) => {
           if (e.key === 'Enter') {
             e.preventDefault();
@@ -515,7 +569,7 @@
           parkYtHost();
           stopYoutubeTrack();
           const slot = document.getElementById('tb-yt-slot');
-          if (slot) slot.innerHTML = 'วางลิงก์ YouTube หรือพิมพ์ชื่อเพลง';
+          if (slot) slot.innerHTML = 'วางลิงก์ YouTube หรือพิมพ์ชื่อเพลงแล้วกด Enter';
         });
       });
     });

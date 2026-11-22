@@ -1,0 +1,12 @@
+{
+  "name": "helpdai-event-toolkit",
+  "version": "1.0.0",
+  "description": "HelpDai — Interactive Stage Scoreboard & Event Toolkit with Node + SQLite Backend",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}

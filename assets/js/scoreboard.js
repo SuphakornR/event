@@ -3329,12 +3329,13 @@
           const cur = state.gameMedia[gIdx];
           Object.assign(cur, patch);
           cur.activeMediaType = resolveActiveMediaType(cur);
+          if (state.activeGameAccordion !== gIdx) {
+            state.activeGameAccordion = gIdx;
+          }
           saveAndBroadcast();
           syncMediaDots();
-          if (state.activeGameAccordion === gIdx) {
-            currentRenderedPaneKey = '';
-            renderMediaStageContent(gIdx, false);
-          }
+          currentRenderedPaneKey = '';
+          syncAccordionFromState();
         },
         toggleGameOpen: (gIdx) => toggleGameAccordion(gIdx),
         toggleGameFocus: (gIdx) => {

@@ -108,6 +108,7 @@
     </div>
   </div>
 
+  <script src="assets/js/config.js" defer></script>
   <script src="assets/js/tos.js" defer></script>
   <script src="assets/js/mascots.js"></script>
   <script src="assets/js/tutorial.js" defer></script>
@@ -236,13 +237,26 @@
           });
         });
 
-        document.getElementById('sugg-form')?.addEventListener('submit', (e) => {
+        document.getElementById('sugg-form')?.addEventListener('submit', async (e) => {
           e.preventDefault();
           const val = (textEl?.value || '').trim();
           if (!val) return;
           items.unshift({ cat: activeCat, text: val, at: Date.now() });
           items = items.slice(0, 12);
           try { localStorage.setItem(SUGG_KEY, JSON.stringify(items)); } catch (_) {}
+          const cfg = window.HELPDAI_CONFIG || {};
+          const defaultApiBase = (!location.hostname.endsWith('github.io') && location.protocol.startsWith('http')) ? location.origin : '';
+          const apiBase = (cfg.apiBase || defaultApiBase).replace(/\/$/, '');
+          const ep = cfg.suggestionEndpoint || (apiBase ? `${apiBase}/api/suggestions` : '');
+          if (ep) {
+            try {
+              await fetch(ep, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+                body: JSON.stringify({ category: activeCat, message: val })
+              });
+            } catch (_) {}
+          }
           if (textEl) textEl.value = '';
           if (statusEl) {
             statusEl.textContent = '✓ บันทึกข้อเสนอแนะเรียบร้อยแล้ว ขอบคุณครับ!';

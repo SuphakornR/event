@@ -56,6 +56,12 @@
       editModalEl.addEventListener('click', (e) => {
         if (e.target === editModalEl) hide();
       });
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && editModalEl && !editModalEl.classList.contains('hidden')) {
+          e.stopPropagation();
+          hide();
+        }
+      }, true);
     }
 
     document.getElementById('vqe-title').textContent = title;
@@ -65,7 +71,15 @@
         <span class="text-xs font-display font-bold text-[#111111]/80">${f.label}</span>
         ${f.type === 'textarea'
           ? `<textarea data-vqe-idx="${i}" rows="3" placeholder="${f.placeholder || ''}" class="thai-safe w-full bg-white border-2 border-[#111111] rounded-xl px-3 py-2 text-sm"></textarea>`
-          : `<input data-vqe-idx="${i}" type="${f.type || 'text'}" placeholder="${f.placeholder || ''}" class="thai-safe-tight w-full bg-white border-2 border-[#111111] rounded-xl px-3 py-2 text-sm font-bold" />`
+          : f.type === 'image'
+            ? `<div class="flex gap-1.5 items-center">
+                <input data-vqe-idx="${i}" type="text" placeholder="${f.placeholder || ''}" class="thai-safe-tight flex-1 min-w-0 bg-white border-2 border-[#111111] rounded-xl px-3 py-2 text-sm font-bold" />
+                <label class="btn-vox bg-white hover:bg-[#F4D03F] text-[#111111] font-display font-extrabold text-xs px-2.5 py-2 rounded-xl cursor-pointer shrink-0">
+                  เลือกรูป
+                  <input type="file" accept="image/*" data-vqe-file="${i}" class="hidden" />
+                </label>
+              </div>`
+            : `<input data-vqe-idx="${i}" type="${f.type || 'text'}" placeholder="${f.placeholder || ''}" class="thai-safe-tight w-full bg-white border-2 border-[#111111] rounded-xl px-3 py-2 text-sm font-bold" />`
         }
       </label>
     `).join('');
@@ -73,16 +87,61 @@
     fields.forEach((f, i) => {
       const inp = fieldsWrap.querySelector(`[data-vqe-idx="${i}"]`);
       if (inp) inp.value = f.value || '';
+      const fileInp = fieldsWrap.querySelector(`[data-vqe-file="${i}"]`);
+      if (fileInp && inp) {
+        fileInp.addEventListener('change', () => {
+          const file = fileInp.files?.[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = () => {
+            const dataUrl = String(reader.result || '');
+            if (file.type === 'image/gif' || dataUrl.length < 320000) {
+              inp.value = dataUrl;
+              return;
+            }
+            const img = new Image();
+            img.onload = () => {
+              const maxSide = 1200;
+              const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+              const canvas = document.createElement('canvas');
+              canvas.width = Math.round(img.width * scale);
+              canvas.height = Math.round(img.height * scale);
+              canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+              inp.value = canvas.toDataURL('image/jpeg', 0.82);
+            };
+            img.src = dataUrl;
+          };
+          reader.readAsDataURL(file);
+        });
+      }
     });
 
     const saveBtn = document.getElementById('vqe-save');
     const newSave = saveBtn.cloneNode(true);
     saveBtn.parentNode.replaceChild(newSave, saveBtn);
-    newSave.addEventListener('click', () => {
+    const submitModal = () => {
       const vals = fields.map((_, i) => fieldsWrap.querySelector(`[data-vqe-idx="${i}"]`)?.value ?? '');
       onSave(vals);
       editModalEl.classList.add('hidden');
       editModalEl.classList.remove('flex');
+    };
+    newSave.addEventListener('click', submitModal);
+
+    fieldsWrap.querySelectorAll('input:not([type="file"])').forEach(inp => {
+      inp.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          submitModal();
+        }
+      });
+    });
+    fieldsWrap.querySelectorAll('textarea').forEach(ta => {
+      ta.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+          e.preventDefault();
+          submitModal();
+        }
+      });
     });
 
     editModalEl.classList.remove('hidden');
@@ -125,7 +184,9 @@
     full: '<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>',
     compact: '<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><rect x="4" y="8" width="16" height="8" rx="2"/></svg>',
     simple: '<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="5"/></svg>',
-    reset: '<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>'
+    reset: '<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>',
+    download: '<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>',
+    upload: '<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>'
   };
 
   function menuBtn(action, icon, label, danger = false) {
@@ -247,7 +308,7 @@
             fields: [
               { label: 'กติกา / คำอธิบาย', type: 'textarea', value: media.description || '', placeholder: 'พิมพ์รายละเอียดหรือกติกา...' },
               { label: 'ลิงก์ YouTube (ถ้ามี)', type: 'url', value: media.youtubeUrl || '', placeholder: 'https://youtu.be/...' },
-              { label: 'ลิงก์รูปภาพ / GIF (ถ้ามี)', type: 'text', value: media.imageData || '', placeholder: 'https://...' }
+              { label: 'ลิงก์รูปภาพ / GIF หรืออัปโหลดรูป', type: 'image', value: media.imageData || '', placeholder: 'https://... หรือกดเลือกรูป' }
             ],
             onSave: ([description, youtubeUrl, imageData]) => {
               const clean = window.VoxSecurity ? window.VoxSecurity.sanitizeUrl : (v => v.trim());
@@ -286,11 +347,15 @@
       return;
     }
 
-    // 4. General Stage Background (Stage-wide reset only; Teams/Activities/Victory live in their dedicated places)
+    // 4. General Stage Background (Backup/Restore + Stage-wide reset)
     const items = `
+      ${menuBtn('export-json', CM_ICONS.download, 'บันทึกไฟล์งาน (.json)')}
+      ${menuBtn('import-json', CM_ICONS.upload, 'โหลดไฟล์งาน (.json)')}
       ${menuBtn('reset-scores', CM_ICONS.reset, 'รีเซ็ตคะแนนทั้งหมด', true)}
     `;
     showMenuAt(x, y, 'Stage Menu', items, (m) => {
+      m.querySelector('[data-cm-action="export-json"]')?.addEventListener('click', () => { closeMenu(); window.VoxCloudSync?.exportEventJson(); });
+      m.querySelector('[data-cm-action="import-json"]')?.addEventListener('click', () => { closeMenu(); window.VoxCloudSync?.importEventJson(); });
       m.querySelector('[data-cm-action="reset-scores"]')?.addEventListener('click', () => { closeMenu(); api.resetScores(); });
     });
   }
