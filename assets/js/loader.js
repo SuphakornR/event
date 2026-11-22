@@ -88,4 +88,19 @@
 
   // Safety timeout in case a slow external CDN/font hangs
   setTimeout(finish, 6000);
+
+  // Auto-hide custom Vox cursor after 2.8s of mouse inactivity
+  let idleCursorTimer = null;
+  const IDLE_MS = 2800;
+  const resetIdleCursor = () => {
+    document.documentElement.classList.remove('vox-cursor-idle');
+    if (idleCursorTimer) clearTimeout(idleCursorTimer);
+    idleCursorTimer = setTimeout(() => {
+      document.documentElement.classList.add('vox-cursor-idle');
+    }, IDLE_MS);
+  };
+  ['pointermove', 'mousedown', 'wheel', 'touchstart', 'focus'].forEach((evt) => {
+    window.addEventListener(evt, resetIdleCursor, { passive: true });
+  });
+  resetIdleCursor();
 })();

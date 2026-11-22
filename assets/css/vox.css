@@ -41,6 +41,26 @@
       cursor: text !important;
     }
 
+    /* Vox Style Open Hand (hover draggable) & Closed Grabbing Hand (active drag) */
+    .vox-grab {
+      cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Cpath d='M9 13V6.5a1.5 1.5 0 0 1 3 0V11m0-5.5a1.5 1.5 0 0 1 3 0V11m0-4.5a1.5 1.5 0 0 1 3 0V12m0-3.5a1.5 1.5 0 0 1 3 0V16c0 4.5-3 7.5-7.5 7.5-3.2 0-5.4-1.5-7-4.5L5 15.5a1.5 1.5 0 0 1 2.5-1.5L9 16v-3Z' transform='translate(1.5 1.5)' fill='%23111111'/%3E%3Cpath d='M9 13V6.5a1.5 1.5 0 0 1 3 0V11m0-5.5a1.5 1.5 0 0 1 3 0V11m0-4.5a1.5 1.5 0 0 1 3 0V12m0-3.5a1.5 1.5 0 0 1 3 0V16c0 4.5-3 7.5-7.5 7.5-3.2 0-5.4-1.5-7-4.5L5 15.5a1.5 1.5 0 0 1 2.5-1.5L9 16v-3Z' fill='%23F4D03F' stroke='%23111111' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") 14 14, grab !important;
+    }
+
+    html.vox-grabbing,
+    html.vox-grabbing * {
+      cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Cpath d='M9 13v-2a1.5 1.5 0 0 1 3 0v1m0-2a1.5 1.5 0 0 1 3 0v2m0-1.5a1.5 1.5 0 0 1 3 0V13m0-1.5a1.5 1.5 0 0 1 3 0V17c0 4.2-2.8 6.8-7 6.8-3 0-5.1-1.3-6.6-4l-1.5-2.8a1.4 1.4 0 0 1 2.4-1.4L9 16v-3Z' transform='translate(1.5 1.5)' fill='%23111111'/%3E%3Cpath d='M9 13v-2a1.5 1.5 0 0 1 3 0v1m0-2a1.5 1.5 0 0 1 3 0v2m0-1.5a1.5 1.5 0 0 1 3 0V13m0-1.5a1.5 1.5 0 0 1 3 0V17c0 4.2-2.8 6.8-7 6.8-3 0-5.1-1.3-6.6-4l-1.5-2.8a1.4 1.4 0 0 1 2.4-1.4L9 16v-3Z' fill='%23F4D03F' stroke='%23111111' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") 14 14, grabbing !important;
+      user-select: none !important;
+    }
+
+    html.vox-cursor-idle,
+    html.vox-cursor-idle *,
+    html.vox-cursor-idle a,
+    html.vox-cursor-idle button,
+    html.vox-cursor-idle [role="button"],
+    html.vox-cursor-idle .cursor-pointer {
+      cursor: none !important;
+    }
+
     .font-display {
       font-family: 'Prompt', sans-serif;
     }
@@ -730,17 +750,6 @@
       .loader-shape, .loader-bar-fill, .mascot-float, .vox-panel-enter, .vox-stage-enter { animation: none; }
     }
 
-    /* Collapsible Control Drawer */
-    #control-drawer {
-      transition: transform 0.38s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.28s ease;
-    }
-
-    #control-drawer.drawer-closed {
-      transform: translateY(105%);
-      opacity: 0;
-      pointer-events: none;
-    }
-
     /* ==========================================================================
        CENTER-STAGE VOX COUNTDOWN OVERLAY
        ========================================================================== */
@@ -771,20 +780,29 @@
 
     @keyframes timerWaveSlide {
       0% { transform: translate3d(0, 0, 0); }
+      50% { transform: translate3d(-25%, -2.5px, 0); }
       100% { transform: translate3d(-50%, 0, 0); }
     }
 
     @keyframes timerWaveSlideBack {
       0% { transform: translate3d(-50%, 0, 0); }
+      50% { transform: translate3d(-25%, 2.5px, 0); }
       100% { transform: translate3d(0, 0, 0); }
+    }
+
+    @keyframes timerBubbleRise {
+      0% { transform: translateY(0) scale(0.75); opacity: 0; }
+      20% { opacity: 0.45; }
+      80% { opacity: 0.35; }
+      100% { transform: translateY(-190px) scale(1.15); opacity: 0; }
     }
 
     .timer-circle-mask {
       isolation: isolate;
       -webkit-mask-image: -webkit-radial-gradient(white, black);
       transform: translateZ(0);
-      box-shadow: inset 0 5px 14px rgba(255, 255, 255, 0.55),
-                  inset 0 -8px 16px rgba(17, 17, 17, 0.14),
+      box-shadow: inset 0 6px 16px rgba(255, 255, 255, 0.65),
+                  inset 0 -10px 18px rgba(17, 17, 17, 0.16),
                   8px 8px 0px #111111;
     }
 
@@ -794,10 +812,14 @@
       right: 0;
       bottom: 0;
       height: 0%;
-      transition: height 0.65s cubic-bezier(0.22, 1, 0.36, 1),
-                  background-color 0.35s ease,
+      transition: height 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+                  background-color 0.45s ease,
                   opacity 0.3s ease;
       will-change: height, opacity;
+    }
+
+    .timer-liquid-fill.is-flowing {
+      transition: background-color 0.45s ease, opacity 0.3s ease;
     }
 
     .timer-liquid-wave {
@@ -805,8 +827,8 @@
       left: 0;
       bottom: calc(100% - 2px);
       width: 200%;
-      height: 22px;
-      animation: timerWaveSlide 2.6s linear infinite;
+      height: 24px;
+      animation: timerWaveSlide 2.2s linear infinite;
       pointer-events: none;
     }
 
@@ -815,10 +837,20 @@
       left: 0;
       bottom: calc(100% - 1px);
       width: 200%;
-      height: 26px;
-      opacity: 0.72;
-      animation: timerWaveSlideBack 4s linear infinite;
+      height: 28px;
+      opacity: 0.68;
+      animation: timerWaveSlideBack 3.4s linear infinite;
       pointer-events: none;
+    }
+
+    .timer-bubble {
+      position: absolute;
+      bottom: 6px;
+      border-radius: 9999px;
+      background: rgba(255, 255, 255, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      pointer-events: none;
+      animation: timerBubbleRise 3.2s ease-in infinite;
     }
 
     @keyframes timerDigitPop {

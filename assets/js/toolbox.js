@@ -97,38 +97,59 @@
       <button type="button" id="tb-flip-btn" title="ย้ายแถบเครื่องมือ ซ้าย ⇄ ขวา" aria-label="สลับฝั่งแถบเครื่องมือ" class="btn-vox w-9 h-9 bg-[#111111] text-[#F4D03F] rounded-lg flex items-center justify-center cursor-pointer">${TB_ICONS.flip}</button>
     `;
 
-    // Floating Popover Panel for Random / Timer / SFX
-    const pop = document.createElement('div');
-    pop.id = 'tb-popover';
-    pop.className = 'fixed top-1/2 -translate-y-1/2 z-40 hidden w-64 vox-card bg-[#F8F6F0] p-3.5 flex-col gap-2.5 vox-panel-enter';
+    document.body.appendChild(bar);
 
-    let customPopPos = null;
-    const positionPopover = () => {
-      if (customPopPos) {
-        pop.classList.remove('left-16', 'right-16', 'top-1/2', '-translate-y-1/2');
-        const maxL = Math.max(8, window.innerWidth - (pop.offsetWidth || 288) - 8);
-        const maxT = Math.max(8, window.innerHeight - (pop.offsetHeight || 220) - 8);
-        customPopPos.left = Math.max(8, Math.min(maxL, customPopPos.left));
-        customPopPos.top = Math.max(8, Math.min(maxT, customPopPos.top));
-        pop.style.left = `${customPopPos.left}px`;
-        pop.style.top = `${customPopPos.top}px`;
+    // Independent Persistent Floating Sub-Popups (Random / Timer / Music)
+    // Closing a popup only hides it — running tasks (Timer / Music) keep running uninterrupted!
+    let topWinZ = 42;
+    const subWindows = {};
+    const dockBtnMap = {
+      random: 'tb-random-btn',
+      timer: 'tb-timer-btn',
+      music: 'tb-music-btn'
+    };
+
+    const syncDockHighlights = () => {
+      Object.entries(dockBtnMap).forEach(([key, btnId]) => {
+        const el = document.getElementById(btnId);
+        const w = subWindows[key];
+        if (!el) return;
+        const isOpen = Boolean(w && !w.el.classList.contains('hidden'));
+        el.classList.toggle('ring-2', isOpen);
+        el.classList.toggle('ring-[#111111]', isOpen);
+        if (key !== 'music') {
+          el.classList.toggle('bg-[#F4D03F]', isOpen);
+          el.classList.toggle('bg-white', !isOpen);
+        }
+      });
+    };
+
+    const positionSubWindow = (winObj, indexOffset = 0) => {
+      const el = winObj.el;
+      if (winObj.customPos) {
+        el.classList.remove('left-16', 'right-16', 'top-1/2', '-translate-y-1/2');
+        const maxL = Math.max(8, window.innerWidth - (el.offsetWidth || 288) - 8);
+        const maxT = Math.max(8, window.innerHeight - (el.offsetHeight || 220) - 8);
+        winObj.customPos.left = Math.max(8, Math.min(maxL, winObj.customPos.left));
+        winObj.customPos.top = Math.max(8, Math.min(maxT, winObj.customPos.top));
+        el.style.left = `${winObj.customPos.left}px`;
+        el.style.top = `${winObj.customPos.top}px`;
       } else {
-        pop.style.left = '';
-        pop.style.top = '';
-        pop.classList.add('top-1/2', '-translate-y-1/2');
-        pop.classList.remove('left-16', 'right-16');
-        pop.classList.add(side === 'left' ? 'left-16' : 'right-16');
+        el.style.left = '';
+        el.style.top = indexOffset ? `calc(50% + ${indexOffset}px)` : '';
+        el.classList.add('top-1/2', '-translate-y-1/2');
+        el.classList.remove('left-16', 'right-16');
+        el.classList.add(side === 'left' ? 'left-16' : 'right-16');
       }
     };
+
     window.addEventListener('resize', () => {
-      if (customPopPos && !pop.classList.contains('hidden')) positionPopover();
+      Object.values(subWindows).forEach((w) => {
+        if (w.customPos && !w.el.classList.contains('hidden')) positionSubWindow(w);
+      });
     });
-    positionPopover();
 
-    document.body.appendChild(bar);
-    document.body.appendChild(pop);
-
-    // Persistent YouTube Embed Host (stays alive in DOM so music keeps playing uninterrupted)
+    // Persistent YouTube Embed Host (kept off-screen when Music window is closed so audio never stops)
     let currentTrackId = '';
     let musicMuted = false;
 
@@ -144,107 +165,97 @@
       }
     };
 
-    let timerPollId = null;
-    let activeTool = null;
-    const syncActiveDockBtns = () => {
-      const map = {
-        'สุ่ม (Random)': 'tb-random-btn',
-        'ตัวจับเวลา (Timer)': 'tb-timer-btn',
-        'YouTube Music': 'tb-music-btn'
-      };
-      Object.entries(map).forEach(([name, id]) => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        const isOpen = activeTool === name;
-        el.classList.toggle('ring-2', isOpen);
-        el.classList.toggle('ring-[#111111]', isOpen);
-        if (id !== 'tb-music-btn') {
-          el.classList.toggle('bg-[#F4D03F]', isOpen);
-          el.classList.toggle('bg-white', !isOpen);
-        }
-      });
-    };
-
-    const closePop = () => {
-      if (timerPollId) {
-        clearInterval(timerPollId);
-        timerPollId = null;
-      }
-      parkYtHost();
-      activeTool = null;
-      syncActiveDockBtns();
-      pop.classList.add('hidden');
-      pop.classList.remove('flex');
-    };
-
-    const makePopoverDraggable = (handleEl) => {
+    const makeWindowDraggable = (winObj, handleEl) => {
       if (!handleEl) return;
-      handleEl.style.cursor = 'grab';
       handleEl.addEventListener('pointerdown', (e) => {
         if (e.target.closest('button')) return;
         e.preventDefault();
-        handleEl.style.cursor = 'grabbing';
-        const rect = pop.getBoundingClientRect();
+        winObj.el.style.zIndex = String(++topWinZ);
+        document.documentElement.classList.add('vox-grabbing');
+        const rect = winObj.el.getBoundingClientRect();
         const offsetX = e.clientX - rect.left;
         const offsetY = e.clientY - rect.top;
-        pop.classList.remove('top-1/2', '-translate-y-1/2', 'left-16', 'right-16');
-        pop.style.left = `${rect.left}px`;
-        pop.style.top = `${rect.top}px`;
+        winObj.el.classList.remove('top-1/2', '-translate-y-1/2', 'left-16', 'right-16');
+        winObj.el.style.left = `${rect.left}px`;
+        winObj.el.style.top = `${rect.top}px`;
 
         const onMove = (ev) => {
-          const maxL = Math.max(8, window.innerWidth - pop.offsetWidth - 8);
-          const maxT = Math.max(8, window.innerHeight - pop.offsetHeight - 8);
+          const maxL = Math.max(8, window.innerWidth - winObj.el.offsetWidth - 8);
+          const maxT = Math.max(8, window.innerHeight - winObj.el.offsetHeight - 8);
           const nextL = Math.max(8, Math.min(maxL, ev.clientX - offsetX));
           const nextT = Math.max(8, Math.min(maxT, ev.clientY - offsetY));
-          customPopPos = { left: nextL, top: nextT };
-          pop.style.left = `${nextL}px`;
-          pop.style.top = `${nextT}px`;
+          winObj.customPos = { left: nextL, top: nextT };
+          winObj.el.style.left = `${nextL}px`;
+          winObj.el.style.top = `${nextT}px`;
         };
         const onUp = () => {
-          handleEl.style.cursor = 'grab';
+          document.documentElement.classList.remove('vox-grabbing');
           window.removeEventListener('pointermove', onMove);
           window.removeEventListener('pointerup', onUp);
+          window.removeEventListener('pointercancel', onUp);
         };
         window.addEventListener('pointermove', onMove);
         window.addEventListener('pointerup', onUp);
+        window.addEventListener('pointercancel', onUp);
       });
     };
 
-    const openPop = (toolName, html, bind) => {
-      if (activeTool === toolName) return closePop();
-      if (timerPollId) {
-        clearInterval(timerPollId);
-        timerPollId = null;
+    const toggleSubWindow = (key, title, widthClass, html, bind, { onShow, onHide } = {}) => {
+      let winObj = subWindows[key];
+      if (!winObj) {
+        const el = document.createElement('div');
+        el.id = `tb-win-${key}`;
+        el.className = `fixed top-1/2 -translate-y-1/2 hidden ${widthClass} vox-card bg-[#F8F6F0] p-3.5 flex-col gap-2.5 vox-panel-enter`;
+        el.style.zIndex = String(++topWinZ);
+        el.innerHTML = `
+          <div data-tb-drag="${key}" title="กดค้างเพื่อลากย้ายตำแหน่ง" class="vox-grab flex items-center justify-between pb-2 border-b-2 border-[#111111] select-none">
+            <span class="inline-flex items-center gap-1.5 font-display font-extrabold text-xs uppercase tracking-wider text-[#111111]">
+              <svg class="w-3 h-3 opacity-45 shrink-0" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="5" cy="4" r="1.3"/><circle cx="11" cy="4" r="1.3"/><circle cx="5" cy="8" r="1.3"/><circle cx="11" cy="8" r="1.3"/><circle cx="5" cy="12" r="1.3"/><circle cx="11" cy="12" r="1.3"/></svg>
+              <span>${title}</span>
+            </span>
+            <button type="button" data-tb-close="${key}" title="ซ่อนหน้าต่าง (งานยังคงทำงานต่อ)" class="w-6 h-6 rounded-md hover:bg-[#E74C3C] hover:text-white text-xs font-black flex items-center justify-center cursor-pointer transition-colors">✕</button>
+          </div>
+          <div data-tb-body="${key}" class="flex flex-col gap-2.5">${html}</div>
+        `;
+        document.body.appendChild(el);
+        const offsetMap = { random: -30, timer: 0, music: 30 };
+        winObj = { el, customPos: null, offset: offsetMap[key] || 0, onShow, onHide };
+        subWindows[key] = winObj;
+
+        el.addEventListener('pointerdown', () => {
+          el.style.zIndex = String(++topWinZ);
+        });
+        el.querySelector(`[data-tb-close="${key}"]`)?.addEventListener('click', () => {
+          el.classList.add('hidden');
+          el.classList.remove('flex');
+          if (winObj.onHide) winObj.onHide(el);
+          syncDockHighlights();
+        });
+        makeWindowDraggable(winObj, el.querySelector(`[data-tb-drag="${key}"]`));
+        positionSubWindow(winObj, winObj.offset);
+        if (bind) bind(el);
       }
-      parkYtHost();
-      activeTool = toolName;
-      syncActiveDockBtns();
-      positionPopover();
-      pop.classList.toggle('w-72', toolName.includes('YouTube'));
-      pop.classList.toggle('w-64', !toolName.includes('YouTube'));
-      pop.innerHTML = `
-        <div id="tb-pop-drag" title="กดค้างเพื่อลากย้ายตำแหน่ง" class="flex items-center justify-between pb-2 border-b-2 border-[#111111] select-none">
-          <span class="inline-flex items-center gap-1.5 font-display font-extrabold text-xs uppercase tracking-wider text-[#111111]">
-            <svg class="w-3 h-3 opacity-45 shrink-0" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="5" cy="4" r="1.3"/><circle cx="11" cy="4" r="1.3"/><circle cx="5" cy="8" r="1.3"/><circle cx="11" cy="8" r="1.3"/><circle cx="5" cy="12" r="1.3"/><circle cx="11" cy="12" r="1.3"/></svg>
-            <span>${toolName}</span>
-          </span>
-          <button type="button" id="tb-pop-close" class="w-6 h-6 rounded-md hover:bg-[#E74C3C] hover:text-white text-xs font-black flex items-center justify-center cursor-pointer transition-colors">✕</button>
-        </div>
-        ${html}
-      `;
-      pop.classList.remove('hidden', 'vox-panel-enter');
-      pop.classList.add('flex');
-      void pop.offsetWidth;
-      pop.classList.add('vox-panel-enter');
-      document.getElementById('tb-pop-close')?.addEventListener('click', closePop);
-      makePopoverDraggable(document.getElementById('tb-pop-drag'));
-      if (bind) bind();
+
+      const isCurrentlyHidden = winObj.el.classList.contains('hidden');
+      if (isCurrentlyHidden) {
+        winObj.el.style.zIndex = String(++topWinZ);
+        positionSubWindow(winObj, winObj.offset);
+        winObj.el.classList.remove('hidden', 'vox-panel-enter');
+        winObj.el.classList.add('flex');
+        void winObj.el.offsetWidth;
+        winObj.el.classList.add('vox-panel-enter');
+        if (winObj.onShow) winObj.onShow(winObj.el);
+      } else {
+        winObj.el.classList.add('hidden');
+        winObj.el.classList.remove('flex');
+        if (winObj.onHide) winObj.onHide(winObj.el);
+      }
+      syncDockHighlights();
     };
 
     // 1. Random Picker (Dramatic decelerating roulette + Web Audio ticks + card spotlight)
     document.getElementById('tb-random-btn').addEventListener('click', () => {
-      const teams = window.VoxScoreboardAPI?.getState()?.teams || [];
-      openPop('สุ่ม (Random)', `
+      toggleSubWindow('random', 'สุ่ม (Random)', 'w-64', `
         <div id="tb-rand-box" class="bg-white border-2 border-[#111111] rounded-xl p-3.5 text-center min-h-[4.25rem] flex flex-col items-center justify-center gap-1.5 transition-all duration-200 shadow-[3px_3px_0px_#111111]">
           <div id="tb-rand-result" class="font-display font-black text-xl text-[#111111] leading-tight">?</div>
           <div class="w-full h-1.5 bg-[#F0EDE4] border border-[#111111] rounded-full overflow-hidden hidden" id="tb-rand-bar-wrap">
@@ -333,6 +344,7 @@
         };
 
         document.getElementById('tb-rand-team').addEventListener('click', () => {
+          const teams = window.VoxScoreboardAPI?.getState()?.teams || [];
           if (teams.length) spin(teams, true);
         });
         document.getElementById('tb-rand-num').addEventListener('click', () => {
@@ -342,6 +354,7 @@
     });
 
     // 2. Quick Timer (Live clock preview + presets + nudge +/- + instant controls)
+    let timerPollId = null;
     document.getElementById('tb-timer-btn').addEventListener('click', () => {
       const api = window.VoxScoreboardAPI;
       const st = api?.getState();
@@ -352,12 +365,14 @@
         return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
       };
       const getLiveSec = () => {
-        const t = st.timer;
+        const t = (api.getState() || st).timer;
         if (t.running && t.endAt) return Math.max(0, Math.ceil((t.endAt - Date.now()) / 1000));
         return Math.max(0, t.remainingSec || 0);
       };
 
-      openPop('ตัวจับเวลา (Timer)', `
+      let syncTimerPopUI = () => {};
+
+      toggleSubWindow('timer', 'ตัวจับเวลา (Timer)', 'w-64', `
         <div class="bg-white border-2 border-[#111111] rounded-xl py-2.5 px-3 text-center shadow-[3px_3px_0px_#111111]">
           <div id="tb-t-clock" class="font-display font-black text-3xl tabular-nums text-[#111111] leading-none">${fmtClock(getLiveSec())}</div>
         </div>
@@ -382,14 +397,14 @@
           <button type="button" id="tb-t-vis" class="btn-vox bg-white hover:bg-[#F4D03F] text-xs font-display font-bold py-1.5 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer"></button>
           <button type="button" id="tb-t-mode" class="btn-vox bg-white hover:bg-[#F4D03F] text-xs font-display font-bold py-1.5 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer"></button>
         </div>
-      `, () => {
+      `, (winEl) => {
         const clockEl = document.getElementById('tb-t-clock');
         const toggleBtn = document.getElementById('tb-t-toggle');
         const visBtn = document.getElementById('tb-t-vis');
         const modeBtn = document.getElementById('tb-t-mode');
 
-        const syncTimerPopUI = () => {
-          const t = st.timer;
+        syncTimerPopUI = () => {
+          const t = (api.getState() || st).timer;
           if (clockEl) clockEl.textContent = fmtClock(getLiveSec());
           if (toggleBtn) toggleBtn.innerHTML = t.running ? `${TB_ICONS.pause}<span>หยุด</span>` : `${TB_ICONS.play}<span>เริ่ม</span>`;
           if (visBtn) visBtn.innerHTML = t.visible ? `${TB_ICONS.eyeOff}<span>ซ่อนจอ</span>` : `${TB_ICONS.eye}<span>แสดงจอ</span>`;
@@ -408,14 +423,14 @@
           syncTimerPopUI();
         };
 
-        pop.querySelectorAll('[data-tb-t]').forEach(b => {
+        winEl.querySelectorAll('[data-tb-t]').forEach(b => {
           b.addEventListener('click', () => {
             const sec = Number(b.dataset.tbT);
             updateTimer(t => { t.durationSec = sec; t.remainingSec = sec; t.running = false; t.endAt = null; t.visible = true; });
           });
         });
 
-        pop.querySelectorAll('[data-tb-nudge]').forEach(b => {
+        winEl.querySelectorAll('[data-tb-nudge]').forEach(b => {
           b.addEventListener('click', () => {
             const delta = Number(b.dataset.tbNudge);
             updateTimer(t => {
@@ -463,9 +478,17 @@
         });
 
         syncTimerPopUI();
-        timerPollId = setInterval(() => {
-          if (clockEl) clockEl.textContent = fmtClock(getLiveSec());
-        }, 200);
+      }, {
+        onShow: () => {
+          if (timerPollId) clearInterval(timerPollId);
+          const clockEl = document.getElementById('tb-t-clock');
+          timerPollId = setInterval(() => {
+            if (clockEl) clockEl.textContent = fmtClock(getLiveSec());
+          }, 200);
+        },
+        onHide: () => {
+          if (timerPollId) { clearInterval(timerPollId); timerPollId = null; }
+        }
       });
     });
 
@@ -539,6 +562,15 @@
     };
 
     document.getElementById('tb-music-btn').addEventListener('click', () => {
+      const mountYtIntoSlot = () => {
+        const slot = document.getElementById('tb-yt-slot');
+        if (slot && currentTrackId) {
+          slot.innerHTML = '';
+          ytHost.className = 'w-full h-full';
+          slot.appendChild(ytHost);
+        }
+      };
+
       const renderMusicBody = () => `
         <div class="flex flex-col gap-2">
           <div id="tb-yt-slot" class="w-full aspect-video bg-[#111111] rounded-lg border-2 border-[#111111] overflow-hidden flex items-center justify-center text-[11px] text-white/60 font-display text-center px-3">
@@ -553,15 +585,7 @@
         </div>
       `;
 
-      openPop('YouTube Music', renderMusicBody(), () => {
-        const mountYtIntoSlot = () => {
-          const slot = document.getElementById('tb-yt-slot');
-          if (slot && currentTrackId) {
-            slot.innerHTML = '';
-            ytHost.className = 'w-full h-full';
-            slot.appendChild(ytHost);
-          }
-        };
+      toggleSubWindow('music', 'YouTube Music', 'w-72', renderMusicBody(), () => {
         mountYtIntoSlot();
 
         const resultsEl = document.getElementById('tb-yt-results');
@@ -633,6 +657,9 @@
           const slot = document.getElementById('tb-yt-slot');
           if (slot) slot.innerHTML = 'วางลิงก์ YouTube หรือพิมพ์ชื่อเพลงแล้วกด Enter';
         });
+      }, {
+        onShow: mountYtIntoSlot,
+        onHide: parkYtHost
       });
     });
 
@@ -646,10 +673,11 @@
     document.getElementById('tb-flip-btn').addEventListener('click', () => {
       const first = bar.getBoundingClientRect();
       side = side === 'left' ? 'right' : 'left';
-      customPopPos = null;
       try { localStorage.setItem(SIDE_KEY, side); } catch (_) {}
       applySide();
-      positionPopover();
+      Object.values(subWindows).forEach((w) => {
+        if (!w.customPos) positionSubWindow(w, w.offset);
+      });
       const last = bar.getBoundingClientRect();
       const dx = first.left - last.left;
       if (Math.abs(dx) > 1) {

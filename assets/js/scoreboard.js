@@ -868,6 +868,7 @@
         const stageDisplay = document.getElementById('stage-timer-display');
         const stageDot = document.getElementById('stage-timer-dot');
         const stageLabel = document.getElementById('stage-timer-label');
+        const stageProgress = document.getElementById('stage-timer-progress');
         const showCorner = Boolean(t.visible && t.mode !== 'center');
         if (stagePill && stageDisplay) {
           stagePill.classList.toggle('hidden', !showCorner);
@@ -884,6 +885,12 @@
           }
           if (stageLabel) {
             stageLabel.textContent = sec === 0 ? "TIME'S UP!" : 'TIME';
+          }
+          if (stageProgress) {
+            const totalDur = Math.max(1, Number(t.durationSec) || 180);
+            const pct = Math.max(0, Math.min(100, ((totalDur - sec) / totalDur) * 100));
+            stageProgress.style.width = `${pct}%`;
+            stageProgress.style.backgroundColor = isUrgent ? '#F4D03F' : (sec <= 15 ? '#F39C12' : '#2980B9');
           }
         }
 
@@ -906,14 +913,43 @@
           }
 
           const totalDur = Math.max(1, Number(t.durationSec) || 180);
-          const elapsedPct = Math.max(0, Math.min(100, ((totalDur - sec) / totalDur) * 100));
-          const hasStarted = elapsedPct > 0;
+          const remMs = (t.running && t.endAt) ? Math.max(0, t.endAt - Date.now()) : (sec * 1000);
+          const elapsedPct = Math.max(0, Math.min(100, ((totalDur * 1000 - remMs) / (totalDur * 1000)) * 100));
+          const hasStarted = elapsedPct > 0.05;
+          const centerBarBack = document.getElementById('center-timer-bar-back');
+          centerBar.classList.toggle('is-flowing', Boolean(t.running && showCenter));
+          if (centerBarBack) centerBarBack.classList.toggle('is-flowing', Boolean(t.running && showCenter));
           centerBar.style.opacity = hasStarted ? '1' : '0';
           centerBar.style.height = `${elapsedPct}%`;
-          const centerBarBack = document.getElementById('center-timer-bar-back');
           if (centerBarBack) {
             centerBarBack.style.opacity = hasStarted ? '1' : '0';
-            centerBarBack.style.height = `${Math.min(100, elapsedPct + (hasStarted && elapsedPct < 98 ? 2 : 0))}%`;
+            centerBarBack.style.height = `${Math.min(100, elapsedPct + (hasStarted && elapsedPct < 98 ? 2.2 : 0))}%`;
+          }
+          if (t.running && showCenter && !window.__voxLiquidRaf) {
+            const tickLiquid = () => {
+              const cur = state.timer;
+              const isStillOpen = Boolean(currentRole === 'stage' && cur?.visible && cur?.mode === 'center' && cur?.running && cur?.endAt);
+              if (!isStillOpen) {
+                window.__voxLiquidRaf = null;
+                return;
+              }
+              const durMs = Math.max(1000, (Number(cur.durationSec) || 180) * 1000);
+              const leftMs = Math.max(0, cur.endAt - Date.now());
+              const pct = Math.max(0, Math.min(100, ((durMs - leftMs) / durMs) * 100));
+              const started = pct > 0.05;
+              centerBar.style.opacity = started ? '1' : '0';
+              centerBar.style.height = `${pct}%`;
+              if (centerBarBack) {
+                centerBarBack.style.opacity = started ? '1' : '0';
+                centerBarBack.style.height = `${Math.min(100, pct + (started && pct < 98 ? 2.2 : 0))}%`;
+              }
+              if (leftMs > 0) {
+                window.__voxLiquidRaf = requestAnimationFrame(tickLiquid);
+              } else {
+                window.__voxLiquidRaf = null;
+              }
+            };
+            window.__voxLiquidRaf = requestAnimationFrame(tickLiquid);
           }
           const cToggleIcon = document.getElementById('center-timer-toggle-icon');
           if (cToggleIcon) {
@@ -3053,6 +3089,33 @@
         renderTimerUI();
       });
 
+      document.querySelectorAll('[data-ct-preset]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const sec = Number(btn.dataset.ctPreset) || 180;
+          updateTimerState(t => {
+            t.durationSec = sec;
+            t.remainingSec = sec;
+            t.running = false;
+            t.endAt = null;
+          });
+        });
+      });
+
+      document.querySelectorAll('[data-ct-nudge]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const delta = Number(btn.dataset.ctNudge) || 0;
+          updateTimerState(t => {
+            const cur = t.running && t.endAt
+              ? Math.max(0, Math.ceil((t.endAt - Date.now()) / 1000))
+              : Math.max(0, t.remainingSec || 0);
+            const next = Math.max(0, cur + delta);
+            t.remainingSec = next;
+            t.durationSec = Math.max(next, t.durationSec || 180);
+            t.endAt = t.running ? (Date.now() + next * 1000) : null;
+          });
+        });
+      });
+
       const centerTimerOverlayEl = document.getElementById('center-timer-overlay');
       if (centerTimerOverlayEl) {
         centerTimerOverlayEl.addEventListener('click', (e) => {
@@ -3421,7 +3484,25 @@
           renderLeaderboard(false);
           renderDrawerControls();
         },
-        addTeam: () => document.getElementById('drawer-add-team-btn')?.click(),
+        addTeam: () => {
+          if (state.teams.length >= 8) return;
+          const usedColors = new Set(state.teams.map(t => (t.color || '').toUpperCase()));
+          const pal = TEAM_PALETTE.find(p => !usedColors.has(p.color.toUpperCase())) || TEAM_PALETTE[state.teams.length % TEAM_PALETTE.length];
+          const usedNames = new Set(state.teams.map(t => (t.name || '').trim().toLowerCase()));
+          let num = 1;
+          while (usedNames.has(`team ${num}`)) num++;
+          const newTeam = {
+            id: `team-${Date.now().toString(36)}`,
+            name: `Team ${num}`,
+            color: pal.color,
+            textColor: pal.textColor,
+            scores: state.games.map(() => 0)
+          };
+          state.teams.push(newTeam);
+          displayedTotals[newTeam.id] = 0;
+          saveAndBroadcast();
+          renderLeaderboard(true);
+        },
         removeTeam: (teamId) => {
           if (state.teams.length <= 2) return;
           const idx = state.teams.findIndex(t => t.id === teamId);
@@ -3464,7 +3545,15 @@
           saveAndBroadcast();
           syncAccordionFromState();
         },
-        addGame: () => document.getElementById('drawer-add-game-btn')?.click(),
+        addGame: () => {
+          if (state.games.length >= 6) return;
+          const idx = state.games.length;
+          state.games.push(`Activity ${idx + 1}`);
+          state.gameMedia.push({ description: '', youtubeUrl: '', imageData: '', activeMediaType: 'video' });
+          state.teams.forEach(t => t.scores.push(0));
+          saveAndBroadcast();
+          syncHeaderTexts();
+        },
         removeGame: (gIdx) => {
           if (state.games.length <= 1 || gIdx < 0 || gIdx >= state.games.length) return;
           state.games.splice(gIdx, 1);
