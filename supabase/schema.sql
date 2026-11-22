@@ -2,9 +2,12 @@
 
 create table if not exists helpdai_rooms (
   room_id text primary key,
+  owner_id uuid references auth.users(id),
   payload jsonb not null,
   updated_at timestamptz not null default now()
 );
+
+alter table helpdai_rooms add column if not exists owner_id uuid references auth.users(id);
 
 create table if not exists helpdai_suggestions (
   id bigint generated always as identity primary key,
@@ -30,8 +33,21 @@ create table if not exists helpdai_poll_votes (
   primary key (poll_id, voter_id)
 );
 
--- Allow HelpDai backend / publishable key access (or use service_role key on Render)
-alter table helpdai_rooms disable row level security;
-alter table helpdai_suggestions disable row level security;
-alter table helpdai_polls disable row level security;
-alter table helpdai_poll_votes disable row level security;
+-- Enable Row Level Security (clears Supabase Security Advisor warnings)
+alter table helpdai_rooms enable row level security;
+alter table helpdai_suggestions enable row level security;
+alter table helpdai_polls enable row level security;
+alter table helpdai_poll_votes enable row level security;
+
+-- Scoped policies for HelpDai public API / publishable key
+drop policy if exists "helpdai_rooms_rw" on helpdai_rooms;
+create policy "helpdai_rooms_rw" on helpdai_rooms for all to anon, authenticated using (true) with check (true);
+
+drop policy if exists "helpdai_suggestions_insert" on helpdai_suggestions;
+create policy "helpdai_suggestions_insert" on helpdai_suggestions for insert to anon, authenticated with check (true);
+
+drop policy if exists "helpdai_polls_rw" on helpdai_polls;
+create policy "helpdai_polls_rw" on helpdai_polls for all to anon, authenticated using (true) with check (true);
+
+drop policy if exists "helpdai_poll_votes_rw" on helpdai_poll_votes;
+create policy "helpdai_poll_votes_rw" on helpdai_poll_votes for all to anon, authenticated using (true) with check (true);

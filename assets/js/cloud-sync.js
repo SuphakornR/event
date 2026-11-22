@@ -45,7 +45,14 @@
   }
 
   const cfg = window.HELPDAI_CONFIG || {};
-  const roomId = new URLSearchParams(window.location.search).get('room') || 'default';
+  const baseRoom = new URLSearchParams(window.location.search).get('room') || 'default';
+  const getScopedRoomId = () => {
+    const uid = window.HelpDaiAuth?.getSession()?.user?.id;
+    return uid && !new URLSearchParams(window.location.search).get('room')
+      ? `u-${uid.slice(0, 12)}`
+      : baseRoom;
+  };
+  const roomId = getScopedRoomId();
   const defaultApiBase = (!location.hostname.endsWith('github.io') && location.protocol.startsWith('http')) ? location.origin : '';
   const apiBase = (cfg.apiBase || defaultApiBase).replace(/\/$/, '');
 
