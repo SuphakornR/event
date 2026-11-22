@@ -1627,7 +1627,6 @@
       // ========================================================================
       function renderMediaStageContent(gameIdx, animateMediaCrossfade = false) {
         const media = state.gameMedia[gameIdx] || { description: '', youtubeUrl: '', imageData: '', activeMediaType: 'video' };
-        const descText = (media.description || '').trim();
         const ytId = extractYouTubeId(media.youtubeUrl);
         const imgSrc = (media.imageData || '').trim();
 
@@ -1635,7 +1634,6 @@
         accordionGameTitleEl.textContent = state.games[gameIdx];
 
         const hasMedia = Boolean(ytId || imgSrc);
-        const hasDesc = Boolean(descText);
 
         // Temporarily park persistent visual host safely in document.body before rebuilding innerHTML
         if (mediaVisualHostEl.parentElement && mediaVisualHostEl.parentElement !== zoomMediaSlotEl) {
@@ -1643,11 +1641,11 @@
           document.body.appendChild(mediaVisualHostEl);
         }
 
-        if (!hasDesc && !hasMedia) {
+        if (!hasMedia) {
           mediaContentStageEl.innerHTML = `
             <div class="w-full bg-[#F8F6F0] border-2 border-dashed border-[#111111]/45 rounded-xl py-7 px-4 flex flex-col items-center justify-center text-center gap-3">
               <p class="thai-safe font-display font-bold text-base sm:text-lg text-[#111111]/75">
-                ยังไม่ได้ตั้งค่าคำอธิบาย ลิงก์ YouTube หรือรูปภาพ/GIF สำหรับเกมนี้
+                ยังไม่ได้ตั้งค่าลิงก์ YouTube หรือรูปภาพ/GIF สำหรับกิจกรรมนี้
               </p>
               <button
                 type="button"
@@ -1657,7 +1655,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
                 </svg>
-                <span>เพิ่มรายละเอียด / สื่อประกอบ</span>
+                <span>เพิ่มสื่อประกอบ / กติกา</span>
               </button>
             </div>
           `;
@@ -1666,34 +1664,9 @@
           return;
         }
 
-        const descriptionHtml = hasDesc
-          ? `
-            <div class="bg-[#F8F6F0] border-[2.5px] border-[#111111] rounded-xl p-4 sm:p-5 shadow-[4px_4px_0px_#111111] flex flex-col justify-center">
-              <div class="inline-flex items-center gap-1.5 mb-2">
-                <span class="px-2 py-0.5 rounded bg-[#111111] text-[#F4D03F] font-display font-extrabold text-xs tracking-wide">กติกา / รายละเอียด</span>
-              </div>
-              <p class="thai-safe text-base sm:text-lg lg:text-xl font-medium text-[#111111] whitespace-pre-line break-words">${escapeHtml(descText)}</p>
-            </div>
-          `
-          : '';
-
-        if (hasDesc && !hasMedia) {
-          mediaContentStageEl.innerHTML = `<div class="w-full">${descriptionHtml}</div>`;
-          return;
-        }
-
-        if (hasDesc && hasMedia) {
-          mediaContentStageEl.innerHTML = `
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
-              <div class="lg:col-span-5 flex flex-col">${descriptionHtml}</div>
-              <div id="accordion-media-slot" class="lg:col-span-7 flex flex-col justify-center"></div>
-            </div>
-          `;
-        } else {
-          mediaContentStageEl.innerHTML = `
-            <div id="accordion-media-slot" class="w-full max-w-4xl mx-auto"></div>
-          `;
-        }
+        mediaContentStageEl.innerHTML = `
+          <div id="accordion-media-slot" class="w-full max-w-4xl mx-auto"></div>
+        `;
 
         const targetSlot = state.isMediaZoomed ? zoomMediaSlotEl : document.getElementById('accordion-media-slot');
         if (targetSlot) {
@@ -1706,34 +1679,45 @@
         const row = document.getElementById('game-cards-row');
         if (!row) return;
         const dense = state.games.length >= 5;
-        row.className = `flex-1 min-h-0 flex flex-col ${dense ? 'gap-1.5' : 'gap-2'}`;
+        row.className = `flex-1 min-h-0 flex flex-col ${dense ? 'gap-1.5' : 'gap-2'} overflow-y-auto pr-0.5`;
         row.innerHTML = state.games.map((title, idx) => {
           const isOpen = state.activeGameAccordion === idx;
           const color = GAME_COLORS[idx % GAME_COLORS.length];
           const media = state.gameMedia[idx];
+          const descText = (media?.description || '').trim();
           const hasContent = Boolean(
-            (media?.description || '').trim() ||
+            descText ||
             extractYouTubeId(media?.youtubeUrl) ||
             (media?.imageData || '').trim()
           );
           return `
-            <div
-              id="game-card-${idx}"
-              data-game-index="${idx}"
-              role="button"
-              tabindex="0"
-              aria-expanded="${isOpen}"
-              class="game-pill-card ${dense ? 'px-2.5 py-1.5' : 'px-3 py-2'} flex items-center justify-between gap-2 ${isOpen ? 'is-active' : ''}"
-            >
-              <div class="flex items-center gap-2 min-w-0 flex-1">
-                <span class="w-3 h-3 rounded-full border-[1.5px] border-[#111111] shrink-0" style="background:${color}"></span>
-                <span class="thai-safe-tight font-semibold ${dense ? 'text-xs' : 'text-sm'} text-[#111111] truncate">${escapeHtml(title)}</span>
+            <div class="flex flex-col">
+              <div
+                id="game-card-${idx}"
+                data-game-index="${idx}"
+                role="button"
+                tabindex="0"
+                aria-expanded="${isOpen}"
+                class="game-pill-card ${dense ? 'px-2.5 py-1.5' : 'px-3 py-2'} flex items-center justify-between gap-2 ${isOpen ? 'is-active' : ''}"
+              >
+                <div class="flex items-center gap-2 min-w-0 flex-1">
+                  <span class="w-3 h-3 rounded-full border-[1.5px] border-[#111111] shrink-0" style="background:${color}"></span>
+                  <span class="thai-safe-tight font-semibold ${dense ? 'text-xs' : 'text-sm'} text-[#111111] truncate">${escapeHtml(title)}</span>
+                </div>
+                <div class="flex items-center gap-1.5 shrink-0">
+                  <span class="${hasContent ? '' : 'hidden'} w-2 h-2 rounded-full bg-[#111111]" title="มีรายละเอียดหรือสื่อประกอบ"></span>
+                  <button type="button" data-game-menu="${idx}" title="ตั้งค่ากิจกรรม (หรือคลิกขวา)" aria-label="ตั้งค่ากิจกรรม" class="w-6 h-6 rounded-md border border-transparent hover:border-[#111111] hover:bg-[#F4D03F] font-display font-black text-xs text-[#111111]/65 hover:text-[#111111] flex items-center justify-center transition-colors cursor-pointer">⋯</button>
+                  <span class="game-chevron font-display font-black text-base text-[#111111]/55 leading-none">›</span>
+                </div>
               </div>
-              <div class="flex items-center gap-1.5 shrink-0">
-                <span class="${hasContent ? '' : 'hidden'} w-2 h-2 rounded-full bg-[#111111]" title="มีรายละเอียดหรือสื่อประกอบ"></span>
-                <button type="button" data-game-menu="${idx}" title="ตั้งค่ากิจกรรม (หรือคลิกขวา)" aria-label="ตั้งค่ากิจกรรม" class="w-6 h-6 rounded-md border border-transparent hover:border-[#111111] hover:bg-[#F4D03F] font-display font-black text-xs text-[#111111]/65 hover:text-[#111111] flex items-center justify-center transition-colors cursor-pointer">⋯</button>
-                <span class="game-chevron font-display font-black text-base text-[#111111]/55 leading-none">›</span>
-              </div>
+              ${descText ? `
+                <div class="mx-1 mt-1 bg-[#F8F6F0] border-2 border-[#111111] rounded-lg px-2.5 py-2 shadow-[2px_2px_0px_#111111]">
+                  <div class="inline-flex items-center gap-1 mb-1">
+                    <span class="px-1.5 py-0.5 rounded bg-[#111111] text-[#F4D03F] font-display font-extrabold text-[10px] tracking-wide">กติกา / รายละเอียด</span>
+                  </div>
+                  <p class="thai-safe text-xs font-medium text-[#111111] whitespace-pre-line break-words leading-snug">${escapeHtml(descText)}</p>
+                </div>
+              ` : ''}
             </div>
           `;
         }).join('');
