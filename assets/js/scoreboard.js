@@ -3537,12 +3537,17 @@
       resizeConfettiCanvas();
 
       let drumrollTimerId = null;
+      let spotlightRafId = null;
       let confettiWaveTimers = [];
 
       function hideVictorySpotlight() {
         if (drumrollTimerId) {
           clearTimeout(drumrollTimerId);
           drumrollTimerId = null;
+        }
+        if (spotlightRafId) {
+          cancelAnimationFrame(spotlightRafId);
+          spotlightRafId = null;
         }
         confettiWaveTimers.forEach(id => clearTimeout(id));
         confettiWaveTimers = [];
@@ -3557,38 +3562,101 @@
         const DRUMROLL_MS = 2120;
         playDrumroll(DRUMROLL_MS);
 
+        // Determine ranked winner card coordinates + decoy spotlight stops
+        const ranked = state.teams
+          .map((t, idx) => ({ ...t, originalIndex: idx, total: getTeamTotal(t) }))
+          .sort((a, b) => b.total - a.total || a.originalIndex - b.originalIndex);
+        const champ = ranked[0];
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+
+        const getCenterOfTeam = (teamId) => {
+          const row = teamId ? document.querySelector(`.team-row[data-team-id="${teamId}"]`) : null;
+          if (!row) return null;
+          const r = row.getBoundingClientRect();
+          if (r.width < 10 || r.height < 10) return null;
+          return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+        };
+
+        const winnerPt = getCenterOfTeam(champ?.id) || { x: vw * 0.65, y: vh * 0.45 };
+        const rowPts = Array.from(document.querySelectorAll('.team-row'))
+          .map(el => {
+            const r = el.getBoundingClientRect();
+            return r.width > 10 ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : null;
+          })
+          .filter(Boolean);
+
+        const decoyPts = rowPts.filter(p => Math.hypot(p.x - winnerPt.x, p.y - winnerPt.y) > 45);
+        const pickRandomPt = () => decoyPts.length
+          ? decoyPts[Math.floor(Math.random() * decoyPts.length)]
+          : { x: vw * (0.22 + Math.random() * 0.56), y: vh * (0.24 + Math.random() * 0.52) };
+
+        const waypoints = [
+          { x: vw * 0.25, y: vh * 0.28 },
+          pickRandomPt(),
+          { x: vw * (0.3 + Math.random() * 0.45), y: vh * (0.35 + Math.random() * 0.35) },
+          pickRandomPt(),
+          winnerPt
+        ];
+
         const drumOverlay = document.createElement('div');
         drumOverlay.id = 'victory-drumroll-overlay';
-        drumOverlay.className = 'fixed inset-0 z-[76] flex items-center justify-center p-4 bg-[#0B0B0B]/90 backdrop-blur-md overflow-hidden';
+        drumOverlay.className = 'fixed inset-0 z-[76] pointer-events-auto overflow-hidden';
         drumOverlay.innerHTML = `
-          <div class="pointer-events-none fixed inset-0 opacity-35" style="background: radial-gradient(circle at 50% 50%, rgba(244,208,63,0.45) 0%, rgba(231,76,60,0.18) 38%, transparent 72%);"></div>
-          <div class="victory-drum-shake relative z-10 w-full max-w-md vox-card bg-[#F8F6F0] p-7 text-center flex flex-col items-center gap-4 border-4 border-[#111111] shadow-[12px_12px_0px_#F4D03F]">
-            <span class="inline-flex items-center gap-1.5 bg-[#111111] text-[#F4D03F] px-3 py-1 rounded-full font-display font-black text-xs tracking-widest uppercase">
-              <span class="w-2 h-2 rounded-full bg-[#E74C3C] animate-ping"></span>
-              <span>FINAL RESULT INCOMING</span>
-            </span>
-            <svg class="w-20 h-20 animate-bounce" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <path d="M12 12 L28 24 M52 12 L36 24" stroke="#111111" stroke-width="4" stroke-linecap="round"/>
-              <circle cx="11" cy="11" r="3.5" fill="#E74C3C" stroke="#111111" stroke-width="2"/>
-              <circle cx="53" cy="11" r="3.5" fill="#E74C3C" stroke="#111111" stroke-width="2"/>
-              <rect x="12" y="25" width="40" height="26" rx="6" fill="#F4D03F" stroke="#111111" stroke-width="3.5"/>
-              <ellipse cx="32" cy="25" rx="20" ry="6" fill="#FFFDF5" stroke="#111111" stroke-width="3.5"/>
-              <path d="M18 31 L26 48 L34 31 L42 48 L48 34" stroke="#111111" stroke-width="3" stroke-linejoin="round"/>
-            </svg>
-            <p class="thai-safe-tight font-display font-black text-2xl sm:text-3xl text-[#111111] tracking-tight">จับตาดูให้ดี... ผู้ชนะคือ!</p>
-            <div class="w-full h-6 bg-[#F0EDE4] border-[3px] border-[#111111] rounded-full overflow-hidden p-[3px] shadow-[3px_3px_0px_#111111]">
-              <div id="drumroll-tension-fill" class="h-full rounded-full transition-all ease-in" style="width:0%; background: linear-gradient(90deg, #F4D03F 0%, #E74C3C 100%); transition-duration:${DRUMROLL_MS}ms;"></div>
-            </div>
+          <div id="victory-spotlight-mask" class="absolute inset-0 transition-opacity duration-200" style="background: radial-gradient(circle 135px at 50% 50%, rgba(255,255,255,0.06) 0%, rgba(56,189,248,0.22) 52%, rgba(41,128,185,0.58) 68%, rgba(5,7,13,0.93) 86%, rgba(5,7,13,0.96) 100%);"></div>
+          <div id="victory-spotlight-ring" class="pointer-events-none fixed -translate-x-1/2 -translate-y-1/2 w-[260px] h-[260px] rounded-full border-[3px] border-[#38BDF8]/75 shadow-[0_0_55px_18px_rgba(41,128,185,0.65),inset_0_0_32px_rgba(56,189,248,0.35)]"></div>
+          <div class="fixed top-5 left-1/2 -translate-x-1/2 z-10 inline-flex items-center gap-2 bg-[#111111]/90 text-[#F4D03F] border-2 border-[#38BDF8] px-4 py-1.5 rounded-full shadow-[0_0_24px_rgba(56,189,248,0.45)] font-display font-black text-xs sm:text-sm tracking-wider">
+            <span class="w-2.5 h-2.5 rounded-full bg-[#38BDF8] animate-ping"></span>
+            <span>กำลังค้นหาผู้ชนะ...</span>
           </div>
         `;
         document.body.appendChild(drumOverlay);
-        requestAnimationFrame(() => {
-          const fill = document.getElementById('drumroll-tension-fill');
-          if (fill) fill.style.width = '100%';
-        });
+
+        const maskEl = document.getElementById('victory-spotlight-mask');
+        const ringEl = document.getElementById('victory-spotlight-ring');
+        const startTime = performance.now();
+
+        const animateSpotlight = (now) => {
+          const elapsed = now - startTime;
+          const totalProgress = Math.min(1, elapsed / DRUMROLL_MS);
+          const segCount = waypoints.length - 1;
+          const segFloat = totalProgress * segCount;
+          const segIdx = Math.min(segCount - 1, Math.floor(segFloat));
+          const localT = segFloat - segIdx;
+          // Smooth easeInOutCubic per segment
+          const easeT = localT < 0.5 ? 4 * localT * localT * localT : 1 - Math.pow(-2 * localT + 2, 3) / 2;
+
+          const p0 = waypoints[segIdx];
+          const p1 = waypoints[segIdx + 1];
+          const cx = p0.x + (p1.x - p0.x) * easeT;
+          const cy = p0.y + (p1.y - p0.y) * easeT;
+          // Tighten spotlight slightly as it locks onto the winner card
+          const radius = Math.round(145 - (totalProgress > 0.75 ? (totalProgress - 0.75) * 90 : 0));
+
+          if (maskEl) {
+            maskEl.style.background = `radial-gradient(circle ${radius}px at ${Math.round(cx)}px ${Math.round(cy)}px, rgba(255,255,255,0.04) 0%, rgba(56,189,248,0.22) 52%, rgba(41,128,185,0.62) 69%, rgba(5,7,13,0.93) 86%, rgba(5,7,13,0.97) 100%)`;
+          }
+          if (ringEl) {
+            ringEl.style.left = `${Math.round(cx)}px`;
+            ringEl.style.top = `${Math.round(cy)}px`;
+            ringEl.style.width = `${radius * 2}px`;
+            ringEl.style.height = `${radius * 2}px`;
+          }
+
+          if (totalProgress < 1 && document.getElementById('victory-drumroll-overlay')) {
+            spotlightRafId = requestAnimationFrame(animateSpotlight);
+          } else {
+            spotlightRafId = null;
+          }
+        };
+        spotlightRafId = requestAnimationFrame(animateSpotlight);
 
         drumrollTimerId = setTimeout(() => {
           drumrollTimerId = null;
+          if (spotlightRafId) {
+            cancelAnimationFrame(spotlightRafId);
+            spotlightRafId = null;
+          }
           document.getElementById('victory-drumroll-overlay')?.remove();
           if (state.winnerAnnounced) {
             const flash = document.createElement('div');
