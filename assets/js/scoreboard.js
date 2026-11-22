@@ -927,37 +927,7 @@
           }
         }
 
-        // Stage Corner Timer Pill (hidden when Center-Stage mode is active)
-        const stagePill = document.getElementById('stage-timer-pill');
-        const stageDisplay = document.getElementById('stage-timer-display');
-        const stageDot = document.getElementById('stage-timer-dot');
-        const stageLabel = document.getElementById('stage-timer-label');
-        const stageProgress = document.getElementById('stage-timer-progress');
-        const showCorner = Boolean(t.visible && t.mode !== 'center');
-        if (stagePill && stageDisplay) {
-          stagePill.classList.toggle('hidden', !showCorner);
-          stagePill.classList.toggle('inline-flex', showCorner);
-          stageDisplay.textContent = formatted;
-          const isUrgent = showCorner && sec <= 10;
-          stagePill.classList.toggle('bg-[#E74C3C]', isUrgent);
-          stagePill.classList.toggle('text-white', isUrgent);
-          stagePill.classList.toggle('bg-[#FFFFFF]', !isUrgent);
-          stagePill.classList.toggle('text-[#111111]', !isUrgent);
-          if (stageDot) {
-            stageDot.classList.toggle('bg-[#F4D03F]', !isUrgent);
-            stageDot.classList.toggle('bg-white', isUrgent);
-            stageDot.classList.toggle('animate-pulse', t.running && sec > 0);
-          }
-          if (stageLabel) {
-            stageLabel.textContent = sec === 0 ? "TIME'S UP!" : 'TIME';
-          }
-          if (stageProgress) {
-            const totalDur = Math.max(1, Number(t.durationSec) || 180);
-            const pct = Math.max(0, Math.min(100, ((totalDur - sec) / totalDur) * 100));
-            stageProgress.style.width = `${pct}%`;
-            stageProgress.style.backgroundColor = isUrgent ? '#F4D03F' : (sec <= 15 ? '#F39C12' : '#2980B9');
-          }
-        }
+        // Stage Corner Timer Pill removed (Timer runs via Center Circle Timer & Toolbox Timer)
 
         // Center-Stage Vox Countdown Overlay
         const centerOverlay = document.getElementById('center-timer-overlay');
@@ -3149,23 +3119,6 @@
 
       const minimizeCenterTimer = () => updateTimerState(t => { t.mode = 'corner'; });
       onClick('center-timer-minimize-btn', minimizeCenterTimer);
-      onClick('stage-timer-close-btn', (e) => {
-        e.stopPropagation();
-        updateTimerState(t => {
-          t.visible = false;
-          t.running = false;
-          t.endAt = null;
-          t.mode = 'corner';
-        });
-      });
-      onClick('stage-timer-pill', (e) => {
-        if (e.target.closest('#stage-timer-close-btn')) return;
-        state.timer.mode = 'center';
-        state.timer.visible = true;
-        state.timer.timerVersion = Date.now();
-        saveAndBroadcast();
-        renderTimerUI();
-      });
       onClick('center-timer-toggle-btn', () => {
         if (state.timer.running) {
           state.timer.remainingSec = getLiveRemainingSec();

@@ -16,13 +16,13 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Prompt:wght@600;700;800;900&display=swap" rel="stylesheet" />
-
+  <style>html,body{cursor:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 26 26'%3E%3Cpath d='M4 3 L20 13 L12.5 15 L9.5 22 Z' transform='translate(2 2)' fill='%23111111'/%3E%3Cpath d='M4 3 L20 13 L12.5 15 L9.5 22 Z' fill='%23F4D03F' stroke='%23111111' stroke-width='2.2' stroke-linejoin='round'/%3E%3C/svg%3E") 4 3,auto}</style>
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <link rel="stylesheet" href="assets/css/vox.css?v=20261122b" />
+  <link rel="stylesheet" href="assets/css/vox.css?v=20261122d" />
 </head>
 <body class="flex flex-col justify-between selection:bg-yellow-300 selection:text-black">
-  <script src="assets/js/loader.js?v=20261122b"></script>
+  <script src="assets/js/loader.js?v=20261122d"></script>
 
   <!-- Confetti Canvas -->
   <canvas id="confetti-canvas"></canvas>
@@ -92,18 +92,6 @@
         <button type="button" id="stage-sync-pill" title="สถานะการบันทึกข้อมูล" class="inline-flex items-center gap-1.5 bg-white hover:bg-[#F4D03F]/40 text-[#111111] border-2 border-[#111111] px-2 py-0.5 rounded-md font-display font-bold text-[10px] shadow-[2px_2px_0px_#111111] transition-colors cursor-pointer"></button>
         </div>
 
-        <!-- Stage Game Timer Pill (hidden by default; flex added by JS when active) -->
-        <div
-          id="stage-timer-pill"
-          class="hidden relative overflow-hidden items-center gap-2 bg-[#FFFFFF] text-[#111111] border-[2.5px] border-[#111111] pl-3 pr-2 py-1 rounded-xl font-display font-black shadow-[3px_3px_0px_#111111] transition-colors duration-300 cursor-pointer"
-          title="คลิกเพื่อขยายตัวจับเวลากลางจอ"
-        >
-          <span id="stage-timer-dot" class="w-2 h-2 rounded-full bg-[#F4D03F] border border-[#111111] shrink-0"></span>
-          <span id="stage-timer-label" class="text-[11px] font-extrabold tracking-wide uppercase opacity-75">TIME</span>
-          <span id="stage-timer-display" class="text-lg sm:text-xl tabular-nums tracking-tight leading-none">03:00</span>
-          <button type="button" id="stage-timer-close-btn" title="ซ่อนตัวจับเวลา" aria-label="ซ่อนตัวจับเวลา" class="ml-0.5 w-5 h-5 rounded-md border border-[#111111]/30 hover:border-[#111111] hover:bg-[#E74C3C] hover:text-white text-[10px] font-black flex items-center justify-center transition-colors cursor-pointer">✕</button>
-          <span id="stage-timer-progress" class="absolute left-0 bottom-0 h-[3px] bg-[#2980B9] transition-all duration-300" style="width:0%"></span>
-        </div>
       </div>
 
       <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5">

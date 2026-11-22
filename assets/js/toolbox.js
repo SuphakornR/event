@@ -92,7 +92,7 @@
     bar.innerHTML = `
       <button type="button" id="tb-random-btn" title="สุ่มทีม / สุ่มเลข" aria-label="สุ่มทีมหรือตัวเลข" class="btn-vox w-9 h-9 bg-white hover:bg-[#F4D03F] text-[#111111] rounded-lg flex items-center justify-center cursor-pointer transition-colors">${TB_ICONS.dice}</button>
       <button type="button" id="tb-timer-btn" title="ตัวจับเวลา" aria-label="ตัวจับเวลา" class="btn-vox w-9 h-9 bg-white hover:bg-[#F4D03F] text-[#111111] rounded-lg flex items-center justify-center cursor-pointer transition-colors">${TB_ICONS.timer}</button>
-      <button type="button" id="tb-music-btn" title="เพลง YouTube" aria-label="เครื่องเล่นเพลง YouTube" class="relative btn-vox w-9 h-9 bg-white hover:bg-[#F4D03F] text-[#111111] rounded-lg flex items-center justify-center cursor-pointer transition-colors">${TB_ICONS.music}<span id="tb-music-dot" class="hidden absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-[#10B981] border-[1.5px] border-[#111111] animate-pulse"></span></button>
+      <button type="button" id="tb-music-btn" title="เพลง YouTube" aria-label="เครื่องเล่นเพลง YouTube" class="relative btn-vox w-9 h-9 bg-white hover:bg-[#F4D03F] text-[#111111] rounded-lg flex items-center justify-center cursor-pointer transition-colors">${TB_ICONS.music}<span id="tb-music-dot" class="hidden absolute -top-1.5 -right-1.5 w-3.5 h-3.5 rounded-full bg-[#10B981] border-2 border-[#111111] shadow-[1px_1px_0px_#111111] flex items-center justify-center"><span class="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span></span></button>
       <button type="button" id="tb-poll-btn" title="โหวตสด QR Poll" aria-label="โหวตสด QR Poll" class="btn-vox w-9 h-9 bg-white hover:bg-[#F4D03F] text-[#111111] rounded-lg flex items-center justify-center cursor-pointer transition-colors">${TB_ICONS.poll}</button>
       <button type="button" id="tb-victory-btn" title="ประกาศผู้ชนะ" aria-label="ประกาศผู้ชนะ" class="btn-vox w-9 h-9 bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] rounded-lg flex items-center justify-center cursor-pointer transition-colors">${TB_ICONS.crown}</button>
       <div class="h-px bg-[#111111]/20 my-0.5"></div>
@@ -154,21 +154,46 @@
       });
     });
 
-    // Persistent YouTube Embed Host (kept off-screen when Music window is closed so audio never stops)
+    // Persistent YouTube Embed Host (NEVER reparented in DOM so iframe never reloads or restarts!)
     let currentTrackId = '';
     let musicMuted = false;
 
     const ytHost = document.createElement('div');
     ytHost.id = 'tb-yt-persistent-host';
-    ytHost.className = 'fixed -left-[9999px] top-0 w-64 aspect-video pointer-events-none opacity-0';
+    ytHost.className = 'fixed w-64 aspect-video pointer-events-none opacity-0';
+    ytHost.style.left = '-9999px';
+    ytHost.style.top = '0px';
     document.body.appendChild(ytHost);
 
     const parkYtHost = () => {
-      if (ytHost.parentElement !== document.body) {
-        ytHost.className = 'fixed -left-[9999px] top-0 w-64 aspect-video pointer-events-none opacity-0';
-        document.body.appendChild(ytHost);
-      }
+      ytHost.style.left = '-9999px';
+      ytHost.style.top = '0px';
+      ytHost.style.opacity = '0';
+      ytHost.style.pointerEvents = 'none';
     };
+
+    const syncYtOverlayPos = () => {
+      const musicWin = subWindows.music?.el;
+      const slot = document.getElementById('tb-yt-slot');
+      if (!musicWin || musicWin.classList.contains('hidden') || !slot || !currentTrackId) {
+        parkYtHost();
+        return;
+      }
+      const r = slot.getBoundingClientRect();
+      if (r.width < 10 || r.height < 10) {
+        parkYtHost();
+        return;
+      }
+      ytHost.style.left = `${Math.round(r.left)}px`;
+      ytHost.style.top = `${Math.round(r.top)}px`;
+      ytHost.style.width = `${Math.round(r.width)}px`;
+      ytHost.style.height = `${Math.round(r.height)}px`;
+      ytHost.style.zIndex = String((Number(musicWin.style.zIndex) || topWinZ) + 1);
+      ytHost.style.opacity = '1';
+      ytHost.style.pointerEvents = 'auto';
+    };
+
+    window.addEventListener('resize', syncYtOverlayPos);
 
     const makeWindowDraggable = (winObj, handleEl) => {
       if (!handleEl) return;
@@ -192,6 +217,7 @@
           winObj.customPos = { left: nextL, top: nextT };
           winObj.el.style.left = `${nextL}px`;
           winObj.el.style.top = `${nextT}px`;
+          if (winObj === subWindows.music) syncYtOverlayPos();
         };
         const onUp = () => {
           document.documentElement.classList.remove('vox-grabbing');
@@ -229,6 +255,7 @@
 
         el.addEventListener('pointerdown', () => {
           el.style.zIndex = String(++topWinZ);
+          if (key === 'music') syncYtOverlayPos();
         });
         el.querySelector(`[data-tb-close="${key}"]`)?.addEventListener('click', () => {
           el.classList.add('hidden');
@@ -580,9 +607,10 @@
       const mountYtIntoSlot = () => {
         const slot = document.getElementById('tb-yt-slot');
         if (slot && currentTrackId) {
-          slot.innerHTML = '';
-          ytHost.className = 'w-full h-full';
-          slot.appendChild(ytHost);
+          slot.textContent = '';
+          requestAnimationFrame(syncYtOverlayPos);
+        } else {
+          parkYtHost();
         }
       };
 
@@ -678,7 +706,7 @@
       });
     });
 
-    // 3.8 Live QR Poll Sub-Popup (Stage Toolbar Integration)
+    // 3.8 Live QR Poll Sub-Popup (Simplified Single-View Stage Tool)
     let pollSyncTimerId = null;
     document.getElementById('tb-poll-btn')?.addEventListener('click', () => {
       const POLL_COLORS = ['#F4D03F', '#E74C3C', '#2980B9', '#10B981', '#8E44AD', '#F39C12'];
@@ -692,9 +720,8 @@
         pollId: 'poll-' + Math.random().toString(36).slice(2, 8),
         adminToken: 'adm-' + Math.random().toString(36).slice(2, 12) + Date.now().toString(36),
         question: 'กิจกรรมต่อไปอยากเล่นแนวไหน?',
-        options: ['เกมตอบคำถาม', 'เกมใบ้คำ', 'เกมวางแผนทีม', 'พักเบรก 5 นาที'],
-        isOpen: true,
-        hideResults: false
+        options: ['เกมตอบคำถาม', 'เกมใบ้คำ', 'เกมวางแผนทีม'],
+        isOpen: true
       };
       try {
         const saved = JSON.parse(localStorage.getItem(POLL_HOST_KEY) || 'null');
@@ -703,233 +730,161 @@
       const saveHostCfg = () => { try { localStorage.setItem(POLL_HOST_KEY, JSON.stringify(hostCfg)); } catch (_) {} };
       saveHostCfg();
 
+      let latestCounts = hostCfg.options.map(() => 0);
+      let latestTotal = 0;
       const getVoteUrl = () => `${location.origin}/poll.html?vote=${encodeURIComponent(hostCfg.pollId)}`;
       let pullResults = () => {};
 
-      toggleSubWindow('poll', 'โหวตสด (QR Poll)', 'w-80', `
+      toggleSubWindow('poll', 'โหวตสด (QR Poll)', 'w-72', `
+        <input id="tb-poll-in-q" type="text" maxlength="160" placeholder="พิมพ์คำถามโหวต..." class="w-full bg-white border-2 border-[#111111] rounded-xl px-2.5 py-1.5 text-xs font-display font-extrabold text-[#111111] shadow-[2px_2px_0px_#111111] focus:outline-none" />
+
+        <div id="tb-poll-rows" class="flex flex-col gap-1.5 max-h-48 overflow-y-auto pr-0.5"></div>
+
         <div class="flex items-center justify-between gap-1.5">
-          <span id="tb-poll-total" class="bg-[#F4D03F] border-2 border-[#111111] px-2 py-0.5 rounded-lg font-display font-black text-[11px]">0 โหวต</span>
+          <button type="button" id="tb-poll-add-opt" class="btn-vox bg-white hover:bg-[#F4D03F] text-[11px] font-display font-bold px-2.5 py-1 rounded-lg cursor-pointer">+ ตัวเลือก</button>
           <div class="flex items-center gap-1">
-            <button type="button" id="tb-poll-new" class="btn-vox bg-white hover:bg-[#F4D03F] text-[10px] font-display font-bold px-2 py-0.5 rounded-lg cursor-pointer">+ โพลใหม่</button>
-            <button type="button" id="tb-poll-open-btn" class="btn-vox bg-[#10B981] text-white text-[10px] font-display font-extrabold px-2 py-0.5 rounded-lg cursor-pointer">เปิดโหวต</button>
+            <button type="button" id="tb-poll-open-btn" class="btn-vox bg-[#10B981] text-white text-[11px] font-display font-extrabold px-2.5 py-1 rounded-lg cursor-pointer">เปิดโหวต</button>
+            <button type="button" id="tb-poll-reset" class="btn-vox bg-white hover:bg-red-50 text-[#E74C3C] text-[11px] font-display font-bold px-2 py-1 rounded-lg cursor-pointer">ล้าง 0</button>
           </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-1 bg-white border-2 border-[#111111] rounded-xl p-0.5">
-          <button type="button" id="tb-poll-tab-live" class="font-display font-extrabold text-[11px] py-1 rounded-lg bg-[#F4D03F] text-[#111111] cursor-pointer">ผลโหวต & QR</button>
-          <button type="button" id="tb-poll-tab-edit" class="font-display font-bold text-[11px] py-1 rounded-lg text-[#111111]/70 hover:text-[#111111] cursor-pointer">แก้ไขคำถาม</button>
-        </div>
-
-        <!-- Tab 1: Live Bars & QR -->
-        <div id="tb-poll-live-pane" class="flex flex-col gap-2">
-          <div id="tb-poll-q-display" class="font-display font-extrabold text-xs text-[#111111] leading-snug"></div>
-          <div id="tb-poll-bars" class="flex flex-col gap-1.5 max-h-40 overflow-y-auto pr-0.5"></div>
-          <div class="flex items-center gap-2.5 bg-white border-2 border-[#111111] rounded-xl p-2">
-            <img id="tb-poll-qr" src="" alt="QR โหวต" class="w-16 h-16 rounded-lg border border-[#111111] bg-[#F8F6F0] shrink-0 cursor-zoom-in" title="คลิกเพื่อขยาย QR" />
-            <div class="min-w-0 flex-1 flex flex-col gap-1">
-              <span class="text-[10px] font-display font-extrabold text-[#111111]">สแกนเพื่อโหวตสด</span>
-              <div class="flex flex-wrap gap-1">
-                <button type="button" id="tb-poll-copy" class="btn-vox bg-[#F8F6F0] hover:bg-[#F4D03F] text-[10px] font-display font-bold px-2 py-1 rounded-md cursor-pointer">คัดลอกลิงก์</button>
-                <a id="tb-poll-full-link" href="poll.html" target="_blank" rel="noopener noreferrer" class="btn-vox bg-white hover:bg-[#F4D03F] text-[10px] font-display font-bold px-2 py-1 rounded-md">เต็มจอ ↗</a>
-              </div>
+        <div class="flex items-center gap-2.5 bg-white border-2 border-[#111111] rounded-xl p-2 shadow-[2px_2px_0px_#111111]">
+          <img id="tb-poll-qr" src="" alt="QR โหวต" class="w-14 h-14 rounded-lg border border-[#111111] bg-[#F8F6F0] shrink-0 cursor-zoom-in" title="คลิกเพื่อขยาย QR" />
+          <div class="min-w-0 flex-1 flex flex-col gap-1">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-display font-extrabold text-[#111111]">สแกนโหวต</span>
+              <span id="tb-poll-total" class="bg-[#F4D03F] border border-[#111111] px-1.5 py-0.5 rounded font-display font-black text-[10px]">0 โหวต</span>
             </div>
-          </div>
-          <div class="grid grid-cols-2 gap-1.5">
-            <button type="button" id="tb-poll-hide-res" class="btn-vox bg-white hover:bg-[#F4D03F] text-[11px] font-display font-bold py-1.5 rounded-xl cursor-pointer">ซ่อนผล</button>
-            <button type="button" id="tb-poll-reset" class="btn-vox bg-white hover:bg-red-50 text-[#E74C3C] text-[11px] font-display font-bold py-1.5 rounded-xl cursor-pointer">ล้างโหวต</button>
-          </div>
-        </div>
-
-        <!-- Tab 2: Edit Question & Options -->
-        <div id="tb-poll-edit-pane" class="hidden flex-col gap-2">
-          <div class="flex items-center gap-1">
-            <button type="button" data-tb-preset="yesno" class="px-2 py-0.5 rounded border border-[#111111] bg-white hover:bg-[#F4D03F] text-[10px] font-display font-bold cursor-pointer">ใช่/ไม่ใช่</button>
-            <button type="button" data-tb-preset="rate5" class="px-2 py-0.5 rounded border border-[#111111] bg-white hover:bg-[#F4D03F] text-[10px] font-display font-bold cursor-pointer">ให้คะแนน 1–5</button>
-          </div>
-          <input id="tb-poll-in-q" type="text" maxlength="160" placeholder="คำถามโหวต..." class="w-full bg-white border-2 border-[#111111] rounded-lg px-2.5 py-1.5 text-xs font-bold" />
-          <div id="tb-poll-in-opts" class="flex flex-col gap-1 max-h-36 overflow-y-auto"></div>
-          <div class="grid grid-cols-2 gap-1.5">
-            <button type="button" id="tb-poll-add-opt" class="btn-vox bg-white hover:bg-[#F4D03F] text-[11px] font-display font-bold py-1.5 rounded-xl cursor-pointer">+ ตัวเลือก</button>
-            <button type="button" id="tb-poll-save" class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[11px] font-display font-extrabold py-1.5 rounded-xl cursor-pointer">อัปเดตโพล</button>
+            <div class="flex gap-1">
+              <button type="button" id="tb-poll-copy" class="flex-1 btn-vox bg-[#F8F6F0] hover:bg-[#F4D03F] text-[10px] font-display font-bold py-1 rounded-md cursor-pointer">คัดลอกลิงก์</button>
+              <button type="button" id="tb-poll-zoom-btn" class="btn-vox bg-white hover:bg-[#F4D03F] text-[10px] font-display font-bold px-2 py-1 rounded-md cursor-pointer" title="ขยาย QR ใหญ่">QR ↗</button>
+            </div>
           </div>
         </div>
       `, (winEl) => {
+        const inQ = winEl.querySelector('#tb-poll-in-q');
+        const rowsEl = winEl.querySelector('#tb-poll-rows');
         const totalEl = winEl.querySelector('#tb-poll-total');
         const openBtn = winEl.querySelector('#tb-poll-open-btn');
-        const hideResBtn = winEl.querySelector('#tb-poll-hide-res');
-        const qDisp = winEl.querySelector('#tb-poll-q-display');
-        const barsEl = winEl.querySelector('#tb-poll-bars');
         const qrEl = winEl.querySelector('#tb-poll-qr');
-        const inQ = winEl.querySelector('#tb-poll-in-q');
-        const inOpts = winEl.querySelector('#tb-poll-in-opts');
-        const livePane = winEl.querySelector('#tb-poll-live-pane');
-        const editPane = winEl.querySelector('#tb-poll-edit-pane');
-        const tabLive = winEl.querySelector('#tb-poll-tab-live');
-        const tabEdit = winEl.querySelector('#tb-poll-tab-edit');
 
         const syncQr = () => {
           const url = getVoteUrl();
           if (qrEl) qrEl.src = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(url)}`;
         };
 
-        const syncBadges = () => {
-          if (openBtn) {
-            openBtn.textContent = hostCfg.isOpen ? 'เปิดโหวต' : 'ปิดโหวต';
-            openBtn.classList.toggle('bg-[#10B981]', hostCfg.isOpen);
-            openBtn.classList.toggle('bg-[#E74C3C]', !hostCfg.isOpen);
-          }
-          if (hideResBtn) {
-            hideResBtn.textContent = hostCfg.hideResults ? 'เปิดเผยผล' : 'ซ่อนผล';
-            hideResBtn.classList.toggle('bg-[#111111]', hostCfg.hideResults);
-            hideResBtn.classList.toggle('text-[#F4D03F]', hostCfg.hideResults);
-          }
+        const syncOpenBtn = () => {
+          if (!openBtn) return;
+          openBtn.textContent = hostCfg.isOpen ? 'เปิดโหวต' : 'ปิดโหวต';
+          openBtn.classList.toggle('bg-[#10B981]', hostCfg.isOpen);
+          openBtn.classList.toggle('bg-[#E74C3C]', !hostCfg.isOpen);
         };
 
-        const renderEditInputs = () => {
-          inQ.value = hostCfg.question;
-          inOpts.innerHTML = hostCfg.options.map((opt, i) => `
-            <div class="flex items-center gap-1">
-              <span class="w-2.5 h-2.5 rounded-full border border-[#111111] shrink-0" style="background:${POLL_COLORS[i % POLL_COLORS.length]};"></span>
-              <input data-tb-poll-opt="${i}" type="text" maxlength="60" value="${escP(opt)}" class="flex-1 min-w-0 bg-white border-2 border-[#111111] rounded-lg px-2 py-1 text-[11px] font-bold" />
-              ${hostCfg.options.length > 2 ? `<button type="button" data-tb-poll-del="${i}" class="w-5 h-5 rounded border border-[#111111] bg-white hover:bg-red-50 text-[#E74C3C] font-black text-[10px] cursor-pointer">−</button>` : ''}
-            </div>
-          `).join('');
-          inOpts.querySelectorAll('[data-tb-poll-del]').forEach(b => {
-            b.addEventListener('click', () => {
-              hostCfg.options = Array.from(inOpts.querySelectorAll('[data-tb-poll-opt]')).map(x => x.value);
-              hostCfg.options.splice(Number(b.dataset.tbPollDel), 1);
-              renderEditInputs();
-            });
+        const syncBarStatsOnly = () => {
+          if (totalEl) totalEl.textContent = `${latestTotal} โหวต`;
+          const total = Math.max(1, latestTotal);
+          rowsEl.querySelectorAll('[data-tb-row]').forEach((row, i) => {
+            const cnt = latestCounts[i] || 0;
+            const pct = Math.round((cnt / total) * 100);
+            const stat = row.querySelector('[data-tb-stat]');
+            const fill = row.querySelector('[data-tb-fill]');
+            if (stat) stat.textContent = `${pct}% (${cnt})`;
+            if (fill) fill.style.width = `${pct}%`;
           });
         };
 
         const pushPoll = async () => {
           hostCfg.question = (inQ.value || '').trim() || 'คำถามโหวต';
-          const inputs = Array.from(inOpts.querySelectorAll('[data-tb-poll-opt]'));
-          if (inputs.length) hostCfg.options = inputs.map(x => x.value.trim()).filter(Boolean).slice(0, 6);
-          if (hostCfg.options.length < 2) hostCfg.options = ['ตัวเลือก A', 'ตัวเลือก B'];
+          const inputs = Array.from(rowsEl.querySelectorAll('[data-tb-opt]'));
+          if (inputs.length) hostCfg.options = inputs.map(x => x.value.trim() || 'ตัวเลือก');
           saveHostCfg();
-          renderEditInputs();
-          if (apiBase) {
-            try {
-              await fetch(`${apiBase}/api/polls/${encodeURIComponent(hostCfg.pollId)}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-Poll-Admin': hostCfg.adminToken },
-                body: JSON.stringify({ question: hostCfg.question, options: hostCfg.options, isOpen: hostCfg.isOpen })
-              });
-            } catch (_) {}
-          }
-          pullResults();
+          if (!apiBase) return;
+          try {
+            await fetch(`${apiBase}/api/polls/${encodeURIComponent(hostCfg.pollId)}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'X-Poll-Admin': hostCfg.adminToken },
+              body: JSON.stringify({ question: hostCfg.question, options: hostCfg.options, isOpen: hostCfg.isOpen })
+            });
+          } catch (_) {}
         };
 
-        const drawBars = (q, opts, counts, totalVotes) => {
-          if (qDisp) qDisp.textContent = q;
-          if (totalEl) totalEl.textContent = `${totalVotes} โหวต`;
-          const total = Math.max(1, totalVotes);
-          const maxCnt = Math.max(0, ...counts);
-          barsEl.innerHTML = opts.map((opt, i) => {
-            const cnt = counts[i] || 0;
-            const pct = hostCfg.hideResults ? 0 : Math.round((cnt / total) * 100);
-            const isLead = !hostCfg.hideResults && totalVotes > 0 && cnt === maxCnt && cnt > 0;
+        const renderRows = () => {
+          inQ.value = hostCfg.question;
+          const total = Math.max(1, latestTotal);
+          rowsEl.innerHTML = hostCfg.options.map((opt, i) => {
+            const cnt = latestCounts[i] || 0;
+            const pct = Math.round((cnt / total) * 100);
             const color = POLL_COLORS[i % POLL_COLORS.length];
             return `
-              <div class="flex flex-col gap-0.5">
-                <div class="flex items-center justify-between gap-1 text-[11px] font-display font-bold text-[#111111]">
-                  <span class="truncate">${isLead ? '👑 ' : ''}${escP(opt)}</span>
-                  <span class="tabular-nums shrink-0">${hostCfg.hideResults ? '••%' : `${pct}% (${cnt})`}</span>
+              <div data-tb-row="${i}" class="bg-white border-2 border-[#111111] rounded-xl p-1.5 flex flex-col gap-1">
+                <div class="flex items-center gap-1">
+                  <span class="w-2.5 h-2.5 rounded-full border border-[#111111] shrink-0" style="background:${color};"></span>
+                  <input data-tb-opt="${i}" type="text" maxlength="60" value="${escP(opt)}" class="flex-1 min-w-0 bg-transparent text-[11px] font-display font-bold text-[#111111] focus:outline-none focus:bg-[#F8F6F0] rounded px-1" />
+                  <span data-tb-stat class="text-[10px] font-display font-black tabular-nums text-[#111111]/75 shrink-0">${pct}% (${cnt})</span>
+                  ${hostCfg.options.length > 2 ? `<button type="button" data-tb-del="${i}" class="w-4 h-4 rounded hover:bg-red-100 text-[#E74C3C] font-black text-[10px] flex items-center justify-center cursor-pointer">✕</button>` : ''}
                 </div>
-                <div class="w-full h-3.5 bg-white border border-[#111111] rounded-md overflow-hidden p-0.5">
-                  <div class="h-full rounded-[2px] transition-all duration-500" style="width:${pct}%; background:${color};"></div>
+                <div class="w-full h-2 bg-[#F0EDE4] border border-[#111111] rounded-full overflow-hidden">
+                  <div data-tb-fill class="h-full transition-all duration-500" style="width:${pct}%; background:${color};"></div>
                 </div>
               </div>
             `;
           }).join('');
+
+          rowsEl.querySelectorAll('[data-tb-opt]').forEach(inp => {
+            inp.addEventListener('change', pushPoll);
+            inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); inp.blur(); pushPoll(); } });
+          });
+
+          rowsEl.querySelectorAll('[data-tb-del]').forEach(btn => {
+            btn.addEventListener('click', () => {
+              hostCfg.options = Array.from(rowsEl.querySelectorAll('[data-tb-opt]')).map(x => x.value);
+              hostCfg.options.splice(Number(btn.dataset.tbDel), 1);
+              latestCounts.splice(Number(btn.dataset.tbDel), 1);
+              renderRows();
+              pushPoll();
+            });
+          });
         };
 
+        inQ.addEventListener('change', pushPoll);
+        inQ.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); inQ.blur(); pushPoll(); } });
+
         pullResults = async () => {
-          if (!apiBase) {
-            drawBars(hostCfg.question, hostCfg.options, hostCfg.options.map(() => 0), 0);
-            return;
-          }
+          if (!apiBase) return;
           try {
             const res = await fetch(`${apiBase}/api/polls/${encodeURIComponent(hostCfg.pollId)}`);
-            if (!res.ok) {
-              drawBars(hostCfg.question, hostCfg.options, hostCfg.options.map(() => 0), 0);
-              return;
-            }
+            if (!res.ok) return;
             const data = await res.json();
-            drawBars(data.question, data.options, data.counts, data.totalVotes);
+            latestCounts = Array.isArray(data.counts) ? data.counts : hostCfg.options.map(() => 0);
+            latestTotal = Number(data.totalVotes) || 0;
+            syncBarStatsOnly();
           } catch (_) {}
         };
 
-        const setTab = (edit) => {
-          livePane.classList.toggle('hidden', edit);
-          livePane.classList.toggle('flex', !edit);
-          editPane.classList.toggle('hidden', !edit);
-          editPane.classList.toggle('flex', edit);
-          tabLive.className = `font-display text-[11px] py-1 rounded-lg cursor-pointer ${!edit ? 'font-extrabold bg-[#F4D03F] text-[#111111]' : 'font-bold text-[#111111]/70'}`;
-          tabEdit.className = `font-display text-[11px] py-1 rounded-lg cursor-pointer ${edit ? 'font-extrabold bg-[#F4D03F] text-[#111111]' : 'font-bold text-[#111111]/70'}`;
-        };
-
-        tabLive?.addEventListener('click', () => setTab(false));
-        tabEdit?.addEventListener('click', () => setTab(true));
-
-        winEl.querySelectorAll('[data-tb-preset]').forEach(b => {
-          b.addEventListener('click', () => {
-            if (b.dataset.tbPreset === 'yesno') {
-              hostCfg.question = 'เห็นด้วยหรือไม่กับข้อเสนอนี้?';
-              hostCfg.options = ['เห็นด้วย (Yes)', 'ไม่เห็นด้วย (No)', 'ขอฟังเพิ่ม'];
-            } else {
-              hostCfg.question = 'ให้คะแนนความสนุกช่วงนี้กี่ดาว?';
-              hostCfg.options = ['★★★★★ 5', '★★★★ 4', '★★★ 3', '★★ 2', '★ 1'];
-            }
-            renderEditInputs();
-            pushPoll();
-          });
-        });
-
         winEl.querySelector('#tb-poll-add-opt')?.addEventListener('click', () => {
-          hostCfg.options = Array.from(inOpts.querySelectorAll('[data-tb-poll-opt]')).map(x => x.value);
+          hostCfg.options = Array.from(rowsEl.querySelectorAll('[data-tb-opt]')).map(x => x.value);
           if (hostCfg.options.length >= 6) return;
           hostCfg.options.push(`ตัวเลือก ${hostCfg.options.length + 1}`);
-          renderEditInputs();
-        });
-
-        winEl.querySelector('#tb-poll-save')?.addEventListener('click', async () => {
-          await pushPoll();
-          setTab(false);
+          latestCounts.push(0);
+          renderRows();
+          pushPoll();
         });
 
         openBtn?.addEventListener('click', () => {
           hostCfg.isOpen = !hostCfg.isOpen;
-          syncBadges();
+          syncOpenBtn();
           pushPoll();
         });
 
-        hideResBtn?.addEventListener('click', () => {
-          hostCfg.hideResults = !hostCfg.hideResults;
-          saveHostCfg();
-          syncBadges();
-          pullResults();
-        });
-
         winEl.querySelector('#tb-poll-reset')?.addEventListener('click', async () => {
+          latestCounts = hostCfg.options.map(() => 0);
+          latestTotal = 0;
+          syncBarStatsOnly();
           if (!apiBase) return;
           await fetch(`${apiBase}/api/polls/${encodeURIComponent(hostCfg.pollId)}/reset`, {
             method: 'POST',
             headers: { 'X-Poll-Admin': hostCfg.adminToken }
           });
-          pullResults();
-        });
-
-        winEl.querySelector('#tb-poll-new')?.addEventListener('click', () => {
-          hostCfg.pollId = 'poll-' + Math.random().toString(36).slice(2, 8);
-          hostCfg.adminToken = 'adm-' + Math.random().toString(36).slice(2, 12) + Date.now().toString(36);
-          hostCfg.isOpen = true;
-          saveHostCfg();
-          syncQr();
-          syncBadges();
-          pushPoll();
         });
 
         winEl.querySelector('#tb-poll-copy')?.addEventListener('click', async (e) => {
@@ -941,23 +896,26 @@
           setTimeout(() => { btn.classList.remove('bg-[#F4D03F]'); btn.textContent = 'คัดลอกลิงก์'; }, 1800);
         });
 
-        qrEl?.addEventListener('click', () => {
+        const openQrZoom = () => {
           let m = document.getElementById('tb-poll-qr-zoom');
           if (!m) {
             m = document.createElement('div');
             m.id = 'tb-poll-qr-zoom';
             m.className = 'fixed inset-0 z-[180] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm';
-            m.innerHTML = `<div class="vox-panel-enter vox-card bg-white p-5 flex flex-col items-center gap-3"><span class="font-display font-black text-sm">สแกน QR เพื่อโหวตสด</span><img id="tb-poll-qr-big" class="w-64 h-64 rounded-xl border-2 border-[#111111]" /><button type="button" id="tb-poll-qr-close" class="btn-vox bg-[#F4D03F] px-4 py-1.5 rounded-xl font-display font-extrabold text-xs cursor-pointer">ปิด</button></div>`;
+            m.innerHTML = `<div class="vox-panel-enter vox-card bg-white p-5 flex flex-col items-center gap-3"><span id="tb-poll-qr-title" class="font-display font-black text-base text-[#111111] text-center max-w-xs"></span><img id="tb-poll-qr-big" class="w-64 h-64 rounded-xl border-2 border-[#111111]" /><button type="button" id="tb-poll-qr-close" class="btn-vox bg-[#F4D03F] px-5 py-1.5 rounded-xl font-display font-extrabold text-xs cursor-pointer">ปิด</button></div>`;
             document.body.appendChild(m);
             m.addEventListener('click', (ev) => { if (ev.target === m || ev.target.id === 'tb-poll-qr-close') m.classList.add('hidden'); });
           }
+          m.querySelector('#tb-poll-qr-title').textContent = hostCfg.question;
           m.querySelector('#tb-poll-qr-big').src = qrEl.src;
           m.classList.remove('hidden');
-        });
+        };
+        qrEl?.addEventListener('click', openQrZoom);
+        winEl.querySelector('#tb-poll-zoom-btn')?.addEventListener('click', openQrZoom);
 
         syncQr();
-        syncBadges();
-        renderEditInputs();
+        syncOpenBtn();
+        renderRows();
         pushPoll();
       }, {
         onShow: () => {

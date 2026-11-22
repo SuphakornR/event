@@ -728,6 +728,7 @@
       position: fixed;
       inset: 0;
       z-index: 200;
+      pointer-events: none;
       background-color: var(--bg-paper);
       background-image:
         linear-gradient(to right, rgba(17,17,17,0.055) 1px, transparent 1px),
