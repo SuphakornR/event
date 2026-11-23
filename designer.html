@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https: data: blob:;" />
+  <title>Page Designer — HelpDaiCha</title>
+  <meta name="description" content="ออกแบบหน้าเว็บไซต์ด้วยข้อความ รูปทรง และสี แล้วคัดลอกเป็น AI Prompt, HTML/Tailwind หรือไฟล์ JSON ให้ AI สร้างต่อได้ทันที" />
+  <meta name="theme-color" content="#F4D03F" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath d='M9 9 H35 V35 H9 Z' transform='translate(3.5 3.5)' fill='%23111111'/%3E%3Cpath d='M9 9 H35 V35 H9 Z' fill='%23F4D03F' stroke='%23111111' stroke-width='3' stroke-linejoin='round'/%3E%3Ccircle cx='18' cy='21' r='2.3' fill='%23111111'/%3E%3Ccircle cx='28' cy='21' r='2.3' fill='%23111111'/%3E%3C/svg%3E" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Prompt:wght@600;700;800;900&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="assets/css/vox.css?v=20261123d" />
+  <style>
+    .designer-grid-bg {
+      background-image:
+        linear-gradient(to right, rgba(17, 17, 17, 0.06) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(17, 17, 17, 0.06) 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+    .canvas-el {
+      position: absolute;
+      user-select: none;
+      cursor: move;
+      box-sizing: border-box;
+    }
+    .canvas-el.is-selected {
+      outline: 2px solid #2980B9;
+      outline-offset: 2px;
+    }
+    .resize-handle {
+      position: absolute;
+      width: 11px;
+      height: 11px;
+      background: #F4D03F;
+      border: 2px solid #111111;
+      border-radius: 3px;
+      z-index: 30;
+    }
+    .resize-handle[data-dir="se"] { right: -6px; bottom: -6px; cursor: nwse-resize; }
+    .resize-handle[data-dir="e"] { right: -6px; top: 50%; transform: translateY(-50%); cursor: ew-resize; }
+    .resize-handle[data-dir="s"] { bottom: -6px; left: 50%; transform: translateX(-50%); cursor: ns-resize; }
+  </style>
+</head>
+<body class="h-screen overflow-hidden flex flex-col bg-[#F8F6F0] selection:bg-yellow-300 selection:text-black">
+  <script src="assets/js/loader.js?v=20261123c"></script>
+
+  <!-- Top Studio Header -->
+  <header class="shrink-0 bg-white border-b-[3px] border-[#111111] px-3 sm:px-4 py-2 flex flex-wrap items-center justify-between gap-2 z-20">
+    <div class="flex items-center gap-2 min-w-0">
+      <a href="index.html" class="btn-vox bg-white hover:bg-[#F4D03F] text-[#111111] font-display font-bold text-xs px-2.5 py-1.5 rounded-lg inline-flex items-center gap-1 shrink-0" title="กลับหน้าหลัก">
+        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        <span class="hidden sm:inline">หน้าหลัก</span>
+      </a>
+      <div class="flex items-center gap-1.5 min-w-0">
+        <span class="bg-[#111111] text-[#F4D03F] font-display font-black text-[11px] px-2 py-0.5 rounded-md shrink-0">DESIGNER</span>
+        <input id="page-title-input" type="text" value="My Landing Page" maxlength="80" aria-label="ชื่อหน้าเว็บ" class="thai-safe font-display font-extrabold text-sm sm:text-base text-[#111111] bg-transparent border-b-2 border-transparent focus:border-[#111111] focus:outline-none px-1 w-36 sm:w-52 truncate" />
+      </div>
+    </div>
+
+    <!-- Viewport & Grid Controls -->
+    <div class="flex items-center gap-1.5 flex-wrap">
+      <div class="inline-flex items-center bg-[#F8F6F0] border-2 border-[#111111] rounded-lg p-0.5" role="group" aria-label="ขนาดหน้าจอ">
+        <button type="button" data-vp="desktop" class="vp-btn px-2 py-1 rounded-md font-display font-bold text-[11px] bg-[#111111] text-[#F4D03F] cursor-pointer">Desktop</button>
+        <button type="button" data-vp="tablet" class="vp-btn px-2 py-1 rounded-md font-display font-bold text-[11px] text-[#111111] hover:bg-white cursor-pointer">Tablet</button>
+        <button type="button" data-vp="mobile" class="vp-btn px-2 py-1 rounded-md font-display font-bold text-[11px] text-[#111111] hover:bg-white cursor-pointer">Mobile</button>
+      </div>
+
+      <button type="button" id="toggle-snap-btn" class="px-2.5 py-1 rounded-lg border-2 border-[#111111] bg-[#F4D03F] text-[#111111] font-display font-bold text-[11px] cursor-pointer" title="สลับการดูดเข้ากริด 12px">Grid: ON</button>
+
+      <div class="hidden md:inline-flex items-center gap-1">
+        <button type="button" id="undo-btn" class="px-2 py-1 rounded-lg border-2 border-[#111111] bg-white hover:bg-[#F8F6F0] font-display font-bold text-[11px] cursor-pointer disabled:opacity-40" title="ย้อนกลับ (Ctrl/Cmd+Z)">↶</button>
+        <button type="button" id="redo-btn" class="px-2 py-1 rounded-lg border-2 border-[#111111] bg-white hover:bg-[#F8F6F0] font-display font-bold text-[11px] cursor-pointer disabled:opacity-40" title="ทำซ้ำ (Ctrl/Cmd+Shift+Z)">↷</button>
+      </div>
+
+      <select id="template-select" aria-label="เทมเพลตเริ่มต้น" class="px-2 py-1 rounded-lg border-2 border-[#111111] bg-white font-display font-bold text-[11px] cursor-pointer">
+        <option value="">เทมเพลต...</option>
+        <option value="hero">Hero + CTA</option>
+        <option value="cards">Landing + Cards</option>
+        <option value="event">Event Page</option>
+        <option value="blank">หน้าว่าง (Blank)</option>
+      </select>
+
+      <button type="button" id="open-import-btn" class="btn-vox bg-white hover:bg-[#F8F6F0] text-[#111111] font-display font-bold text-xs px-2.5 py-1.5 rounded-lg cursor-pointer">Import</button>
+      <button type="button" id="open-export-btn" class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-black text-xs px-3 py-1.5 rounded-lg inline-flex items-center gap-1.5 cursor-pointer">
+        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>
+        <span>Copy / Export for AI</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main 3-Pane Studio -->
+  <div class="flex-1 min-h-0 flex overflow-hidden">
+
+    <!-- Left Palette -->
+    <aside class="w-52 sm:w-56 shrink-0 bg-white border-r-[3px] border-[#111111] p-3 flex flex-col gap-3 overflow-y-auto vox-scroll-area">
+      <div>
+        <h2 class="font-display font-black text-[11px] uppercase tracking-wider text-[#111111]/60 mb-1.5">ข้อความ &amp; ปุ่ม (Text &amp; UI)</h2>
+        <div class="grid grid-cols-2 gap-1.5">
+          <button type="button" data-add-el="heading" class="btn-vox bg-[#F8F6F0] hover:bg-[#F4D03F] px-2 py-2 rounded-lg text-left flex flex-col gap-0.5 cursor-pointer">
+            <span class="font-display font-black text-xs">H1 หัวข้อ</span>
+            <span class="text-[10px] text-[#111111]/60">Heading</span>
+          </button>
+          <button type="button" data-add-el="text" class="btn-vox bg-[#F8F6F0] hover:bg-[#F4D03F] px-2 py-2 rounded-lg text-left flex flex-col gap-0.5 cursor-pointer">
+            <span class="font-display font-black text-xs">T ข้อความ</span>
+            <span class="text-[10px] text-[#111111]/60">Paragraph</span>
+          </button>
+          <button type="button" data-add-el="button" class="btn-vox bg-[#F8F6F0] hover:bg-[#F4D03F] px-2 py-2 rounded-lg text-left flex flex-col gap-0.5 cursor-pointer">
+            <span class="font-display font-black text-xs">ปุ่มกด</span>
+            <span class="text-[10px] text-[#111111]/60">CTA Button</span>
+          </button>
+          <button type="button" data-add-el="badge" class="btn-vox bg-[#F8F6F0] hover:bg-[#F4D03F] px-2 py-2 rounded-lg text-left flex flex-col gap-0.5 cursor-pointer">
+            <span class="font-display font-black text-xs">แท็ก</span>
+            <span class="text-[10px] text-[#111111]/60">Badge / Pill</span>
+          </button>
+          <button type="button" data-add-el="input" class="btn-vox bg-[#F8F6F0] hover:bg-[#F4D03F] px-2 py-2 rounded-lg text-left flex flex-col gap-0.5 col-span-2 cursor-pointer">
+            <span class="font-display font-black text-xs">ช่องกรอกข้อมูล (Input Field)</span>
+            <span class="text-[10px] text-[#111111]/60">Form Input</span>
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <h2 class="font-display font-black text-[11px] uppercase tracking-wider text-[#111111]/60 mb-1.5">รูปทรง &amp; กล่อง (Shapes)</h2>
+        <div class="grid grid-cols-2 gap-1.5">
+          <button type="button" data-add-el="box" class="btn-vox bg-[#F8F6F0] hover:bg-[#F4D03F] px-2 py-2 rounded-lg text-left flex flex-col gap-0.5 cursor-pointer">
+            <span class="font-display font-black text-xs">▭ กล่อง/การ์ด</span>
+            <span class="text-[10px] text-[#111111]/60">Section / Card</span>
+          </button>
+          <button type="button" data-add-el="rect" class="btn-vox bg-[#F8F6F0] hover:bg-[#F4D03F] px-2 py-2 rounded-lg text-left flex flex-col gap-0.5 cursor-pointer">
+            <span class="font-display font-black text-xs">■ สี่เหลี่ยม</span>
+            <span class="text-[10px] text-[#111111]/60">Rectangle</span>
+          </button>
+          <button type="button" data-add-el="circle" class="btn-vox bg-[#F8F6F0] hover:bg-[#F4D03F] px-2 py-2 rounded-lg text-left flex flex-col gap-0.5 cursor-pointer">
+            <span class="font-display font-black text-xs">● วงกลม</span>
+            <span class="text-[10px] text-[#111111]/60">Circle / Avatar</span>
+          </button>
+          <button type="button" data-add-el="image" class="btn-vox bg-[#F8F6F0] hover:bg-[#F4D03F] px-2 py-2 rounded-lg text-left flex flex-col gap-0.5 cursor-pointer">
+            <span class="font-display font-black text-xs">🖼 รูปภาพ</span>
+            <span class="text-[10px] text-[#111111]/60">Image Frame</span>
+          </button>
+          <button type="button" data-add-el="divider" class="btn-vox bg-[#F8F6F0] hover:bg-[#F4D03F] px-2 py-2 rounded-lg text-left flex flex-col gap-0.5 col-span-2 cursor-pointer">
+            <span class="font-display font-black text-xs">— เส้นคั่น (Divider)</span>
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <h2 class="font-display font-black text-[11px] uppercase tracking-wider text-[#111111]/60 mb-1.5">ชุดสีด่วน (Quick Colors)</h2>
+        <p class="text-[10px] text-[#111111]/55 mb-1.5">คลิกเพื่อเปลี่ยนสีพื้นหลังของชิ้นที่เลือก (หรือพื้นหลังหน้า)</p>
+        <div id="quick-swatches" class="grid grid-cols-5 gap-1.5"></div>
+      </div>
+
+      <div class="mt-auto pt-2 border-t-2 border-dashed border-[#111111]/15 text-[11px] text-[#111111]/65 space-y-1">
+        <p class="font-bold text-[#111111]">วิธีใช้งานเร็ว:</p>
+        <p>• ดับเบิลคลิกข้อความเพื่อแก้ตรงๆ</p>
+        <p>• ลากมุมขวาล่างเพื่อปรับขนาด</p>
+        <p>• กด <b>Copy / Export for AI</b> เพื่อส่งให้ AI สร้างโค้ดต่อ</p>
+      </div>
+    </aside>
+
+    <!-- Center Canvas Workspace -->
+    <main id="canvas-workspace" class="flex-1 min-w-0 overflow-auto p-4 sm:p-8 flex justify-center items-start bg-[#EAE6DA]">
+      <div id="design-canvas-shell" class="shrink-0 transition-all duration-200" style="width: 1024px;">
+        <div class="flex items-center justify-between text-[11px] font-display font-bold text-[#111111]/60 mb-1.5 px-1">
+          <span id="canvas-size-label">Desktop • 1024 × 680 px</span>
+          <span id="canvas-el-count">0 elements</span>
+        </div>
+        <div id="design-canvas" class="relative w-full border-[3px] border-[#111111] shadow-[8px_8px_0px_#111111] rounded-xl overflow-hidden designer-grid-bg" style="height: 680px; background-color: #FFFFFF;">
+          <!-- Dynamic elements rendered by designer.js -->
+        </div>
+      </div>
+    </main>
+
+    <!-- Right Inspector Panel -->
+    <aside class="w-64 sm:w-72 shrink-0 bg-white border-l-[3px] border-[#111111] p-3 flex flex-col gap-3 overflow-y-auto vox-scroll-area">
+      <div id="inspector-panel" class="flex flex-col gap-3">
+        <!-- Populated dynamically by designer.js -->
+      </div>
+    </aside>
+  </div>
+
+  <!-- Export for AI Modal -->
+  <div id="export-modal" class="hidden fixed inset-0 z-50 items-center justify-center p-4 bg-[#111111]/65 backdrop-blur-sm" aria-hidden="true">
+    <div class="vox-panel-enter w-full max-w-2xl vox-card bg-[#F8F6F0] p-5 flex flex-col gap-3 max-h-[88vh]">
+      <div class="flex items-center justify-between gap-2 pb-2.5 border-b-2 border-[#111111] shrink-0">
+        <div class="flex items-center gap-2">
+          <span class="px-2 py-0.5 rounded bg-[#111111] text-[#F4D03F] font-display font-black text-xs">EXPORT FOR AI</span>
+          <h2 class="thai-safe font-display font-extrabold text-base text-[#111111]">คัดลอกหรือดาวน์โหลดดีไซน์ให้ AI</h2>
+        </div>
+        <button type="button" id="close-export-btn" aria-label="ปิดหน้าต่าง" class="w-7 h-7 rounded-lg border-2 border-[#111111] bg-white hover:bg-[#E74C3C] hover:text-white font-display font-black text-xs flex items-center justify-center cursor-pointer">✕</button>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-1.5 shrink-0">
+        <button type="button" data-export-tab="prompt" class="exp-tab-btn px-3 py-1.5 rounded-lg border-2 border-[#111111] bg-[#111111] text-[#F4D03F] font-display font-bold text-xs cursor-pointer">AI Prompt + Spec (.md)</button>
+        <button type="button" data-export-tab="html" class="exp-tab-btn px-3 py-1.5 rounded-lg border-2 border-[#111111] bg-white text-[#111111] hover:bg-[#F4D03F]/40 font-display font-bold text-xs cursor-pointer">HTML + Tailwind (.html)</button>
+        <button type="button" data-export-tab="json" class="exp-tab-btn px-3 py-1.5 rounded-lg border-2 border-[#111111] bg-white text-[#111111] hover:bg-[#F4D03F]/40 font-display font-bold text-xs cursor-pointer">Design Data (.json)</button>
+      </div>
+
+      <textarea id="export-output" readonly rows="14" class="w-full flex-1 min-h-[240px] bg-white border-2 border-[#111111] rounded-xl p-3 font-mono text-xs leading-relaxed text-[#111111] resize-none focus:outline-none"></textarea>
+
+      <div class="flex flex-wrap items-center justify-between gap-2 shrink-0">
+        <span id="export-copy-status" class="text-xs font-display font-bold text-[#111111]/70">พร้อมคัดลอกไปวางให้ AI (ChatGPT, Claude, Antigravity)</span>
+        <div class="flex items-center gap-2">
+          <button type="button" id="download-export-btn" class="btn-vox bg-white hover:bg-[#F8F6F0] text-[#111111] font-display font-bold text-xs px-3.5 py-2 rounded-xl cursor-pointer">ดาวน์โหลดไฟล์</button>
+          <button type="button" id="copy-export-btn" class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-black text-xs px-4 py-2 rounded-xl cursor-pointer">คัดลอกทั้งหมด</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Import JSON Modal -->
+  <div id="import-modal" class="hidden fixed inset-0 z-50 items-center justify-center p-4 bg-[#111111]/65 backdrop-blur-sm" aria-hidden="true">
+    <div class="vox-panel-enter w-full max-w-lg vox-card bg-[#F8F6F0] p-5 flex flex-col gap-3">
+      <div class="flex items-center justify-between gap-2 pb-2 border-b-2 border-[#111111]">
+        <h2 class="thai-safe font-display font-extrabold text-base text-[#111111]">นำเข้าดีไซน์ (.json)</h2>
+        <button type="button" id="close-import-btn" class="w-7 h-7 rounded-lg border-2 border-[#111111] bg-white hover:bg-[#E74C3C] hover:text-white font-display font-black text-xs flex items-center justify-center cursor-pointer">✕</button>
+      </div>
+      <input type="file" id="import-file-input" accept=".json,application/json" class="text-xs font-semibold" />
+      <textarea id="import-json-text" rows="8" placeholder="หรือวางข้อมูล JSON ที่นี่..." class="w-full bg-white border-2 border-[#111111] rounded-xl p-3 font-mono text-xs resize-none focus:outline-none"></textarea>
+      <div class="flex justify-end gap-2">
+        <button type="button" id="apply-import-btn" class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-black text-xs px-4 py-2 rounded-xl cursor-pointer">โหลดดีไซน์</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="assets/js/security.js"></script>
+  <script src="assets/js/designer.js"></script>
+</body>
+</html>
