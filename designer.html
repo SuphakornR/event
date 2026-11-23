@@ -5,184 +5,236 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="referrer" content="strict-origin-when-cross-origin" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https: data: blob:;" />
-  <title>Page Designer — HelpDaiCha</title>
-  <meta name="description" content="ออกแบบหน้าเว็บไซต์ด้วยข้อความ รูปทรง และสี แล้วคัดลอกเป็น AI Prompt, HTML/Tailwind หรือไฟล์ JSON ให้ AI สร้างต่อได้ทันที" />
+  <title>Page Designer — Figma-Style Studio • HelpDaiCha</title>
+  <meta name="description" content="ออกแบบหน้าเว็บไซต์สไตล์ Figma ด้วยข้อความ รูปทรง รูปภาพ สี เลเยอร์ และส่งออกเป็น AI Prompt, HTML/Tailwind หรือ JSON" />
   <meta name="theme-color" content="#F4D03F" />
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath d='M9 9 H35 V35 H9 Z' transform='translate(3.5 3.5)' fill='%23111111'/%3E%3Cpath d='M9 9 H35 V35 H9 Z' fill='%23F4D03F' stroke='%23111111' stroke-width='3' stroke-linejoin='round'/%3E%3Ccircle cx='18' cy='21' r='2.3' fill='%23111111'/%3E%3Ccircle cx='28' cy='21' r='2.3' fill='%23111111'/%3E%3C/svg%3E" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Prompt:wght@600;700;800;900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Prompt:wght@600;700;800;900&display=swap" rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="assets/css/vox.css?v=20261123d" />
   <style>
-    .designer-grid-bg {
+    .figma-dot-bg {
+      background-color: #E3DFD3;
+      background-image: radial-gradient(rgba(17, 17, 17, 0.12) 1px, transparent 1px);
+      background-size: 16px 16px;
+    }
+    .canvas-grid-lines {
       background-image:
-        linear-gradient(to right, rgba(17, 17, 17, 0.06) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(17, 17, 17, 0.06) 1px, transparent 1px);
+        linear-gradient(to right, rgba(17, 17, 17, 0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(17, 17, 17, 0.05) 1px, transparent 1px);
       background-size: 24px 24px;
     }
     .canvas-el {
       position: absolute;
       user-select: none;
-      cursor: move;
       box-sizing: border-box;
+      cursor: default;
+    }
+    .canvas-el.is-editing {
+      user-select: text;
+      cursor: text;
     }
     .canvas-el.is-selected {
       outline: 2px solid #2980B9;
-      outline-offset: 2px;
+      outline-offset: 0px;
+    }
+    .canvas-el.is-hovered:not(.is-selected) {
+      outline: 1.5px solid rgba(41, 128, 185, 0.55);
     }
     .resize-handle {
       position: absolute;
-      width: 11px;
-      height: 11px;
-      background: #F4D03F;
-      border: 2px solid #111111;
-      border-radius: 3px;
-      z-index: 30;
+      width: 9px;
+      height: 9px;
+      background: #FFFFFF;
+      border: 2px solid #2980B9;
+      border-radius: 2px;
+      z-index: 40;
     }
-    .resize-handle[data-dir="se"] { right: -6px; bottom: -6px; cursor: nwse-resize; }
-    .resize-handle[data-dir="e"] { right: -6px; top: 50%; transform: translateY(-50%); cursor: ew-resize; }
-    .resize-handle[data-dir="s"] { bottom: -6px; left: 50%; transform: translateX(-50%); cursor: ns-resize; }
+    .resize-handle[data-dir="nw"] { left: -5px; top: -5px; cursor: nwse-resize; }
+    .resize-handle[data-dir="n"]  { left: 50%; top: -5px; transform: translateX(-50%); cursor: ns-resize; }
+    .resize-handle[data-dir="ne"] { right: -5px; top: -5px; cursor: nesw-resize; }
+    .resize-handle[data-dir="e"]  { right: -5px; top: 50%; transform: translateY(-50%); cursor: ew-resize; }
+    .resize-handle[data-dir="se"] { right: -5px; bottom: -5px; cursor: nwse-resize; }
+    .resize-handle[data-dir="s"]  { left: 50%; bottom: -5px; transform: translateX(-50%); cursor: ns-resize; }
+    .resize-handle[data-dir="sw"] { left: -5px; bottom: -5px; cursor: nesw-resize; }
+    .resize-handle[data-dir="w"]  { left: -5px; top: 50%; transform: translateY(-50%); cursor: ew-resize; }
+    .snap-guide-v {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      background: #E91E63;
+      pointer-events: none;
+      z-index: 50;
+    }
+    .snap-guide-h {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: #E91E63;
+      pointer-events: none;
+      z-index: 50;
+    }
+    .marquee-box {
+      position: absolute;
+      border: 1.5px solid #2980B9;
+      background: rgba(41, 128, 185, 0.14);
+      pointer-events: none;
+      z-index: 60;
+    }
   </style>
 </head>
 <body class="h-screen overflow-hidden flex flex-col bg-[#F8F6F0] selection:bg-yellow-300 selection:text-black">
   <script src="assets/js/loader.js?v=20261123c"></script>
 
-  <!-- Top Studio Header -->
-  <header class="shrink-0 bg-white border-b-[3px] border-[#111111] px-3 sm:px-4 py-2 flex flex-wrap items-center justify-between gap-2 z-20">
-    <div class="flex items-center gap-2 min-w-0">
-      <a href="index.html" class="btn-vox bg-white hover:bg-[#F4D03F] text-[#111111] font-display font-bold text-xs px-2.5 py-1.5 rounded-lg inline-flex items-center gap-1 shrink-0" title="กลับหน้าหลัก">
+  <!-- Top Figma-Style Studio Bar -->
+  <header class="shrink-0 bg-[#111111] text-white border-b-[3px] border-[#111111] px-2.5 sm:px-3.5 py-1.5 flex flex-wrap items-center justify-between gap-2 z-30">
+    <!-- Left: Back + Tools -->
+    <div class="flex items-center gap-1.5 min-w-0 flex-wrap">
+      <a href="index.html" class="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-[#F4D03F] hover:text-[#111111] text-white font-display font-bold text-xs inline-flex items-center gap-1 transition-colors shrink-0" title="กลับหน้าหลัก">
         <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-        <span class="hidden sm:inline">หน้าหลัก</span>
+        <span class="hidden md:inline">Hub</span>
       </a>
-      <div class="flex items-center gap-1.5 min-w-0">
-        <span class="bg-[#111111] text-[#F4D03F] font-display font-black text-[11px] px-2 py-0.5 rounded-md shrink-0">DESIGNER</span>
-        <input id="page-title-input" type="text" value="My Landing Page" maxlength="80" aria-label="ชื่อหน้าเว็บ" class="thai-safe font-display font-extrabold text-sm sm:text-base text-[#111111] bg-transparent border-b-2 border-transparent focus:border-[#111111] focus:outline-none px-1 w-36 sm:w-52 truncate" />
+
+      <div class="h-5 w-px bg-white/20 mx-0.5 hidden sm:block"></div>
+
+      <!-- Primary Tool Selector -->
+      <div class="inline-flex items-center gap-0.5 bg-white/10 p-0.5 rounded-lg" role="toolbar" aria-label="เครื่องมือวาด">
+        <button type="button" data-tool="select" title="Select / Move (V)" class="tool-btn px-2 py-1 rounded-md text-xs font-display font-bold bg-[#F4D03F] text-[#111111] cursor-pointer flex items-center gap-1">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M4 3l15 9-7 2-3 7z"/></svg>
+          <span class="hidden xl:inline text-[11px]">V</span>
+        </button>
+        <button type="button" data-tool="frame" title="Frame / Card Box (F)" class="tool-btn px-2 py-1 rounded-md text-xs font-display font-bold text-white hover:bg-white/15 cursor-pointer flex items-center gap-1">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 3v18M19 3v18M3 5h18M3 19h18"/></svg>
+          <span class="hidden xl:inline text-[11px]">F</span>
+        </button>
+        <button type="button" data-tool="rect" title="Rectangle (R)" class="tool-btn px-2 py-1 rounded-md text-xs font-display font-bold text-white hover:bg-white/15 cursor-pointer flex items-center gap-1">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
+          <span class="hidden xl:inline text-[11px]">R</span>
+        </button>
+        <button type="button" data-tool="circle" title="Ellipse / Circle (O)" class="tool-btn px-2 py-1 rounded-md text-xs font-display font-bold text-white hover:bg-white/15 cursor-pointer flex items-center gap-1">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="8"/></svg>
+          <span class="hidden xl:inline text-[11px]">O</span>
+        </button>
+        <button type="button" data-tool="line" title="Line / Divider (L)" class="tool-btn px-2 py-1 rounded-md text-xs font-display font-bold text-white hover:bg-white/15 cursor-pointer flex items-center gap-1">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 12h16"/></svg>
+          <span class="hidden xl:inline text-[11px]">L</span>
+        </button>
+        <button type="button" data-tool="text" title="Text (T)" class="tool-btn px-2 py-1 rounded-md text-xs font-display font-bold text-white hover:bg-white/15 cursor-pointer flex items-center gap-1">
+          <span class="font-display font-black text-xs leading-none px-0.5">T</span>
+        </button>
+        <button type="button" data-tool="button" title="Button Component (B)" class="tool-btn px-2 py-1 rounded-md text-xs font-display font-bold text-white hover:bg-white/15 cursor-pointer flex items-center gap-1">
+          <span class="font-display font-black text-[10px] border border-current rounded px-1 leading-tight">BTN</span>
+        </button>
+        <button type="button" data-tool="image" title="Image Frame (I)" class="tool-btn px-2 py-1 rounded-md text-xs font-display font-bold text-white hover:bg-white/15 cursor-pointer flex items-center gap-1">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+        </button>
+        <button type="button" data-tool="hand" title="Hand / Pan (H or Space+Drag)" class="tool-btn px-2 py-1 rounded-md text-xs font-display font-bold text-white hover:bg-white/15 cursor-pointer flex items-center gap-1">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M18 11V6a2 2 0 0 0-4 0v4M14 10V4a2 2 0 0 0-4 0v6M10 10V6a2 2 0 0 0-4 0v7M6 13l-1.5-1.5a2 2 0 0 0-2.8 2.8L6.5 20a5 5 0 0 0 3.5 1.5h4a5 5 0 0 0 5-5v-5.5a2 2 0 0 0-4 0"/></svg>
+        </button>
       </div>
     </div>
 
-    <!-- Viewport & Grid Controls -->
+    <!-- Center: Page Title -->
+    <div class="hidden lg:flex items-center gap-2">
+      <input id="page-title-input" type="text" value="My Landing Page" maxlength="80" aria-label="ชื่อหน้าเว็บ" class="thai-safe font-display font-bold text-sm text-white bg-white/10 hover:bg-white/15 focus:bg-white focus:text-[#111111] rounded-lg px-2.5 py-1 w-48 text-center focus:outline-none transition-colors" />
+    </div>
+
+    <!-- Right: Viewport, Zoom, Undo/Redo, Export -->
     <div class="flex items-center gap-1.5 flex-wrap">
-      <div class="inline-flex items-center bg-[#F8F6F0] border-2 border-[#111111] rounded-lg p-0.5" role="group" aria-label="ขนาดหน้าจอ">
-        <button type="button" data-vp="desktop" class="vp-btn px-2 py-1 rounded-md font-display font-bold text-[11px] bg-[#111111] text-[#F4D03F] cursor-pointer">Desktop</button>
-        <button type="button" data-vp="tablet" class="vp-btn px-2 py-1 rounded-md font-display font-bold text-[11px] text-[#111111] hover:bg-white cursor-pointer">Tablet</button>
-        <button type="button" data-vp="mobile" class="vp-btn px-2 py-1 rounded-md font-display font-bold text-[11px] text-[#111111] hover:bg-white cursor-pointer">Mobile</button>
+      <div class="inline-flex items-center bg-white/10 rounded-lg p-0.5">
+        <button type="button" data-vp="desktop" class="vp-btn px-2 py-1 rounded-md font-display font-bold text-[11px] bg-[#F4D03F] text-[#111111] cursor-pointer">Desktop</button>
+        <button type="button" data-vp="tablet" class="vp-btn px-2 py-1 rounded-md font-display font-bold text-[11px] text-white/80 hover:text-white cursor-pointer">Tablet</button>
+        <button type="button" data-vp="mobile" class="vp-btn px-2 py-1 rounded-md font-display font-bold text-[11px] text-white/80 hover:text-white cursor-pointer">Mobile</button>
       </div>
 
-      <button type="button" id="toggle-snap-btn" class="px-2.5 py-1 rounded-lg border-2 border-[#111111] bg-[#F4D03F] text-[#111111] font-display font-bold text-[11px] cursor-pointer" title="สลับการดูดเข้ากริด 12px">Grid: ON</button>
-
-      <div class="hidden md:inline-flex items-center gap-1">
-        <button type="button" id="undo-btn" class="px-2 py-1 rounded-lg border-2 border-[#111111] bg-white hover:bg-[#F8F6F0] font-display font-bold text-[11px] cursor-pointer disabled:opacity-40" title="ย้อนกลับ (Ctrl/Cmd+Z)">↶</button>
-        <button type="button" id="redo-btn" class="px-2 py-1 rounded-lg border-2 border-[#111111] bg-white hover:bg-[#F8F6F0] font-display font-bold text-[11px] cursor-pointer disabled:opacity-40" title="ทำซ้ำ (Ctrl/Cmd+Shift+Z)">↷</button>
+      <div class="inline-flex items-center bg-white/10 rounded-lg p-0.5 text-[11px] font-display font-bold">
+        <button type="button" id="zoom-out-btn" class="px-1.5 py-1 hover:bg-white/15 rounded cursor-pointer" title="ย่อ (-)">−</button>
+        <button type="button" id="zoom-reset-btn" class="px-1.5 py-1 hover:bg-white/15 rounded tabular-nums cursor-pointer min-w-[3rem] text-center" title="รีเซ็ตซูม 100%">100%</button>
+        <button type="button" id="zoom-in-btn" class="px-1.5 py-1 hover:bg-white/15 rounded cursor-pointer" title="ขยาย (+)">+</button>
       </div>
 
-      <select id="template-select" aria-label="เทมเพลตเริ่มต้น" class="px-2 py-1 rounded-lg border-2 border-[#111111] bg-white font-display font-bold text-[11px] cursor-pointer">
-        <option value="">เทมเพลต...</option>
-        <option value="hero">Hero + CTA</option>
-        <option value="cards">Landing + Cards</option>
-        <option value="event">Event Page</option>
-        <option value="blank">หน้าว่าง (Blank)</option>
+      <button type="button" id="toggle-snap-btn" class="px-2 py-1 rounded-lg bg-[#F4D03F] text-[#111111] font-display font-bold text-[11px] cursor-pointer" title="Snap &amp; Guides">Snap</button>
+
+      <div class="inline-flex items-center gap-0.5">
+        <button type="button" id="undo-btn" class="px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white font-display font-bold text-xs cursor-pointer disabled:opacity-35" title="Undo (Ctrl/Cmd+Z)">↶</button>
+        <button type="button" id="redo-btn" class="px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white font-display font-bold text-xs cursor-pointer disabled:opacity-35" title="Redo (Ctrl/Cmd+Shift+Z)">↷</button>
+      </div>
+
+      <select id="template-select" aria-label="เทมเพลตเริ่มต้น" class="px-2 py-1 rounded-lg bg-white/10 text-white border border-white/20 font-display font-bold text-[11px] cursor-pointer">
+        <option value="" class="text-black">Templates...</option>
+        <option value="hero" class="text-black">Hero + CTA</option>
+        <option value="cards" class="text-black">Landing + Cards</option>
+        <option value="event" class="text-black">Event Page</option>
+        <option value="blank" class="text-black">Blank Canvas</option>
       </select>
 
-      <button type="button" id="open-import-btn" class="btn-vox bg-white hover:bg-[#F8F6F0] text-[#111111] font-display font-bold text-xs px-2.5 py-1.5 rounded-lg cursor-pointer">Import</button>
-      <button type="button" id="open-export-btn" class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-black text-xs px-3 py-1.5 rounded-lg inline-flex items-center gap-1.5 cursor-pointer">
+      <button type="button" id="open-import-btn" class="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white font-display font-bold text-xs cursor-pointer">Import</button>
+      <button type="button" id="open-export-btn" class="px-3 py-1.5 rounded-lg bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-black text-xs inline-flex items-center gap-1.5 cursor-pointer shadow-[2px_2px_0px_#FFFFFF]">
         <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>
-        <span>Copy / Export for AI</span>
+        <span>Export for AI</span>
       </button>
     </div>
   </header>
 
-  <!-- Main 3-Pane Studio -->
+  <!-- Main 3-Pane Figma Layout -->
   <div class="flex-1 min-h-0 flex overflow-hidden">
 
-    <!-- Left Palette -->
-    <aside class="w-52 sm:w-56 shrink-0 bg-white border-r-[3px] border-[#111111] p-3 flex flex-col gap-3 overflow-y-auto vox-scroll-area">
-      <div>
-        <h2 class="font-display font-black text-[11px] uppercase tracking-wider text-[#111111]/60 mb-1.5">ข้อความ &amp; ปุ่ม (Text &amp; UI)</h2>
-        <div class="grid grid-cols-2 gap-1.5">
-          <button type="button" data-add-el="heading" class="btn-vox bg-[#F8F6F0] hover:bg-[#F4D03F] px-2 py-2 rounded-lg text-left flex flex-col gap-0.5 cursor-pointer">
-            <span class="font-display font-black text-xs">H1 หัวข้อ</span>
-            <span class="text-[10px] text-[#111111]/60">Heading</span>
-          </button>
-          <button type="button" data-add-el="text" class="btn-vox bg-[#F8F6F0] hover:bg-[#F4D03F] px-2 py-2 rounded-lg text-left flex flex-col gap-0.5 cursor-pointer">
-            <span class="font-display font-black text-xs">T ข้อความ</span>
-            <span class="text-[10px] text-[#111111]/60">Paragraph</span>
-          </button>
-          <button type="button" data-add-el="button" class="btn-vox bg-[#F8F6F0] hover:bg-[#F4D03F] px-2 py-2 rounded-lg text-left flex flex-col gap-0.5 cursor-pointer">
-            <span class="font-display font-black text-xs">ปุ่มกด</span>
-            <span class="text-[10px] text-[#111111]/60">CTA Button</span>
-          </button>
-          <button type="button" data-add-el="badge" class="btn-vox bg-[#F8F6F0] hover:bg-[#F4D03F] px-2 py-2 rounded-lg text-left flex flex-col gap-0.5 cursor-pointer">
-            <span class="font-display font-black text-xs">แท็ก</span>
-            <span class="text-[10px] text-[#111111]/60">Badge / Pill</span>
-          </button>
-          <button type="button" data-add-el="input" class="btn-vox bg-[#F8F6F0] hover:bg-[#F4D03F] px-2 py-2 rounded-lg text-left flex flex-col gap-0.5 col-span-2 cursor-pointer">
-            <span class="font-display font-black text-xs">ช่องกรอกข้อมูล (Input Field)</span>
-            <span class="text-[10px] text-[#111111]/60">Form Input</span>
-          </button>
+    <!-- Left Panel: Quick Insert + Layers Tree -->
+    <aside class="w-56 shrink-0 bg-white border-r-[3px] border-[#111111] flex flex-col min-h-0">
+      <!-- Quick Components -->
+      <div class="p-2.5 border-b-2 border-[#111111]/15 shrink-0">
+        <div class="font-display font-black text-[10px] uppercase tracking-wider text-[#111111]/55 mb-1.5">เพิ่มด่วน (Click or Draw)</div>
+        <div class="grid grid-cols-2 gap-1">
+          <button type="button" data-quick-add="heading" class="px-2 py-1.5 rounded-md border border-[#111111]/30 bg-[#F8F6F0] hover:bg-[#F4D03F] font-display font-bold text-[11px] text-left cursor-pointer">+ Heading</button>
+          <button type="button" data-quick-add="text" class="px-2 py-1.5 rounded-md border border-[#111111]/30 bg-[#F8F6F0] hover:bg-[#F4D03F] font-display font-bold text-[11px] text-left cursor-pointer">+ Paragraph</button>
+          <button type="button" data-quick-add="button" class="px-2 py-1.5 rounded-md border border-[#111111]/30 bg-[#F8F6F0] hover:bg-[#F4D03F] font-display font-bold text-[11px] text-left cursor-pointer">+ Button</button>
+          <button type="button" data-quick-add="badge" class="px-2 py-1.5 rounded-md border border-[#111111]/30 bg-[#F8F6F0] hover:bg-[#F4D03F] font-display font-bold text-[11px] text-left cursor-pointer">+ Badge</button>
+          <button type="button" data-quick-add="input" class="px-2 py-1.5 rounded-md border border-[#111111]/30 bg-[#F8F6F0] hover:bg-[#F4D03F] font-display font-bold text-[11px] text-left cursor-pointer">+ Input</button>
+          <button type="button" data-quick-add="image" class="px-2 py-1.5 rounded-md border border-[#111111]/30 bg-[#F8F6F0] hover:bg-[#F4D03F] font-display font-bold text-[11px] text-left cursor-pointer">+ Image</button>
         </div>
       </div>
 
-      <div>
-        <h2 class="font-display font-black text-[11px] uppercase tracking-wider text-[#111111]/60 mb-1.5">รูปทรง &amp; กล่อง (Shapes)</h2>
-        <div class="grid grid-cols-2 gap-1.5">
-          <button type="button" data-add-el="box" class="btn-vox bg-[#F8F6F0] hover:bg-[#F4D03F] px-2 py-2 rounded-lg text-left flex flex-col gap-0.5 cursor-pointer">
-            <span class="font-display font-black text-xs">▭ กล่อง/การ์ด</span>
-            <span class="text-[10px] text-[#111111]/60">Section / Card</span>
-          </button>
-          <button type="button" data-add-el="rect" class="btn-vox bg-[#F8F6F0] hover:bg-[#F4D03F] px-2 py-2 rounded-lg text-left flex flex-col gap-0.5 cursor-pointer">
-            <span class="font-display font-black text-xs">■ สี่เหลี่ยม</span>
-            <span class="text-[10px] text-[#111111]/60">Rectangle</span>
-          </button>
-          <button type="button" data-add-el="circle" class="btn-vox bg-[#F8F6F0] hover:bg-[#F4D03F] px-2 py-2 rounded-lg text-left flex flex-col gap-0.5 cursor-pointer">
-            <span class="font-display font-black text-xs">● วงกลม</span>
-            <span class="text-[10px] text-[#111111]/60">Circle / Avatar</span>
-          </button>
-          <button type="button" data-add-el="image" class="btn-vox bg-[#F8F6F0] hover:bg-[#F4D03F] px-2 py-2 rounded-lg text-left flex flex-col gap-0.5 cursor-pointer">
-            <span class="font-display font-black text-xs">🖼 รูปภาพ</span>
-            <span class="text-[10px] text-[#111111]/60">Image Frame</span>
-          </button>
-          <button type="button" data-add-el="divider" class="btn-vox bg-[#F8F6F0] hover:bg-[#F4D03F] px-2 py-2 rounded-lg text-left flex flex-col gap-0.5 col-span-2 cursor-pointer">
-            <span class="font-display font-black text-xs">— เส้นคั่น (Divider)</span>
-          </button>
+      <!-- Layers List -->
+      <div class="flex-1 min-h-0 flex flex-col p-2.5">
+        <div class="flex items-center justify-between mb-1.5 shrink-0">
+          <span class="font-display font-black text-[10px] uppercase tracking-wider text-[#111111]/55">Layers (<span id="layers-count">0</span>)</span>
+          <span class="text-[10px] text-[#111111]/45">บนสุดอยู่ด้านบน</span>
         </div>
+        <div id="layers-list" class="flex-1 min-h-0 overflow-y-auto flex flex-col gap-1 pr-0.5 vox-scroll-area"></div>
       </div>
 
-      <div>
-        <h2 class="font-display font-black text-[11px] uppercase tracking-wider text-[#111111]/60 mb-1.5">ชุดสีด่วน (Quick Colors)</h2>
-        <p class="text-[10px] text-[#111111]/55 mb-1.5">คลิกเพื่อเปลี่ยนสีพื้นหลังของชิ้นที่เลือก (หรือพื้นหลังหน้า)</p>
+      <!-- Quick Swatches -->
+      <div class="p-2.5 border-t-2 border-[#111111]/15 shrink-0">
+        <div class="font-display font-black text-[10px] uppercase tracking-wider text-[#111111]/55 mb-1.5">Quick Fill Colors</div>
         <div id="quick-swatches" class="grid grid-cols-5 gap-1.5"></div>
-      </div>
-
-      <div class="mt-auto pt-2 border-t-2 border-dashed border-[#111111]/15 text-[11px] text-[#111111]/65 space-y-1">
-        <p class="font-bold text-[#111111]">วิธีใช้งานเร็ว:</p>
-        <p>• ดับเบิลคลิกข้อความเพื่อแก้ตรงๆ</p>
-        <p>• ลากมุมขวาล่างเพื่อปรับขนาด</p>
-        <p>• กด <b>Copy / Export for AI</b> เพื่อส่งให้ AI สร้างโค้ดต่อ</p>
       </div>
     </aside>
 
-    <!-- Center Canvas Workspace -->
-    <main id="canvas-workspace" class="flex-1 min-w-0 overflow-auto p-4 sm:p-8 flex justify-center items-start bg-[#EAE6DA]">
-      <div id="design-canvas-shell" class="shrink-0 transition-all duration-200" style="width: 1024px;">
-        <div class="flex items-center justify-between text-[11px] font-display font-bold text-[#111111]/60 mb-1.5 px-1">
-          <span id="canvas-size-label">Desktop • 1024 × 680 px</span>
-          <span id="canvas-el-count">0 elements</span>
+    <!-- Center Infinite-Style Figma Pasteboard -->
+    <main id="canvas-workspace" class="flex-1 min-w-0 overflow-auto figma-dot-bg relative p-10 sm:p-16 flex justify-center items-start">
+      <div id="zoom-stage" class="origin-top transition-transform duration-100 shrink-0">
+        <div class="flex items-center justify-between text-[11px] font-display font-bold text-[#111111]/65 mb-1.5 px-0.5 select-none">
+          <span id="canvas-size-label">Desktop • 1024 × 680</span>
+          <span id="tool-hint-label">Select (V) • Double-click text to edit • Space+Drag to pan</span>
         </div>
-        <div id="design-canvas" class="relative w-full border-[3px] border-[#111111] shadow-[8px_8px_0px_#111111] rounded-xl overflow-hidden designer-grid-bg" style="height: 680px; background-color: #FFFFFF;">
-          <!-- Dynamic elements rendered by designer.js -->
+        <div id="design-canvas" class="relative border-[2.5px] border-[#111111] shadow-[10px_10px_0px_rgba(17,17,17,0.85)] rounded-lg overflow-hidden canvas-grid-lines" style="width: 1024px; height: 680px; background-color: #FFFFFF;">
+          <!-- Dynamic elements, snap guides, and marquee box rendered here -->
         </div>
       </div>
     </main>
 
     <!-- Right Inspector Panel -->
-    <aside class="w-64 sm:w-72 shrink-0 bg-white border-l-[3px] border-[#111111] p-3 flex flex-col gap-3 overflow-y-auto vox-scroll-area">
-      <div id="inspector-panel" class="flex flex-col gap-3">
-        <!-- Populated dynamically by designer.js -->
-      </div>
+    <aside class="w-68 sm:w-72 shrink-0 bg-white border-l-[3px] border-[#111111] p-3 flex flex-col gap-3 overflow-y-auto vox-scroll-area">
+      <div id="inspector-panel" class="flex flex-col gap-3"></div>
     </aside>
   </div>
+
+  <input type="file" id="hidden-image-upload" accept="image/*" class="hidden" />
 
   <!-- Export for AI Modal -->
   <div id="export-modal" class="hidden fixed inset-0 z-50 items-center justify-center p-4 bg-[#111111]/65 backdrop-blur-sm" aria-hidden="true">
