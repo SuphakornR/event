@@ -991,7 +991,7 @@
 
       let lastTickSec = -1;
 
-      function showVoxAlert(message, type = 'info') {
+      function showVoxAlert(message, type = 'info', options = null) {
         try {
           let stack = document.getElementById('vox-toast-stack');
           if (!stack) {
@@ -1002,15 +1002,32 @@
           }
           const bg = type === 'alarm' ? 'bg-[#E74C3C] text-white' : type === 'success' ? 'bg-[#F4D03F] text-[#111111]' : 'bg-[#111111] text-[#F4D03F]';
           const toast = document.createElement('div');
-          toast.className = `vox-panel-enter pointer-events-auto ${bg} border-[2.5px] border-[#111111] rounded-xl px-4 py-2 shadow-[4px_4px_0px_#111111] font-display font-extrabold text-xs sm:text-sm flex items-center gap-2`;
-          toast.textContent = message;
+          toast.className = `vox-panel-enter pointer-events-auto ${bg} border-[2.5px] border-[#111111] rounded-xl px-4 py-2 shadow-[4px_4px_0px_#111111] font-display font-extrabold text-xs sm:text-sm flex items-center gap-2.5`;
+          const msgSpan = document.createElement('span');
+          msgSpan.textContent = message;
+          toast.appendChild(msgSpan);
+
+          if (options?.actionLabel && typeof options.onAction === 'function') {
+            const actionBtn = document.createElement('button');
+            actionBtn.type = 'button';
+            actionBtn.className = 'px-2.5 py-0.5 rounded-lg border-2 border-[#111111] bg-white hover:bg-[#F4D03F] text-[#111111] font-display font-black text-xs cursor-pointer transition-colors';
+            actionBtn.textContent = options.actionLabel;
+            actionBtn.addEventListener('click', () => {
+              options.onAction();
+              toast.remove();
+            }, { once: true });
+            toast.appendChild(actionBtn);
+          }
+
           stack.appendChild(toast);
+          const duration = Number(options?.duration) || 2800;
           setTimeout(() => {
+            if (!toast.isConnected) return;
             toast.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
             toast.style.opacity = '0';
             toast.style.transform = 'translateY(-6px)';
             setTimeout(() => toast.remove(), 260);
-          }, 2800);
+          }, duration);
         } catch (_) {}
       }
 
@@ -2899,10 +2916,23 @@
         });
       }
 
-      // Keyboard Shortcuts (Esc steps back: Victory -> Center Timer -> Zoom -> Focus -> Accordion)
+      // Keyboard Shortcuts (Esc steps back: Popover -> Victory -> Center Timer -> Zoom -> Focus -> Accordion; Space toggles center timer)
       window.addEventListener('keydown', (e) => {
+        if (e.code === 'Space' && !e.target.closest('input, textarea, select, button, a, [contenteditable="true"]')) {
+          if (state.timer?.visible && state.timer?.mode === 'center') {
+            e.preventDefault();
+            document.getElementById('center-timer-toggle-btn')?.click();
+            return;
+          }
+        }
         if (e.key === 'Escape') {
-          if (document.getElementById('victory-celebration-overlay')) {
+          if (viewSettingsPopover && !viewSettingsPopover.classList.contains('hidden')) {
+            viewSettingsPopover.classList.add('hidden');
+            viewSettingsPopover.classList.remove('flex');
+            viewSettingsBtn?.setAttribute('aria-expanded', 'false');
+            return;
+          }
+          if (document.getElementById('victory-celebration-overlay') || document.getElementById('victory-drumroll-overlay')) {
             hideVictorySpotlight();
             return;
           }
@@ -4001,12 +4031,29 @@
           renderTimerUI();
         },
         resetScores: () => {
+          const snapshot = state.teams.map(t => ({ id: t.id, scores: [...t.scores] }));
+          const prevWinner = state.winnerAnnounced;
           state.teams.forEach(t => { t.scores = state.games.map(() => 0); });
           state.winnerAnnounced = false;
           hideVictorySpotlight();
           saveAndBroadcast();
           renderLeaderboard(true);
           renderDrawerControls();
+          showVoxAlert('รีเซ็ตคะแนนทั้งหมดแล้ว', 'info', {
+            actionLabel: 'ย้อนกลับ (Undo)',
+            duration: 5000,
+            onAction: () => {
+              snapshot.forEach(snap => {
+                const team = state.teams.find(t => t.id === snap.id);
+                if (team) team.scores = [...snap.scores];
+              });
+              state.winnerAnnounced = prevWinner;
+              saveAndBroadcast();
+              renderLeaderboard(true);
+              renderDrawerControls();
+              showVoxAlert('กู้คืนคะแนนเดิมแล้ว', 'success');
+            }
+          });
         },
         applyTemplate: (key) => {
           const templates = {

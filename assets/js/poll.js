@@ -84,8 +84,19 @@
         }
         if (!data) data = readLocalPollData();
         if (!data) {
+          statusEl.textContent = 'ไม่พบห้องโหวต';
+          statusEl.classList.remove('bg-[#F4D03F]', 'bg-[#10B981]', 'text-[#111111]');
+          statusEl.classList.add('bg-[#E74C3C]', 'text-white');
           qEl.textContent = 'ไม่พบโพลนี้ หรือโพลถูกปิดไปแล้ว';
-          choicesEl.innerHTML = '';
+          choicesEl.innerHTML = `
+            <button type="button" id="poll-voter-retry" class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-extrabold text-sm px-4 py-2.5 rounded-xl cursor-pointer self-start">
+              ลองเชื่อมต่อใหม่
+            </button>
+          `;
+          document.getElementById('poll-voter-retry')?.addEventListener('click', () => {
+            qEl.textContent = 'กำลังโหลดโพล...';
+            renderVoter();
+          });
           lastVoterRenderKey = '';
           return;
         }

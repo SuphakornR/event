@@ -689,13 +689,27 @@
     .btn-vox {
       border: 2.5px solid #111111;
       box-shadow: var(--shadow-hard-sm);
-      transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.15s ease;
+      transition: transform 0.14s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.14s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.15s ease;
       user-select: none;
+    }
+
+    .btn-vox:hover {
+      transform: translate(-1px, -1px);
+      box-shadow: 4px 4px 0px #111111;
     }
 
     .btn-vox:active {
       transform: translate(2px, 2px);
       box-shadow: 1px 1px 0px #111111;
+    }
+
+    .btn-vox:focus-visible,
+    .game-pill-card:focus-visible,
+    a:focus-visible,
+    button:focus-visible,
+    select:focus-visible {
+      outline: 2.5px solid #111111;
+      outline-offset: 2px;
     }
 
     /* Smooth Backstage Reveal / Collapse & Panel Transitions */
@@ -733,7 +747,7 @@
     }
 
     .vox-panel-enter {
-      animation: voxFadeSlide 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+      animation: voxFadeSlide 0.28s cubic-bezier(0.22, 1, 0.36, 1);
       will-change: opacity, transform;
     }
 
@@ -869,7 +883,14 @@
       animation: waterSheenFlow 1.6s ease-in-out infinite;
     }
     @media (prefers-reduced-motion: reduce) {
-      .loader-shape, .loader-bar-fill, .mascot-float, .vox-panel-enter, .vox-stage-enter { animation: none; }
+      .loader-shape, .loader-bar-fill, .mascot-float, .vox-panel-enter, .vox-stage-enter,
+      .victory-sunburst, .victory-mascot-jump, .victory-mascot-idle, .victory-drum-shake,
+      .vox-autosync-spin, .crown-badge {
+        animation: none !important;
+      }
+      .btn-vox, .vox-card-hover, .game-pill-card, .game-rules-drawer, #center-timer-overlay, #center-timer-card {
+        transition-duration: 0.01ms !important;
+      }
     }
 
     /* ==========================================================================

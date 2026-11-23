@@ -11,7 +11,7 @@
   <meta property="og:title" content="HelpDai — Stage Scoreboard" />
   <meta property="og:description" content="กระดานคะแนนสดบนเวที ปรับแต่งทีมและกิจกรรมแบบเรียลไทม์" />
   <meta property="og:type" content="website" />
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath d='M9 9 H35 V35 H9 Z' transform='translate(3.5 3.5)' fill='%23111111'/%3E%3Cpath d='M9 9 H35 V35 H9 Z' fill='%23F4D03F' stroke='%23111111' stroke-width='3' stroke-linejoin='round'/%3E%3Ccircle cx='18' cy='21' r='2.3' fill='%23111111'/%3E%3Ccircle cx='28' cy='21' r='2.3' fill='%23111111'/%3E%3C/svg%3E" />
+  <link rel="icon" type="image/svg+xml" href="assets/img/logo.svg" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -36,16 +36,16 @@
   <!-- ========================================================================
        VIEW 1: CLEAN REAL-TIME STAGE VIEW (PROJECTOR READY — NO TOP-RIGHT BUTTONS)
        ======================================================================== -->
-  <main id="stage-container" class="w-full max-w-7xl mx-auto px-14 sm:px-16 py-3 sm:py-4 lg:h-screen lg:overflow-hidden flex flex-col gap-3">
+  <main id="stage-container" class="w-full max-w-7xl mx-auto px-3.5 sm:px-8 lg:px-14 py-3 sm:py-4 lg:h-screen lg:overflow-hidden flex flex-col gap-3">
 
     <!-- Clean Vox Editorial Masthead + Top-Right Big Image Banner -->
     <header class="border-b-[3px] border-[#111111] pb-2.5 shrink-0 bg-[#F8F6F0]/90 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
       <div class="min-w-0 flex-1 flex flex-col justify-center">
-        <div class="flex flex-wrap items-center justify-between gap-2 mb-1">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-1.5">
           <div class="flex flex-wrap items-center gap-2 relative">
-          <a href="index.html" title="เมนูหลัก" aria-label="กลับเมนูหลัก" class="inline-flex items-center justify-center bg-white text-[#111111] border-2 border-[#111111] w-7 h-7 rounded-md font-display font-black text-sm shadow-[2px_2px_0px_#111111] hover:bg-[#F4D03F] transition-colors">←</a>
-          <button type="button" data-start-tutorial title="คู่มือการใช้งาน" aria-label="เปิดคู่มือการใช้งาน" class="inline-flex items-center justify-center bg-white text-[#111111] border-2 border-[#111111] w-7 h-7 rounded-md font-display font-black text-xs shadow-[2px_2px_0px_#111111] hover:bg-[#F4D03F] transition-colors cursor-pointer">?</button>
-          <button type="button" id="view-settings-btn" title="มุมมอง &amp; การจัดวาง" aria-label="ตั้งค่ามุมมอง" class="inline-flex items-center justify-center bg-white text-[#111111] border-2 border-[#111111] w-7 h-7 rounded-md shadow-[2px_2px_0px_#111111] hover:bg-[#F4D03F] transition-colors cursor-pointer" aria-expanded="false" aria-controls="view-settings-popover">
+          <a href="index.html" title="เมนูหลัก" aria-label="กลับเมนูหลัก" class="inline-flex items-center justify-center bg-white text-[#111111] border-2 border-[#111111] w-9 h-9 sm:w-8 sm:h-8 rounded-lg font-display font-black text-sm shadow-[2px_2px_0px_#111111] hover:bg-[#F4D03F] transition-colors">←</a>
+          <button type="button" data-start-tutorial title="คู่มือการใช้งาน" aria-label="เปิดคู่มือการใช้งาน" class="inline-flex items-center justify-center bg-white text-[#111111] border-2 border-[#111111] w-9 h-9 sm:w-8 sm:h-8 rounded-lg font-display font-black text-xs shadow-[2px_2px_0px_#111111] hover:bg-[#F4D03F] transition-colors cursor-pointer">?</button>
+          <button type="button" id="view-settings-btn" title="มุมมอง &amp; การจัดวาง" aria-label="ตั้งค่ามุมมอง" class="inline-flex items-center justify-center bg-white text-[#111111] border-2 border-[#111111] w-9 h-9 sm:w-8 sm:h-8 rounded-lg shadow-[2px_2px_0px_#111111] hover:bg-[#F4D03F] transition-colors cursor-pointer" aria-expanded="false" aria-controls="view-settings-popover">
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
           </button>
 
@@ -112,11 +112,13 @@
         <div class="flex flex-col gap-0.5">
           <h1
             id="event-title"
-            class="thai-safe font-display font-black text-2xl sm:text-3xl lg:text-[2.1rem] text-[#111111] tracking-tight break-words leading-tight"
+            title="คลิกเพื่อแก้ไขชื่องาน"
+            class="thai-safe font-display font-black text-2xl sm:text-3xl lg:text-[2.1rem] text-[#111111] tracking-tight break-words leading-tight cursor-pointer hover:opacity-80 transition-opacity"
           >กระดานคะแนนกิจกรรม</h1>
           <p
             id="event-subtitle"
-            class="thai-safe-tight font-semibold text-xs sm:text-sm text-[#111111]/75 break-words"
+            title="คลิกเพื่อแก้ไขคำโปรย"
+            class="thai-safe-tight font-semibold text-xs sm:text-sm text-[#111111]/75 break-words cursor-pointer hover:opacity-80 transition-opacity"
           >แสดงคะแนน กติกา และจับเวลาสดบนเวที</p>
         </div>
       </div>
@@ -139,8 +141,8 @@
       <!-- Activity List Column (Dynamically rendered 1..6 activities, auto-fit zero-scroll) -->
       <aside id="activity-list-col" class="lg:col-span-4 flex flex-col gap-1.5 min-h-0 overflow-hidden pb-2 pr-2 bg-[#F8F6F0]/90">
         <div class="flex items-center justify-between gap-2 px-0.5 shrink-0">
-          <span class="font-display font-extrabold text-[10px] uppercase tracking-wider text-[#111111]/60">กิจกรรม • คลิกเปิด / คลิกขวาแก้ไข</span>
-          <span class="hidden sm:inline font-display font-bold text-[10px] text-[#111111]/45">คลิกที่ทีมเพื่อปรับคะแนน</span>
+          <span class="font-display font-extrabold text-[11px] tracking-wide text-[#111111]/75">กิจกรรม • กดเปิด / ปุ่ม ⋯ แก้ไข</span>
+          <span class="hidden sm:inline font-display font-bold text-[11px] text-[#111111]/60">คลิกที่ทีมเพื่อปรับคะแนน</span>
         </div>
         <div class="flex-1 min-h-0 flex flex-col gap-2" id="game-cards-row">
           <!-- Populated dynamically by JS -->

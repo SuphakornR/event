@@ -238,6 +238,9 @@
   openBtn?.addEventListener('click', openCl);
   closeBtn?.addEventListener('click', closeCl);
   modalEl?.addEventListener('click', (e) => { if (e.target === modalEl) closeCl(); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modalEl && !modalEl.classList.contains('hidden')) closeCl();
+  });
 
   window.VoxChangelog = Object.freeze({
     getVersion: () => latestRelease.version,
