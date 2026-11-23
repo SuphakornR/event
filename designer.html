@@ -5,62 +5,90 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="referrer" content="strict-origin-when-cross-origin" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https: data: blob:;" />
-  <title>Page Designer — Figma-Style Studio • HelpDaiCha</title>
-  <meta name="description" content="ออกแบบหน้าเว็บไซต์สไตล์ Figma ด้วยข้อความ รูปทรง รูปภาพ สี เลเยอร์ และส่งออกเป็น AI Prompt, HTML/Tailwind หรือ JSON" />
+  <title>Page Designer — HelpDaiCha</title>
+  <meta name="description" content="เครื่องมือออกแบบหน้าเว็บอย่างง่าย ลื่นไหล น้ำหนักเบา พร้อมคัดลอกเป็น AI Prompt, HTML หรือ JSON ให้ AI สร้างต่อทันที" />
   <meta name="theme-color" content="#F4D03F" />
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath d='M9 9 H35 V35 H9 Z' transform='translate(3.5 3.5)' fill='%23111111'/%3E%3Cpath d='M9 9 H35 V35 H9 Z' fill='%23F4D03F' stroke='%23111111' stroke-width='3' stroke-linejoin='round'/%3E%3Ccircle cx='18' cy='21' r='2.3' fill='%23111111'/%3E%3Ccircle cx='28' cy='21' r='2.3' fill='%23111111'/%3E%3C/svg%3E" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Prompt:wght@600;700;800;900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Prompt:wght@600;700;800;900&display=swap" rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="assets/css/vox.css?v=20261123d" />
   <style>
-    .figma-dot-bg {
-      background-color: #E3DFD3;
-      background-image: radial-gradient(rgba(17, 17, 17, 0.12) 1px, transparent 1px);
-      background-size: 16px 16px;
+    .studio-pasteboard {
+      background-color: #E6E2D6;
+      background-image: radial-gradient(rgba(17, 17, 17, 0.11) 1px, transparent 1px);
+      background-size: 18px 18px;
     }
     .canvas-grid-lines {
       background-image:
-        linear-gradient(to right, rgba(17, 17, 17, 0.05) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(17, 17, 17, 0.05) 1px, transparent 1px);
+        linear-gradient(to right, rgba(17, 17, 17, 0.045) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(17, 17, 17, 0.045) 1px, transparent 1px);
       background-size: 24px 24px;
+    }
+    #design-canvas {
+      contain: layout style;
+      transition: width 0.24s cubic-bezier(0.22, 1, 0.36, 1),
+                  height 0.24s cubic-bezier(0.22, 1, 0.36, 1),
+                  background-color 0.2s ease;
+    }
+    #zoom-stage {
+      transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+      will-change: transform;
+    }
+    @keyframes elPopIn {
+      from { opacity: 0; transform: scale(0.94); }
+      to   { opacity: 1; transform: scale(1); }
     }
     .canvas-el {
       position: absolute;
       user-select: none;
       box-sizing: border-box;
-      cursor: default;
+      cursor: grab;
+      transition: box-shadow 0.16s ease, background-color 0.16s ease, color 0.16s ease, border-color 0.16s ease;
+    }
+    .canvas-el.is-new {
+      animation: elPopIn 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .canvas-el.is-dragging {
+      cursor: grabbing;
+      will-change: left, top, width, height;
+      transition: none;
     }
     .canvas-el.is-editing {
       user-select: text;
       cursor: text;
     }
+    .canvas-el:hover:not(.is-selected) {
+      outline: 1.5px solid rgba(41, 128, 185, 0.55);
+    }
     .canvas-el.is-selected {
       outline: 2px solid #2980B9;
       outline-offset: 0px;
     }
-    .canvas-el.is-hovered:not(.is-selected) {
-      outline: 1.5px solid rgba(41, 128, 185, 0.55);
-    }
     .resize-handle {
       position: absolute;
-      width: 9px;
-      height: 9px;
+      width: 10px;
+      height: 10px;
       background: #FFFFFF;
       border: 2px solid #2980B9;
-      border-radius: 2px;
+      border-radius: 3px;
       z-index: 40;
+      transition: transform 0.12s ease, background-color 0.12s ease;
+    }
+    .resize-handle:hover {
+      background: #F4D03F;
+      transform: scale(1.2);
     }
     .resize-handle[data-dir="nw"] { left: -5px; top: -5px; cursor: nwse-resize; }
-    .resize-handle[data-dir="n"]  { left: 50%; top: -5px; transform: translateX(-50%); cursor: ns-resize; }
+    .resize-handle[data-dir="n"]  { left: 50%; top: -5px; margin-left: -5px; cursor: ns-resize; }
     .resize-handle[data-dir="ne"] { right: -5px; top: -5px; cursor: nesw-resize; }
-    .resize-handle[data-dir="e"]  { right: -5px; top: 50%; transform: translateY(-50%); cursor: ew-resize; }
+    .resize-handle[data-dir="e"]  { right: -5px; top: 50%; margin-top: -5px; cursor: ew-resize; }
     .resize-handle[data-dir="se"] { right: -5px; bottom: -5px; cursor: nwse-resize; }
-    .resize-handle[data-dir="s"]  { left: 50%; bottom: -5px; transform: translateX(-50%); cursor: ns-resize; }
+    .resize-handle[data-dir="s"]  { left: 50%; bottom: -5px; margin-left: -5px; cursor: ns-resize; }
     .resize-handle[data-dir="sw"] { left: -5px; bottom: -5px; cursor: nesw-resize; }
-    .resize-handle[data-dir="w"]  { left: -5px; top: 50%; transform: translateY(-50%); cursor: ew-resize; }
+    .resize-handle[data-dir="w"]  { left: -5px; top: 50%; margin-top: -5px; cursor: ew-resize; }
     .snap-guide-v {
       position: absolute;
       top: 0;
@@ -79,10 +107,11 @@
       pointer-events: none;
       z-index: 50;
     }
-    .marquee-box {
+    .draw-preview-box {
       position: absolute;
-      border: 1.5px solid #2980B9;
-      background: rgba(41, 128, 185, 0.14);
+      border: 2px dashed #2980B9;
+      background: rgba(41, 128, 185, 0.12);
+      border-radius: 6px;
       pointer-events: none;
       z-index: 60;
     }
@@ -91,191 +120,182 @@
 <body class="h-screen overflow-hidden flex flex-col bg-[#F8F6F0] selection:bg-yellow-300 selection:text-black">
   <script src="assets/js/loader.js?v=20261123c"></script>
 
-  <!-- Top Figma-Style Studio Bar -->
-  <header class="shrink-0 bg-[#111111] text-white border-b-[3px] border-[#111111] px-2.5 sm:px-3.5 py-1.5 flex flex-wrap items-center justify-between gap-2 z-30">
-    <!-- Left: Back + Tools -->
-    <div class="flex items-center gap-1.5 min-w-0 flex-wrap">
-      <a href="index.html" class="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-[#F4D03F] hover:text-[#111111] text-white font-display font-bold text-xs inline-flex items-center gap-1 transition-colors shrink-0" title="กลับหน้าหลัก">
+  <!-- Simple, Clean Top Bar -->
+  <header class="shrink-0 bg-white border-b-[3px] border-[#111111] px-3 sm:px-4 py-2 flex flex-wrap items-center justify-between gap-2 z-30">
+    <!-- Left: Hub + Page Title -->
+    <div class="flex items-center gap-2 min-w-0">
+      <a href="index.html" class="btn-vox bg-[#F8F6F0] hover:bg-[#F4D03F] text-[#111111] font-display font-bold text-xs px-2.5 py-1.5 rounded-lg inline-flex items-center gap-1 shrink-0">
         <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-        <span class="hidden md:inline">Hub</span>
+        <span class="hidden sm:inline">หน้าหลัก</span>
       </a>
-
-      <div class="h-5 w-px bg-white/20 mx-0.5 hidden sm:block"></div>
-
-      <!-- Primary Tool Selector -->
-      <div class="inline-flex items-center gap-0.5 bg-white/10 p-0.5 rounded-lg" role="toolbar" aria-label="เครื่องมือวาด">
-        <button type="button" data-tool="select" title="Select / Move (V)" class="tool-btn px-2 py-1 rounded-md text-xs font-display font-bold bg-[#F4D03F] text-[#111111] cursor-pointer flex items-center gap-1">
-          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M4 3l15 9-7 2-3 7z"/></svg>
-          <span class="hidden xl:inline text-[11px]">V</span>
-        </button>
-        <button type="button" data-tool="frame" title="Frame / Card Box (F)" class="tool-btn px-2 py-1 rounded-md text-xs font-display font-bold text-white hover:bg-white/15 cursor-pointer flex items-center gap-1">
-          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 3v18M19 3v18M3 5h18M3 19h18"/></svg>
-          <span class="hidden xl:inline text-[11px]">F</span>
-        </button>
-        <button type="button" data-tool="rect" title="Rectangle (R)" class="tool-btn px-2 py-1 rounded-md text-xs font-display font-bold text-white hover:bg-white/15 cursor-pointer flex items-center gap-1">
-          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
-          <span class="hidden xl:inline text-[11px]">R</span>
-        </button>
-        <button type="button" data-tool="circle" title="Ellipse / Circle (O)" class="tool-btn px-2 py-1 rounded-md text-xs font-display font-bold text-white hover:bg-white/15 cursor-pointer flex items-center gap-1">
-          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="8"/></svg>
-          <span class="hidden xl:inline text-[11px]">O</span>
-        </button>
-        <button type="button" data-tool="line" title="Line / Divider (L)" class="tool-btn px-2 py-1 rounded-md text-xs font-display font-bold text-white hover:bg-white/15 cursor-pointer flex items-center gap-1">
-          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 12h16"/></svg>
-          <span class="hidden xl:inline text-[11px]">L</span>
-        </button>
-        <button type="button" data-tool="text" title="Text (T)" class="tool-btn px-2 py-1 rounded-md text-xs font-display font-bold text-white hover:bg-white/15 cursor-pointer flex items-center gap-1">
-          <span class="font-display font-black text-xs leading-none px-0.5">T</span>
-        </button>
-        <button type="button" data-tool="button" title="Button Component (B)" class="tool-btn px-2 py-1 rounded-md text-xs font-display font-bold text-white hover:bg-white/15 cursor-pointer flex items-center gap-1">
-          <span class="font-display font-black text-[10px] border border-current rounded px-1 leading-tight">BTN</span>
-        </button>
-        <button type="button" data-tool="image" title="Image Frame (I)" class="tool-btn px-2 py-1 rounded-md text-xs font-display font-bold text-white hover:bg-white/15 cursor-pointer flex items-center gap-1">
-          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-        </button>
-        <button type="button" data-tool="hand" title="Hand / Pan (H or Space+Drag)" class="tool-btn px-2 py-1 rounded-md text-xs font-display font-bold text-white hover:bg-white/15 cursor-pointer flex items-center gap-1">
-          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M18 11V6a2 2 0 0 0-4 0v4M14 10V4a2 2 0 0 0-4 0v6M10 10V6a2 2 0 0 0-4 0v7M6 13l-1.5-1.5a2 2 0 0 0-2.8 2.8L6.5 20a5 5 0 0 0 3.5 1.5h4a5 5 0 0 0 5-5v-5.5a2 2 0 0 0-4 0"/></svg>
-        </button>
-      </div>
+      <input id="page-title-input" type="text" value="My Landing Page" maxlength="80" aria-label="ชื่อหน้าเว็บ" class="thai-safe font-display font-extrabold text-sm sm:text-base text-[#111111] bg-[#F8F6F0] hover:bg-yellow-50/70 focus:bg-white border-2 border-transparent focus:border-[#111111] rounded-lg px-2.5 py-1 w-40 sm:w-52 truncate focus:outline-none transition-colors" />
     </div>
 
-    <!-- Center: Page Title -->
-    <div class="hidden lg:flex items-center gap-2">
-      <input id="page-title-input" type="text" value="My Landing Page" maxlength="80" aria-label="ชื่อหน้าเว็บ" class="thai-safe font-display font-bold text-sm text-white bg-white/10 hover:bg-white/15 focus:bg-white focus:text-[#111111] rounded-lg px-2.5 py-1 w-48 text-center focus:outline-none transition-colors" />
-    </div>
-
-    <!-- Right: Viewport, Zoom, Undo/Redo, Export -->
+    <!-- Center: Viewport + Zoom + Undo/Redo -->
     <div class="flex items-center gap-1.5 flex-wrap">
-      <div class="inline-flex items-center bg-white/10 rounded-lg p-0.5">
-        <button type="button" data-vp="desktop" class="vp-btn px-2 py-1 rounded-md font-display font-bold text-[11px] bg-[#F4D03F] text-[#111111] cursor-pointer">Desktop</button>
-        <button type="button" data-vp="tablet" class="vp-btn px-2 py-1 rounded-md font-display font-bold text-[11px] text-white/80 hover:text-white cursor-pointer">Tablet</button>
-        <button type="button" data-vp="mobile" class="vp-btn px-2 py-1 rounded-md font-display font-bold text-[11px] text-white/80 hover:text-white cursor-pointer">Mobile</button>
+      <div class="inline-flex items-center bg-[#F8F6F0] border-2 border-[#111111] rounded-lg p-0.5">
+        <button type="button" data-vp="desktop" class="vp-btn px-2.5 py-1 rounded-md font-display font-bold text-[11px] bg-[#111111] text-[#F4D03F] cursor-pointer transition-colors">Desktop</button>
+        <button type="button" data-vp="tablet" class="vp-btn px-2.5 py-1 rounded-md font-display font-bold text-[11px] text-[#111111] hover:bg-white cursor-pointer transition-colors">Tablet</button>
+        <button type="button" data-vp="mobile" class="vp-btn px-2.5 py-1 rounded-md font-display font-bold text-[11px] text-[#111111] hover:bg-white cursor-pointer transition-colors">Mobile</button>
       </div>
 
-      <div class="inline-flex items-center bg-white/10 rounded-lg p-0.5 text-[11px] font-display font-bold">
-        <button type="button" id="zoom-out-btn" class="px-1.5 py-1 hover:bg-white/15 rounded cursor-pointer" title="ย่อ (-)">−</button>
-        <button type="button" id="zoom-reset-btn" class="px-1.5 py-1 hover:bg-white/15 rounded tabular-nums cursor-pointer min-w-[3rem] text-center" title="รีเซ็ตซูม 100%">100%</button>
-        <button type="button" id="zoom-in-btn" class="px-1.5 py-1 hover:bg-white/15 rounded cursor-pointer" title="ขยาย (+)">+</button>
+      <div class="hidden sm:inline-flex items-center bg-[#F8F6F0] border-2 border-[#111111] rounded-lg p-0.5 text-[11px] font-display font-bold">
+        <button type="button" id="zoom-out-btn" class="px-2 py-0.5 hover:bg-white rounded cursor-pointer" title="ย่อ">−</button>
+        <button type="button" id="zoom-reset-btn" class="px-2 py-0.5 hover:bg-white rounded tabular-nums cursor-pointer min-w-[3.1rem] text-center" title="รีเซ็ต 100%">100%</button>
+        <button type="button" id="zoom-in-btn" class="px-2 py-0.5 hover:bg-white rounded cursor-pointer" title="ขยาย">+</button>
       </div>
 
-      <button type="button" id="toggle-snap-btn" class="px-2 py-1 rounded-lg bg-[#F4D03F] text-[#111111] font-display font-bold text-[11px] cursor-pointer" title="Snap &amp; Guides">Snap</button>
+      <button type="button" id="toggle-snap-btn" class="px-2.5 py-1 rounded-lg border-2 border-[#111111] bg-[#F4D03F] text-[#111111] font-display font-bold text-[11px] cursor-pointer transition-colors" title="เปิด/ปิดเส้นช่วยจัดแนว">Snap: ON</button>
 
-      <div class="inline-flex items-center gap-0.5">
-        <button type="button" id="undo-btn" class="px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white font-display font-bold text-xs cursor-pointer disabled:opacity-35" title="Undo (Ctrl/Cmd+Z)">↶</button>
-        <button type="button" id="redo-btn" class="px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white font-display font-bold text-xs cursor-pointer disabled:opacity-35" title="Redo (Ctrl/Cmd+Shift+Z)">↷</button>
+      <div class="inline-flex items-center gap-1">
+        <button type="button" id="undo-btn" class="px-2 py-1 rounded-lg border-2 border-[#111111] bg-white hover:bg-[#F8F6F0] font-display font-bold text-xs cursor-pointer disabled:opacity-35 transition-opacity" title="ย้อนกลับ (Ctrl/Cmd+Z)">↶</button>
+        <button type="button" id="redo-btn" class="px-2 py-1 rounded-lg border-2 border-[#111111] bg-white hover:bg-[#F8F6F0] font-display font-bold text-xs cursor-pointer disabled:opacity-35 transition-opacity" title="ทำซ้ำ (Ctrl/Cmd+Shift+Z)">↷</button>
       </div>
+    </div>
 
-      <select id="template-select" aria-label="เทมเพลตเริ่มต้น" class="px-2 py-1 rounded-lg bg-white/10 text-white border border-white/20 font-display font-bold text-[11px] cursor-pointer">
-        <option value="" class="text-black">Templates...</option>
-        <option value="hero" class="text-black">Hero + CTA</option>
-        <option value="cards" class="text-black">Landing + Cards</option>
-        <option value="event" class="text-black">Event Page</option>
-        <option value="blank" class="text-black">Blank Canvas</option>
+    <!-- Right: Templates + 1-Click Copy for AI + Export Modal -->
+    <div class="flex items-center gap-1.5">
+      <select id="template-select" aria-label="เทมเพลตเริ่มต้น" class="px-2 py-1.5 rounded-lg border-2 border-[#111111] bg-[#F8F6F0] font-display font-bold text-xs cursor-pointer">
+        <option value="">เทมเพลต...</option>
+        <option value="hero">Hero + CTA</option>
+        <option value="cards">3 Feature Cards</option>
+        <option value="event">Event Page</option>
+        <option value="blank">หน้าว่าง (Blank)</option>
       </select>
 
-      <button type="button" id="open-import-btn" class="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white font-display font-bold text-xs cursor-pointer">Import</button>
-      <button type="button" id="open-export-btn" class="px-3 py-1.5 rounded-lg bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-black text-xs inline-flex items-center gap-1.5 cursor-pointer shadow-[2px_2px_0px_#FFFFFF]">
-        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>
-        <span>Export for AI</span>
+      <button type="button" id="quick-copy-ai-btn" class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-black text-xs px-3 py-1.5 rounded-lg inline-flex items-center gap-1.5 cursor-pointer" title="คัดลอก AI Prompt ทันทีในคลิกเดียว">
+        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        <span id="quick-copy-ai-label">Copy for AI</span>
+      </button>
+
+      <button type="button" id="open-export-btn" class="btn-vox bg-[#111111] hover:bg-[#2a2a2a] text-[#F4D03F] font-display font-bold text-xs px-2.5 py-1.5 rounded-lg cursor-pointer" title="ดูโค้ด HTML / JSON / นำเข้าไฟล์">
+        Export / JSON
       </button>
     </div>
   </header>
 
-  <!-- Main 3-Pane Figma Layout -->
+  <!-- Main 3-Pane Studio -->
   <div class="flex-1 min-h-0 flex overflow-hidden">
 
-    <!-- Left Panel: Quick Insert + Layers Tree -->
-    <aside class="w-56 shrink-0 bg-white border-r-[3px] border-[#111111] flex flex-col min-h-0">
-      <!-- Quick Components -->
+    <!-- Left Panel: Simple Tools + Layers -->
+    <aside class="w-52 sm:w-56 shrink-0 bg-white border-r-[3px] border-[#111111] flex flex-col min-h-0">
+      <!-- Mode Toggle: Select vs Draw vs Pan -->
       <div class="p-2.5 border-b-2 border-[#111111]/15 shrink-0">
-        <div class="font-display font-black text-[10px] uppercase tracking-wider text-[#111111]/55 mb-1.5">เพิ่มด่วน (Click or Draw)</div>
-        <div class="grid grid-cols-2 gap-1">
-          <button type="button" data-quick-add="heading" class="px-2 py-1.5 rounded-md border border-[#111111]/30 bg-[#F8F6F0] hover:bg-[#F4D03F] font-display font-bold text-[11px] text-left cursor-pointer">+ Heading</button>
-          <button type="button" data-quick-add="text" class="px-2 py-1.5 rounded-md border border-[#111111]/30 bg-[#F8F6F0] hover:bg-[#F4D03F] font-display font-bold text-[11px] text-left cursor-pointer">+ Paragraph</button>
-          <button type="button" data-quick-add="button" class="px-2 py-1.5 rounded-md border border-[#111111]/30 bg-[#F8F6F0] hover:bg-[#F4D03F] font-display font-bold text-[11px] text-left cursor-pointer">+ Button</button>
-          <button type="button" data-quick-add="badge" class="px-2 py-1.5 rounded-md border border-[#111111]/30 bg-[#F8F6F0] hover:bg-[#F4D03F] font-display font-bold text-[11px] text-left cursor-pointer">+ Badge</button>
-          <button type="button" data-quick-add="input" class="px-2 py-1.5 rounded-md border border-[#111111]/30 bg-[#F8F6F0] hover:bg-[#F4D03F] font-display font-bold text-[11px] text-left cursor-pointer">+ Input</button>
-          <button type="button" data-quick-add="image" class="px-2 py-1.5 rounded-md border border-[#111111]/30 bg-[#F8F6F0] hover:bg-[#F4D03F] font-display font-bold text-[11px] text-left cursor-pointer">+ Image</button>
+        <div class="grid grid-cols-2 gap-1 bg-[#F8F6F0] p-1 rounded-xl border-2 border-[#111111]">
+          <button type="button" data-tool="select" class="tool-btn py-1.5 rounded-lg font-display font-bold text-xs bg-[#111111] text-[#F4D03F] cursor-pointer transition-colors">↖ เลือก/ย้าย (V)</button>
+          <button type="button" data-tool="hand" class="tool-btn py-1.5 rounded-lg font-display font-bold text-xs text-[#111111] hover:bg-white cursor-pointer transition-colors">✋ เลื่อนจอ (H)</button>
+        </div>
+      </div>
+
+      <!-- 1-Click Add or Draw Elements -->
+      <div class="p-2.5 border-b-2 border-[#111111]/15 shrink-0">
+        <div class="flex items-center justify-between mb-1.5">
+          <span class="font-display font-black text-[10px] uppercase tracking-wider text-[#111111]/60">เพิ่มองค์ประกอบ</span>
+          <span class="text-[10px] font-semibold text-[#111111]/45">คลิกเพิ่มได้เลย</span>
+        </div>
+        <div class="grid grid-cols-2 gap-1.5">
+          <button type="button" data-add-item="heading" class="btn-vox bg-[#F8F6F0] hover:bg-[#F4D03F] px-2.5 py-2 rounded-lg text-left flex items-center gap-1.5 cursor-pointer">
+            <span class="font-display font-black text-xs">H1</span>
+            <span class="font-display font-bold text-xs">หัวข้อ</span>
+          </button>
+          <button type="button" data-add-item="text" class="btn-vox bg-[#F8F6F0] hover:bg-[#F4D03F] px-2.5 py-2 rounded-lg text-left flex items-center gap-1.5 cursor-pointer">
+            <span class="font-display font-black text-xs">T</span>
+            <span class="font-display font-bold text-xs">ข้อความ</span>
+          </button>
+          <button type="button" data-add-item="button" class="btn-vox bg-[#F8F6F0] hover:bg-[#F4D03F] px-2.5 py-2 rounded-lg text-left flex items-center gap-1.5 cursor-pointer">
+            <span class="font-display font-black text-xs">◉</span>
+            <span class="font-display font-bold text-xs">ปุ่มกด</span>
+          </button>
+          <button type="button" data-add-item="badge" class="btn-vox bg-[#F8F6F0] hover:bg-[#F4D03F] px-2.5 py-2 rounded-lg text-left flex items-center gap-1.5 cursor-pointer">
+            <span class="font-display font-black text-xs">#</span>
+            <span class="font-display font-bold text-xs">แท็ก</span>
+          </button>
+          <button type="button" data-add-item="frame" class="btn-vox bg-[#F8F6F0] hover:bg-[#F4D03F] px-2.5 py-2 rounded-lg text-left flex items-center gap-1.5 cursor-pointer">
+            <span class="font-display font-black text-xs">▭</span>
+            <span class="font-display font-bold text-xs">กล่อง/การ์ด</span>
+          </button>
+          <button type="button" data-add-item="circle" class="btn-vox bg-[#F8F6F0] hover:bg-[#F4D03F] px-2.5 py-2 rounded-lg text-left flex items-center gap-1.5 cursor-pointer">
+            <span class="font-display font-black text-xs">●</span>
+            <span class="font-display font-bold text-xs">วงกลม</span>
+          </button>
+          <button type="button" data-add-item="image" class="btn-vox bg-[#F8F6F0] hover:bg-[#F4D03F] px-2.5 py-2 rounded-lg text-left flex items-center gap-1.5 cursor-pointer">
+            <span class="font-display font-black text-xs">🖼</span>
+            <span class="font-display font-bold text-xs">รูปภาพ</span>
+          </button>
+          <button type="button" data-add-item="input" class="btn-vox bg-[#F8F6F0] hover:bg-[#F4D03F] px-2.5 py-2 rounded-lg text-left flex items-center gap-1.5 cursor-pointer">
+            <span class="font-display font-black text-xs">⌨</span>
+            <span class="font-display font-bold text-xs">ช่องกรอก</span>
+          </button>
+          <button type="button" data-add-item="line" class="btn-vox bg-[#F8F6F0] hover:bg-[#F4D03F] px-2.5 py-1.5 rounded-lg text-left flex items-center justify-center gap-1.5 col-span-2 cursor-pointer">
+            <span class="font-display font-bold text-xs">— เส้นคั่น (Divider)</span>
+          </button>
         </div>
       </div>
 
       <!-- Layers List -->
       <div class="flex-1 min-h-0 flex flex-col p-2.5">
         <div class="flex items-center justify-between mb-1.5 shrink-0">
-          <span class="font-display font-black text-[10px] uppercase tracking-wider text-[#111111]/55">Layers (<span id="layers-count">0</span>)</span>
-          <span class="text-[10px] text-[#111111]/45">บนสุดอยู่ด้านบน</span>
+          <span class="font-display font-black text-[10px] uppercase tracking-wider text-[#111111]/60">เลเยอร์ (<span id="layers-count">0</span>)</span>
+          <button type="button" id="clear-canvas-btn" class="text-[10px] font-bold text-[#E74C3C] hover:underline cursor-pointer">ล้างหน้า</button>
         </div>
         <div id="layers-list" class="flex-1 min-h-0 overflow-y-auto flex flex-col gap-1 pr-0.5 vox-scroll-area"></div>
       </div>
-
-      <!-- Quick Swatches -->
-      <div class="p-2.5 border-t-2 border-[#111111]/15 shrink-0">
-        <div class="font-display font-black text-[10px] uppercase tracking-wider text-[#111111]/55 mb-1.5">Quick Fill Colors</div>
-        <div id="quick-swatches" class="grid grid-cols-5 gap-1.5"></div>
-      </div>
     </aside>
 
-    <!-- Center Infinite-Style Figma Pasteboard -->
-    <main id="canvas-workspace" class="flex-1 min-w-0 overflow-auto figma-dot-bg relative p-10 sm:p-16 flex justify-center items-start">
-      <div id="zoom-stage" class="origin-top transition-transform duration-100 shrink-0">
-        <div class="flex items-center justify-between text-[11px] font-display font-bold text-[#111111]/65 mb-1.5 px-0.5 select-none">
+    <!-- Center Workspace -->
+    <main id="canvas-workspace" class="flex-1 min-w-0 overflow-auto studio-pasteboard relative p-6 sm:p-10 flex justify-center items-start">
+      <div id="zoom-stage" class="origin-top shrink-0">
+        <div class="flex items-center justify-between text-[11px] font-display font-bold text-[#111111]/65 mb-1.5 px-1 select-none">
           <span id="canvas-size-label">Desktop • 1024 × 680</span>
-          <span id="tool-hint-label">Select (V) • Double-click text to edit • Space+Drag to pan</span>
+          <span id="tool-hint-label">ดับเบิลคลิกเพื่อแก้ข้อความ • ลากมุมเพื่อย่อ/ขยาย • Space+ลากเพื่อเลื่อนจอ</span>
         </div>
-        <div id="design-canvas" class="relative border-[2.5px] border-[#111111] shadow-[10px_10px_0px_rgba(17,17,17,0.85)] rounded-lg overflow-hidden canvas-grid-lines" style="width: 1024px; height: 680px; background-color: #FFFFFF;">
-          <!-- Dynamic elements, snap guides, and marquee box rendered here -->
+        <div id="design-canvas" class="relative border-[3px] border-[#111111] shadow-[8px_8px_0px_#111111] rounded-xl overflow-hidden canvas-grid-lines" style="width: 1024px; height: 680px; background-color: #FFFFFF;">
+          <div id="canvas-elements-root" class="absolute inset-0"></div>
+          <div id="canvas-guides-root" class="absolute inset-0 pointer-events-none"></div>
         </div>
       </div>
     </main>
 
-    <!-- Right Inspector Panel -->
-    <aside class="w-68 sm:w-72 shrink-0 bg-white border-l-[3px] border-[#111111] p-3 flex flex-col gap-3 overflow-y-auto vox-scroll-area">
-      <div id="inspector-panel" class="flex flex-col gap-3"></div>
+    <!-- Right Practical Inspector -->
+    <aside class="w-64 sm:w-72 shrink-0 bg-white border-l-[3px] border-[#111111] p-3 flex flex-col gap-3 overflow-y-auto vox-scroll-area">
+      <div id="inspector-panel" class="flex flex-col gap-3 transition-opacity duration-150"></div>
     </aside>
   </div>
 
   <input type="file" id="hidden-image-upload" accept="image/*" class="hidden" />
 
-  <!-- Export for AI Modal -->
-  <div id="export-modal" class="hidden fixed inset-0 z-50 items-center justify-center p-4 bg-[#111111]/65 backdrop-blur-sm" aria-hidden="true">
+  <!-- Export / Import Modal -->
+  <div id="export-modal" class="hidden fixed inset-0 z-50 items-center justify-center p-4 bg-[#111111]/60 backdrop-blur-sm" aria-hidden="true">
     <div class="vox-panel-enter w-full max-w-2xl vox-card bg-[#F8F6F0] p-5 flex flex-col gap-3 max-h-[88vh]">
       <div class="flex items-center justify-between gap-2 pb-2.5 border-b-2 border-[#111111] shrink-0">
         <div class="flex items-center gap-2">
-          <span class="px-2 py-0.5 rounded bg-[#111111] text-[#F4D03F] font-display font-black text-xs">EXPORT FOR AI</span>
-          <h2 class="thai-safe font-display font-extrabold text-base text-[#111111]">คัดลอกหรือดาวน์โหลดดีไซน์ให้ AI</h2>
+          <span class="px-2 py-0.5 rounded bg-[#111111] text-[#F4D03F] font-display font-black text-xs">AI &amp; FILES</span>
+          <h2 class="thai-safe font-display font-extrabold text-base text-[#111111]">ส่งออกหรือนำเข้าดีไซน์</h2>
         </div>
-        <button type="button" id="close-export-btn" aria-label="ปิดหน้าต่าง" class="w-7 h-7 rounded-lg border-2 border-[#111111] bg-white hover:bg-[#E74C3C] hover:text-white font-display font-black text-xs flex items-center justify-center cursor-pointer">✕</button>
+        <button type="button" id="close-export-btn" aria-label="ปิดหน้าต่าง" class="w-7 h-7 rounded-lg border-2 border-[#111111] bg-white hover:bg-[#E74C3C] hover:text-white font-display font-black text-xs flex items-center justify-center cursor-pointer transition-colors">✕</button>
       </div>
-
-      <div class="flex flex-wrap items-center gap-1.5 shrink-0">
-        <button type="button" data-export-tab="prompt" class="exp-tab-btn px-3 py-1.5 rounded-lg border-2 border-[#111111] bg-[#111111] text-[#F4D03F] font-display font-bold text-xs cursor-pointer">AI Prompt + Spec (.md)</button>
-        <button type="button" data-export-tab="html" class="exp-tab-btn px-3 py-1.5 rounded-lg border-2 border-[#111111] bg-white text-[#111111] hover:bg-[#F4D03F]/40 font-display font-bold text-xs cursor-pointer">HTML + Tailwind (.html)</button>
-        <button type="button" data-export-tab="json" class="exp-tab-btn px-3 py-1.5 rounded-lg border-2 border-[#111111] bg-white text-[#111111] hover:bg-[#F4D03F]/40 font-display font-bold text-xs cursor-pointer">Design Data (.json)</button>
-      </div>
-
-      <textarea id="export-output" readonly rows="14" class="w-full flex-1 min-h-[240px] bg-white border-2 border-[#111111] rounded-xl p-3 font-mono text-xs leading-relaxed text-[#111111] resize-none focus:outline-none"></textarea>
 
       <div class="flex flex-wrap items-center justify-between gap-2 shrink-0">
-        <span id="export-copy-status" class="text-xs font-display font-bold text-[#111111]/70">พร้อมคัดลอกไปวางให้ AI (ChatGPT, Claude, Antigravity)</span>
+        <div class="flex flex-wrap items-center gap-1.5">
+          <button type="button" data-export-tab="prompt" class="exp-tab-btn px-3 py-1.5 rounded-lg border-2 border-[#111111] bg-[#111111] text-[#F4D03F] font-display font-bold text-xs cursor-pointer">AI Prompt (.md)</button>
+          <button type="button" data-export-tab="html" class="exp-tab-btn px-3 py-1.5 rounded-lg border-2 border-[#111111] bg-white text-[#111111] hover:bg-[#F4D03F]/40 font-display font-bold text-xs cursor-pointer">HTML + Tailwind (.html)</button>
+          <button type="button" data-export-tab="json" class="exp-tab-btn px-3 py-1.5 rounded-lg border-2 border-[#111111] bg-white text-[#111111] hover:bg-[#F4D03F]/40 font-display font-bold text-xs cursor-pointer">JSON Data (.json)</button>
+        </div>
+        <label class="btn-vox bg-white hover:bg-[#F4D03F] text-[#111111] font-display font-bold text-xs px-3 py-1.5 rounded-lg cursor-pointer inline-flex items-center gap-1">
+          <span>นำเข้า JSON</span>
+          <input type="file" id="import-file-input" accept=".json,application/json" class="hidden" />
+        </label>
+      </div>
+
+      <textarea id="export-output" rows="13" class="w-full flex-1 min-h-[220px] bg-white border-2 border-[#111111] rounded-xl p-3 font-mono text-xs leading-relaxed text-[#111111] resize-none focus:outline-none"></textarea>
+
+      <div class="flex flex-wrap items-center justify-between gap-2 shrink-0">
+        <span id="export-copy-status" class="text-xs font-display font-bold text-[#111111]/70">คัดลอกไปวางให้ AI หรือแก้ไข JSON แล้วกดโหลดดีไซน์ได้</span>
         <div class="flex items-center gap-2">
+          <button type="button" id="apply-json-btn" class="hidden btn-vox bg-white hover:bg-yellow-50 text-[#111111] font-display font-bold text-xs px-3 py-2 rounded-xl cursor-pointer">โหลด JSON นี้เข้าหน้าเว็บ</button>
           <button type="button" id="download-export-btn" class="btn-vox bg-white hover:bg-[#F8F6F0] text-[#111111] font-display font-bold text-xs px-3.5 py-2 rounded-xl cursor-pointer">ดาวน์โหลดไฟล์</button>
           <button type="button" id="copy-export-btn" class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-black text-xs px-4 py-2 rounded-xl cursor-pointer">คัดลอกทั้งหมด</button>
         </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Import JSON Modal -->
-  <div id="import-modal" class="hidden fixed inset-0 z-50 items-center justify-center p-4 bg-[#111111]/65 backdrop-blur-sm" aria-hidden="true">
-    <div class="vox-panel-enter w-full max-w-lg vox-card bg-[#F8F6F0] p-5 flex flex-col gap-3">
-      <div class="flex items-center justify-between gap-2 pb-2 border-b-2 border-[#111111]">
-        <h2 class="thai-safe font-display font-extrabold text-base text-[#111111]">นำเข้าดีไซน์ (.json)</h2>
-        <button type="button" id="close-import-btn" class="w-7 h-7 rounded-lg border-2 border-[#111111] bg-white hover:bg-[#E74C3C] hover:text-white font-display font-black text-xs flex items-center justify-center cursor-pointer">✕</button>
-      </div>
-      <input type="file" id="import-file-input" accept=".json,application/json" class="text-xs font-semibold" />
-      <textarea id="import-json-text" rows="8" placeholder="หรือวางข้อมูล JSON ที่นี่..." class="w-full bg-white border-2 border-[#111111] rounded-xl p-3 font-mono text-xs resize-none focus:outline-none"></textarea>
-      <div class="flex justify-end gap-2">
-        <button type="button" id="apply-import-btn" class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-black text-xs px-4 py-2 rounded-xl cursor-pointer">โหลดดีไซน์</button>
       </div>
     </div>
   </div>
