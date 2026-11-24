@@ -4,9 +4,25 @@
   const STORAGE_KEY = 'helpdai_budget_planner_v1';
   const THAI_MONTHS = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
 
+  const ICONS = {
+    check: '<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+    alert: '<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><circle cx="12" cy="17" r="1" fill="currentColor"/><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>',
+    incomeBadge: '<span class="w-6 h-6 rounded-lg border-[1.5px] border-[#111111] bg-[#10B981] text-white flex items-center justify-center shrink-0"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>',
+    expenseBadge: '<span class="w-6 h-6 rounded-lg border-[1.5px] border-[#111111] bg-[#E74C3C] text-white flex items-center justify-center shrink-0"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M5 12h14"/></svg></span>',
+    incomeDot: '<span class="w-2.5 h-2.5 rounded-full bg-[#10B981] border border-[#111111] shrink-0"></span>',
+    expenseDot: '<span class="w-2.5 h-2.5 rounded-full bg-[#E74C3C] border border-[#111111] shrink-0"></span>',
+    trash: '<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>'
+  };
+
   const esc = (s) => (window.VoxSecurity ? window.VoxSecurity.escapeHtml(s) : String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])));
   const uid = () => 'bg_' + Math.random().toString(36).slice(2, 9);
   const fmtMoney = (n) => Math.round(Number(n) || 0).toLocaleString('th-TH');
+  const fmtCompact = (n) => {
+    const val = Math.round(Number(n) || 0);
+    if (Math.abs(val) >= 100000) return `${(val / 1000).toFixed(0)}k`;
+    if (Math.abs(val) >= 10000) return `${(val / 1000).toFixed(1).replace(/\.0$/, '')}k`;
+    return val.toLocaleString('th-TH');
+  };
   const fmtSigned = (n) => {
     const val = Math.round(Number(n) || 0);
     return `${val >= 0 ? '+' : '−'}${Math.abs(val).toLocaleString('th-TH')} ฿`;
@@ -37,12 +53,12 @@
       safeBuffer: 5000,
       horizonMonths: 6,
       items: [
-        { id: uid(), title: 'เงินเดือน / รายรับประจำ', amount: 22000, type: 'income', freq: 'monthly', day: 25, date: '', category: 'รายได้', enabled: true },
-        { id: uid(), title: 'ค่าหอพัก + น้ำไฟ', amount: 6500, type: 'expense', freq: 'monthly', day: 1, date: '', category: 'ที่พัก/บิล', enabled: true },
-        { id: uid(), title: 'ค่าอาหาร & ของใช้รายเดือน', amount: 6000, type: 'expense', freq: 'monthly', day: 5, date: '', category: 'อาหาร', enabled: true },
-        { id: uid(), title: 'ค่าเดินทาง & อินเทอร์เน็ต', amount: 2200, type: 'expense', freq: 'monthly', day: 10, date: '', category: 'เดินทาง', enabled: true },
-        { id: uid(), title: 'ออมเข้ากองทุนสำรอง', amount: 3000, type: 'expense', freq: 'monthly', day: 26, date: '', category: 'ออม/ลงทุน', enabled: true },
-        { id: uid(), title: 'ทดลองซื้ออุปกรณ์ใหม่ (What-if)', amount: 8500, type: 'expense', freq: 'once', day: 1, date: addDaysIso(20), category: 'ทดลองซื้อ', enabled: true }
+        { id: uid(), title: 'เงินเดือน / ค่าขนม', amount: 22000, type: 'income', freq: 'monthly', day: 25, date: '', enabled: true },
+        { id: uid(), title: 'ค่าห้อง + น้ำไฟ', amount: 6500, type: 'expense', freq: 'monthly', day: 1, date: '', enabled: true },
+        { id: uid(), title: 'ค่าข้าว & ของกิน', amount: 6000, type: 'expense', freq: 'monthly', day: 5, date: '', enabled: true },
+        { id: uid(), title: 'ค่าเดินทาง & เน็ต', amount: 2200, type: 'expense', freq: 'monthly', day: 10, date: '', enabled: true },
+        { id: uid(), title: 'เก็บออมประจำเดือน', amount: 3000, type: 'expense', freq: 'monthly', day: 26, date: '', enabled: true },
+        { id: uid(), title: 'ลองซื้อของที่อยากได้', amount: 8500, type: 'expense', freq: 'once', day: 1, date: addDaysIso(20), enabled: true }
       ]
     };
   }
@@ -67,6 +83,7 @@
 
   let state = loadState();
   let formType = 'expense';
+  let formFreq = 'monthly';
 
   function saveState() {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch { /* ignore */ }
@@ -76,12 +93,68 @@
     formType = nextType === 'income' ? 'income' : 'expense';
     document.querySelectorAll('.type-toggle-btn').forEach((b) => {
       const on = b.dataset.itemType === formType;
-      b.classList.toggle('bg-[#111111]', on);
-      b.classList.toggle('text-[#F4D03F]', on);
-      b.classList.toggle('bg-white', !on);
-      b.classList.toggle('text-[#111111]', !on);
+      const isInc = b.dataset.itemType === 'income';
+      b.classList.remove('bg-[#10B981]', 'bg-[#E74C3C]', 'text-white', 'bg-white', 'text-[#111111]', 'shadow-[2px_2px_0px_#111111]');
+      if (on) {
+        b.classList.add(isInc ? 'bg-[#10B981]' : 'bg-[#E74C3C]', 'text-white', 'shadow-[2px_2px_0px_#111111]');
+      } else {
+        b.classList.add('bg-white', 'text-[#111111]');
+      }
     });
   }
+
+  // Custom Vox Frequency Dropdown
+  const freqWrap = document.getElementById('freq-dropdown-wrap');
+  const freqBtn = document.getElementById('freq-dropdown-btn');
+  const freqMenu = document.getElementById('freq-dropdown-menu');
+  const freqLabel = document.getElementById('freq-dropdown-label');
+  const freqChevron = document.getElementById('freq-dropdown-chevron');
+  const dayWrap = document.getElementById('wrap-day-of-month');
+  const dateIn = document.getElementById('in-item-date');
+  if (dateIn) dateIn.value = addDaysIso(7);
+
+  function setFreqDropdownOpen(open) {
+    if (!freqMenu || !freqBtn) return;
+    freqMenu.classList.toggle('is-open', open);
+    freqBtn.setAttribute('aria-expanded', String(open));
+    if (freqChevron) freqChevron.style.transform = open ? 'rotate(180deg)' : 'rotate(0deg)';
+  }
+
+  function setFormFreq(nextFreq) {
+    formFreq = nextFreq === 'once' ? 'once' : 'monthly';
+    if (freqLabel) freqLabel.textContent = formFreq === 'once' ? 'แค่ครั้งเดียว' : 'เกิดซ้ำทุกเดือน';
+    document.querySelectorAll('[data-freq-opt]').forEach((opt) => {
+      const active = opt.dataset.freqOpt === formFreq;
+      opt.classList.toggle('bg-[#111111]', active);
+      opt.classList.toggle('text-[#F4D03F]', active);
+      opt.classList.toggle('text-[#111111]', !active);
+    });
+    const isOnce = formFreq === 'once';
+    dayWrap?.classList.toggle('hidden', isOnce);
+    dayWrap?.classList.toggle('flex', !isOnce);
+    dateIn?.classList.toggle('hidden', !isOnce);
+  }
+
+  freqBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isOpen = freqMenu?.classList.contains('is-open');
+    setFreqDropdownOpen(!isOpen);
+  });
+
+  document.querySelectorAll('[data-freq-opt]').forEach((opt) => {
+    opt.addEventListener('click', () => {
+      setFormFreq(opt.dataset.freqOpt);
+      setFreqDropdownOpen(false);
+    });
+  });
+
+  document.addEventListener('click', (e) => {
+    if (freqWrap && !freqWrap.contains(e.target)) setFreqDropdownOpen(false);
+  });
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') setFreqDropdownOpen(false);
+  });
 
   function showToast(msg, actionLabel = '', onAction = null) {
     let stack = document.getElementById('budget-toast-stack');
@@ -114,18 +187,17 @@
     }, actionLabel ? 4500 : 2400);
   }
 
-  // Today label
   const todayLabelEl = document.getElementById('budget-today-label');
   if (todayLabelEl) {
     try {
-      todayLabelEl.textContent = `เริ่มจาก ${new Intl.DateTimeFormat('th-TH', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date())}`;
+      todayLabelEl.textContent = `เริ่มนับตั้งแต่วันนี้ (${new Intl.DateTimeFormat('th-TH', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date())})`;
     } catch {
       todayLabelEl.textContent = toIsoDate(new Date());
     }
   }
 
   // ========================================================================
-  // FORWARD CASH-FLOW SIMULATION ENGINE
+  // FORWARD CASH-FLOW ENGINE
   // ========================================================================
   function buildForecast() {
     const now = new Date();
@@ -155,9 +227,7 @@
               date: dateStr,
               monthKey: `${y}-${String(m + 1).padStart(2, '0')}`,
               title: it.title,
-              category: it.category || 'ทั่วไป',
               type: it.type,
-              freq: it.freq,
               amount: Number(it.amount) || 0,
               signed: it.type === 'income' ? (Number(it.amount) || 0) : -(Number(it.amount) || 0)
             });
@@ -173,9 +243,7 @@
             date: it.date,
             monthKey: it.date.slice(0, 7),
             title: it.title,
-            category: it.category || 'ทั่วไป',
             type: it.type,
-            freq: it.freq,
             amount: Number(it.amount) || 0,
             signed: it.type === 'income' ? (Number(it.amount) || 0) : -(Number(it.amount) || 0)
           });
@@ -212,7 +280,7 @@
       const openBal = monthCursorBalance;
       const closeBal = mEvents.length ? mEvents[mEvents.length - 1].balanceAfter : openBal;
       monthCursorBalance = closeBal;
-      months.push({ key, label, openBal, closeBal, income, expense, net: income - expense, events: mEvents });
+      months.push({ key, label, shortLabel: THAI_MONTHS[m], openBal, closeBal, income, expense, net: income - expense, events: mEvents });
     }
 
     const monthlyRecurringIn = activeItems.filter((i) => i.freq === 'monthly' && i.type === 'income').reduce((s, i) => s + (Number(i.amount) || 0), 0);
@@ -222,8 +290,6 @@
       endBalance: running,
       lowestBalance,
       lowestDate,
-      monthlyRecurringIn,
-      monthlyRecurringOut,
       monthlyRecurringNet: monthlyRecurringIn - monthlyRecurringOut,
       months,
       events: timelineEvents
@@ -231,7 +297,7 @@
   }
 
   // ========================================================================
-  // RENDERING: VERDICT BANNER, KPIs, CHART, ITEMS LIST, TIMELINE
+  // RENDERING: VERDICT, KPIs, BAR GRAPH, LIST, TIMELINE
   // ========================================================================
   function renderVerdict(forecast) {
     const banner = document.getElementById('budget-verdict-banner');
@@ -247,28 +313,27 @@
       if (forecast.lowestBalance < 0) {
         banner.classList.add('bg-[#E74C3C]/15');
         iconEl.classList.add('bg-[#E74C3C]', 'text-white');
-        iconEl.textContent = '!';
-        textEl.textContent = `ระวังเงินไม่พอ! วันที่ ${fmtThaiShortDate(forecast.lowestDate)} ยอดเงินจะติดลบ ${fmtMoney(forecast.lowestBalance)} ฿ — ลองปิดบางรายการด้านซ้ายเพื่อทดสอบ`;
+        iconEl.innerHTML = ICONS.alert;
+        textEl.textContent = `เงินจะไม่พอใช้! วันที่ ${fmtThaiShortDate(forecast.lowestDate)} เงินจะติดลบ ${fmtMoney(forecast.lowestBalance)} ฿ — ลองปิดบางรายจ่ายด้านซ้าย`;
       } else if (forecast.lowestBalance < state.safeBuffer) {
         banner.classList.add('bg-[#F4D03F]/30');
         iconEl.classList.add('bg-[#F4D03F]', 'text-[#111111]');
-        iconEl.textContent = '!';
-        textEl.textContent = `ใกล้จุดอันตราย: วันที่ ${fmtThaiShortDate(forecast.lowestDate)} เงินจะลดเหลือ ${fmtMoney(forecast.lowestBalance)} ฿ (ต่ำกว่าสำรอง ${fmtMoney(state.safeBuffer)} ฿)`;
+        iconEl.innerHTML = ICONS.alert;
+        textEl.textContent = `ใกล้ถึงเงินเก็บแล้ว! วันที่ ${fmtThaiShortDate(forecast.lowestDate)} เงินจะลดเหลือ ${fmtMoney(forecast.lowestBalance)} ฿ (ต่ำกว่า ${fmtMoney(state.safeBuffer)} ฿)`;
       } else {
         banner.classList.add('bg-[#10B981]/15');
         iconEl.classList.add('bg-[#10B981]', 'text-white');
-        iconEl.textContent = '✓';
-        const cushion = forecast.lowestBalance - state.safeBuffer;
-        textEl.textContent = `แผนการเงินปลอดภัยตลอด ${state.horizonMonths} เดือน! ต่ำสุดอยู่ที่ ${fmtMoney(forecast.lowestBalance)} ฿ (สูงกว่าสำรอง +${fmtMoney(cushion)} ฿)`;
+        iconEl.innerHTML = ICONS.check;
+        textEl.textContent = `สบายมาก! เงินพอใช้ตลอด ${state.horizonMonths} เดือน (ช่วงที่เหลือน้อยสุดยังมี ${fmtMoney(forecast.lowestBalance)} ฿)`;
       }
     }
 
-    const disabledItems = state.items.filter((it) => it.enabled === false);
+    const disabledCount = state.items.filter((it) => it.enabled === false).length;
     if (simPill && simLabel) {
-      if (disabledItems.length) {
+      if (disabledCount) {
         simPill.classList.remove('hidden');
         simPill.classList.add('inline-flex');
-        simLabel.textContent = `กำลังจำลองงบ: ปิดอยู่ ${disabledItems.length} รายการ`;
+        simLabel.textContent = `ลองปิดไว้ ${disabledCount} รายการ`;
       } else {
         simPill.classList.add('hidden');
         simPill.classList.remove('inline-flex');
@@ -276,97 +341,41 @@
     }
   }
 
-  function renderChart(forecast) {
+  function renderBarGraph(forecast) {
     const wrap = document.getElementById('budget-chart-wrap');
-    const readout = document.getElementById('chart-hover-readout');
     if (!wrap) return;
 
-    const points = [
-      { key: '', label: 'วันนี้', balance: Number(state.startBalance) || 0, net: 0 },
-      ...forecast.months.map((m) => ({ key: m.key, label: m.label, balance: m.closeBal, net: m.net }))
-    ];
-
-    if (readout && points.length) {
-      const last = points[points.length - 1];
-      readout.textContent = `สิ้นงวด ${last.label}: ${fmtMoney(last.balance)} ฿`;
-    }
-
-    const W = 640;
-    const H = 210;
-    const padL = 56;
-    const padR = 24;
-    const padT = 22;
-    const padB = 28;
-    const plotW = W - padL - padR;
-    const plotH = H - padT - padB;
-
-    const allVals = [...points.map((p) => p.balance), state.safeBuffer, 0];
-    let minV = Math.min(...allVals);
-    let maxV = Math.max(...allVals);
-    if (minV === maxV) { minV -= 1000; maxV += 1000; }
-    const padRange = (maxV - minV) * 0.14;
-    minV -= padRange;
-    maxV += padRange;
-
-    const toX = (i) => padL + (points.length <= 1 ? plotW / 2 : (i / (points.length - 1)) * plotW);
-    const toY = (v) => padT + ((maxV - v) / (maxV - minV)) * plotH;
-
-    const coords = points.map((p, i) => ({ ...p, x: toX(i), y: toY(p.balance), idx: i }));
-    const linePath = coords.map((c, i) => `${i === 0 ? 'M' : 'L'}${c.x.toFixed(1)},${c.y.toFixed(1)}`).join(' ');
-    const areaPath = `${linePath} L${coords[coords.length - 1].x.toFixed(1)},${(padT + plotH).toFixed(1)} L${coords[0].x.toFixed(1)},${(padT + plotH).toFixed(1)} Z`;
-
-    const bufY = toY(state.safeBuffer);
-    const zeroY = toY(0);
+    const bars = forecast.months;
+    const maxVal = Math.max(1000, ...bars.map((m) => Math.max(0, m.closeBal)), state.safeBuffer);
 
     wrap.innerHTML = `
-      <svg viewBox="0 0 ${W} ${H}" class="w-full h-full select-none overflow-visible" role="img" aria-label="กราฟคาดการณ์เงินคงเหลือล่วงหน้า">
-        <defs>
-          <linearGradient id="budgetAreaGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#F4D03F" stop-opacity="0.58" />
-            <stop offset="100%" stop-color="#F4D03F" stop-opacity="0.06" />
-          </linearGradient>
-        </defs>
-
-        ${zeroY >= padT && zeroY <= padT + plotH ? `<line x1="${padL}" y1="${zeroY.toFixed(1)}" x2="${W - padR}" y2="${zeroY.toFixed(1)}" stroke="#111111" stroke-opacity="0.22" stroke-width="1" />` : ''}
-
-        ${bufY >= padT && bufY <= padT + plotH ? `
-          <line x1="${padL}" y1="${bufY.toFixed(1)}" x2="${W - padR}" y2="${bufY.toFixed(1)}" stroke="#E74C3C" stroke-width="1.6" stroke-dasharray="5 4" />
-          <text x="${padL + 4}" y="${Math.max(padT + 10, bufY - 5).toFixed(1)}" font-size="10" font-weight="800" fill="#E74C3C">สำรอง ${fmtMoney(state.safeBuffer)} ฿</text>
-        ` : ''}
-
-        <text x="${padL - 6}" y="${padT + 8}" text-anchor="end" font-size="10" font-weight="700" fill="#111111" opacity="0.55">${fmtMoney(maxV)}</text>
-        <text x="${padL - 6}" y="${padT + plotH}" text-anchor="end" font-size="10" font-weight="700" fill="#111111" opacity="0.55">${fmtMoney(minV)}</text>
-
-        <path d="${areaPath}" fill="url(#budgetAreaGrad)" />
-        <path d="${linePath}" fill="none" stroke="#111111" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" />
-
-        ${coords.map((c) => {
-          const isDanger = c.balance < state.safeBuffer;
-          const showLabel = coords.length <= 8 || c.idx % 2 === 0 || c.idx === coords.length - 1;
+      <div class="grid gap-2 items-end h-44 sm:h-48 pt-6" style="grid-template-columns: repeat(${bars.length}, minmax(0, 1fr));">
+        ${bars.map((m) => {
+          const val = m.closeBal;
+          const isLow = val < state.safeBuffer;
+          const pct = val <= 0 ? 6 : Math.max(10, Math.round((val / maxVal) * 100));
+          const barColor = val < 0 ? 'bg-[#E74C3C]' : (isLow ? 'bg-[#F39C12]' : 'bg-[#F4D03F]');
           return `
-            ${showLabel ? `<text x="${c.x.toFixed(1)}" y="${H - 6}" text-anchor="middle" font-size="10" font-weight="700" fill="#111111" opacity="0.68">${esc(c.label)}</text>` : ''}
-            <circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="5.5" fill="${isDanger ? '#E74C3C' : '#F4D03F'}" stroke="#111111" stroke-width="2.2" class="chart-pt cursor-pointer transition-transform" data-pt-idx="${c.idx}" />
+            <button type="button" data-bar-month="${esc(m.key)}" class="group h-full flex flex-col items-center justify-end gap-1 cursor-pointer focus:outline-none" title="${esc(m.label)}: เหลือ ${fmtMoney(val)} ฿">
+              <span class="font-display font-black text-[10px] sm:text-xs tabular-nums ${isLow ? 'text-[#E74C3C]' : 'text-[#111111]'} group-hover:scale-110 transition-transform">${fmtCompact(val)}</span>
+              <div class="w-full max-w-[46px] flex-1 flex items-end justify-center">
+                <div class="bar-col-fill w-full rounded-t-xl border-2 border-[#111111] shadow-[2px_0px_0px_#111111] ${barColor} group-hover:-translate-y-0.5" style="height: ${pct}%;"></div>
+              </div>
+              <span class="font-display font-bold text-[10px] sm:text-xs text-[#111111]/75 truncate w-full text-center">${esc(bars.length > 6 ? m.shortLabel : m.label)}</span>
+            </button>
           `;
         }).join('')}
-      </svg>
+      </div>
     `;
 
-    wrap.querySelectorAll('.chart-pt').forEach((dot) => {
-      const p = points[Number(dot.dataset.ptIdx)];
-      if (!p) return;
-      dot.addEventListener('mouseenter', () => {
-        if (readout) readout.textContent = `${p.label}: ${fmtMoney(p.balance)} ฿${p.net ? ` (${fmtSigned(p.net)})` : ''}`;
-      });
-      dot.addEventListener('click', () => {
-        if (readout) readout.textContent = `${p.label}: ${fmtMoney(p.balance)} ฿${p.net ? ` (${fmtSigned(p.net)})` : ''}`;
-        if (p.key) {
-          const card = document.getElementById(`month-card-${p.key}`);
-          if (card) {
-            card.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-            card.classList.remove('month-card-flash');
-            void card.offsetWidth;
-            card.classList.add('month-card-flash');
-          }
+    wrap.querySelectorAll('[data-bar-month]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const card = document.getElementById(`month-card-${btn.dataset.barMonth}`);
+        if (card) {
+          card.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+          card.classList.remove('month-card-flash');
+          void card.offsetWidth;
+          card.classList.add('month-card-flash');
         }
       });
     });
@@ -378,7 +387,7 @@
     if (!state.items.length) {
       listEl.innerHTML = `
         <div class="bg-[#F8F6F0] border-2 border-dashed border-[#111111]/30 rounded-2xl p-6 text-center text-xs font-semibold text-[#111111]/55">
-          ยังไม่มีรายการ — กดปุ่ม "กรอกไว" หรือพิมพ์เพิ่มด้านบนได้เลย
+          ยังไม่มีรายการ — กดปุ่ม "เลือกไว" ด้านบนได้เลย
         </div>
       `;
       return;
@@ -389,20 +398,18 @@
       const on = it.enabled !== false;
       const whenLabel = it.freq === 'monthly' ? `ทุกวันที่ ${it.day}` : fmtThaiShortDate(it.date || '');
       return `
-        <div class="bg-[#F8F6F0] border-2 border-[#111111] rounded-xl px-3 py-2 flex items-center gap-2.5 transition-all duration-150 ${on ? 'shadow-[2px_2px_0px_#111111]' : 'opacity-55 bg-white'}">
-          <button type="button" role="switch" aria-checked="${on}" data-item-toggle="${esc(it.id)}" title="${on ? 'ปิดชั่วคราวเพื่อทดสอบงบ' : 'เปิดใช้งานในแผน'}" class="vox-switch"></button>
+        <div class="bg-[#F8F6F0] border-2 border-[#111111] rounded-xl px-3 py-2 flex items-center gap-2.5 transition-all duration-150 ${on ? 'shadow-[2px_2px_0px_#111111]' : 'opacity-50 bg-white'}">
+          <button type="button" role="switch" aria-checked="${on}" data-item-toggle="${esc(it.id)}" title="${on ? 'กดปิดเพื่อลองดู' : 'กดเปิด'}" class="vox-switch"></button>
+          ${isIncome ? ICONS.incomeBadge : ICONS.expenseBadge}
           <div class="min-w-0 flex-1">
-            <div class="flex items-center gap-1.5">
-              <span class="thai-safe font-display font-bold text-xs sm:text-sm text-[#111111] truncate ${on ? '' : 'line-through'}">${esc(it.title)}</span>
-              <span class="px-1.5 py-0.5 rounded bg-white border border-[#111111]/30 text-[10px] font-bold text-[#111111]/70 shrink-0">${esc(it.category || 'ทั่วไป')}</span>
-            </div>
+            <div class="thai-safe font-display font-bold text-xs sm:text-sm text-[#111111] truncate ${on ? '' : 'line-through'}">${esc(it.title)}</div>
             <div class="text-[11px] font-semibold text-[#111111]/55">${esc(whenLabel)}</div>
           </div>
-          <div class="flex items-center gap-1 shrink-0">
+          <div class="flex items-center gap-0.5 shrink-0">
             <span class="font-display font-black text-xs ${isIncome ? 'text-[#10B981]' : 'text-[#E74C3C]'}">${isIncome ? '+' : '−'}</span>
-            <input type="number" min="0" step="100" value="${Math.round(Number(it.amount) || 0)}" data-item-amount="${esc(it.id)}" aria-label="แก้ไขจำนวนเงิน ${esc(it.title)}" class="w-20 text-right font-display font-black text-xs sm:text-sm tabular-nums bg-white/80 hover:bg-white focus:bg-white border border-transparent hover:border-[#111111]/40 focus:border-[#111111] rounded-lg px-1.5 py-0.5 focus:outline-none ${isIncome ? 'text-[#10B981]' : 'text-[#E74C3C]'}" />
+            <input type="number" min="0" step="100" value="${Math.round(Number(it.amount) || 0)}" data-item-amount="${esc(it.id)}" aria-label="จำนวนเงิน ${esc(it.title)}" class="w-20 text-right font-display font-black text-xs sm:text-sm tabular-nums bg-white/85 hover:bg-white focus:bg-white border border-transparent hover:border-[#111111]/40 focus:border-[#111111] rounded-lg px-1.5 py-0.5 focus:outline-none ${isIncome ? 'text-[#10B981]' : 'text-[#E74C3C]'}" />
           </div>
-          <button type="button" data-item-del="${esc(it.id)}" aria-label="ลบรายการ" class="px-1.5 py-1 rounded text-xs font-black text-[#111111]/40 hover:text-[#E74C3C] cursor-pointer">✕</button>
+          <button type="button" data-item-del="${esc(it.id)}" aria-label="ลบรายการ" class="p-1 rounded text-[#111111]/40 hover:text-[#E74C3C] cursor-pointer transition-colors">${ICONS.trash}</button>
         </div>
       `;
     }).join('');
@@ -434,7 +441,7 @@
         const removed = state.items.splice(idx, 1)[0];
         saveState();
         renderAll();
-        showToast('ลบรายการแล้ว', 'ย้อนกลับ', () => {
+        showToast('ลบรายการแล้ว', 'เอากลับมา', () => {
           state.items.splice(idx, 0, removed);
           saveState();
           renderAll();
@@ -446,7 +453,7 @@
   function renderTimeline(forecast) {
     const listEl = document.getElementById('budget-timeline-list');
     const countEl = document.getElementById('timeline-events-count');
-    if (countEl) countEl.textContent = `${forecast.events.length} รายการล่วงหน้า`;
+    if (countEl) countEl.textContent = `${forecast.events.length} รายการ`;
     if (!listEl) return;
 
     listEl.innerHTML = forecast.months.map((m) => {
@@ -459,6 +466,7 @@
               <div class="flex items-center justify-between gap-2 py-1.5 border-t border-dashed border-[#111111]/15 text-xs">
                 <div class="flex items-center gap-2 min-w-0">
                   <span class="px-1.5 py-0.5 rounded bg-white border border-[#111111]/25 font-display font-bold text-[10px] text-[#111111]/75 shrink-0">${esc(fmtThaiShortDate(ev.date))}</span>
+                  ${isIncome ? ICONS.incomeDot : ICONS.expenseDot}
                   <span class="thai-safe font-semibold text-[#111111] truncate">${esc(ev.title)}</span>
                 </div>
                 <div class="flex items-center gap-2 shrink-0 tabular-nums">
@@ -468,18 +476,18 @@
               </div>
             `;
           }).join('')
-        : '<p class="text-[11px] text-[#111111]/45 pt-1.5 border-t border-dashed border-[#111111]/15">ไม่มีรายการเคลื่อนไหวในเดือนนี้</p>';
+        : '<p class="text-[11px] text-[#111111]/45 pt-1.5 border-t border-dashed border-[#111111]/15">เดือนนี้ไม่มีรายการเงินเข้า-ออก</p>';
 
       return `
         <div id="month-card-${esc(m.key)}" class="bg-[#F8F6F0] border-2 border-[#111111] rounded-2xl p-3 shadow-[3px_3px_0px_#111111] transition-shadow">
           <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
             <div class="flex items-center gap-2">
               <span class="px-2.5 py-0.5 rounded-lg bg-[#111111] text-[#F4D03F] font-display font-black text-xs">${esc(m.label)}</span>
-              <span class="text-[11px] font-bold ${m.net >= 0 ? 'text-[#10B981]' : 'text-[#E74C3C]'}">${fmtSigned(m.net)}</span>
+              <span class="text-xs font-bold ${m.net >= 0 ? 'text-[#10B981]' : 'text-[#E74C3C]'}">${m.net >= 0 ? 'ได้เพิ่ม' : 'ใช้เกิน'} ${fmtSigned(m.net)}</span>
             </div>
             <div class="flex items-center gap-1.5 text-xs font-display font-bold">
-              <span class="text-[#111111]/55 text-[11px]">${fmtMoney(m.openBal)} →</span>
-              <span class="font-black px-2 py-0.5 rounded-lg border border-[#111111] ${belowBuffer ? 'bg-[#E74C3C] text-white' : 'bg-[#F4D03F] text-[#111111]'} tabular-nums">${fmtMoney(m.closeBal)} ฿</span>
+              <span class="text-[#111111]/60 text-[11px]">เหลือสิ้นเดือน:</span>
+              <span class="font-black px-2.5 py-0.5 rounded-lg border border-[#111111] ${belowBuffer ? 'bg-[#E74C3C] text-white' : 'bg-[#F4D03F] text-[#111111]'} tabular-nums">${fmtMoney(m.closeBal)} ฿</span>
             </div>
           </div>
           <div class="flex flex-col">${rowsHtml}</div>
@@ -489,35 +497,22 @@
   }
 
   function renderKpis(forecast) {
-    const netEl = document.getElementById('kpi-monthly-net');
-    const subEl = document.getElementById('kpi-monthly-sub');
+    const endTitleEl = document.getElementById('kpi-end-title');
     const endEl = document.getElementById('kpi-end-balance');
-    const lowEl = document.getElementById('kpi-lowest-note');
+    const netEl = document.getElementById('kpi-monthly-net');
 
-    if (netEl) {
-      netEl.textContent = fmtSigned(forecast.monthlyRecurringNet);
-      netEl.classList.toggle('text-[#10B981]', forecast.monthlyRecurringNet >= 0);
-      netEl.classList.toggle('text-[#E74C3C]', forecast.monthlyRecurringNet < 0);
-    }
-    if (subEl) {
-      subEl.textContent = `รับ ${fmtMoney(forecast.monthlyRecurringIn)} • จ่าย ${fmtMoney(forecast.monthlyRecurringOut)}`;
+    if (endTitleEl) {
+      endTitleEl.textContent = state.horizonMonths === 12 ? 'อีก 1 ปีจะมีเงินเหลือ' : `อีก ${state.horizonMonths} เดือนจะมีเงินเหลือ`;
     }
     if (endEl) {
       endEl.textContent = `${fmtMoney(forecast.endBalance)} ฿`;
       endEl.classList.toggle('text-[#E74C3C]', forecast.endBalance < state.safeBuffer);
       endEl.classList.toggle('text-[#111111]', forecast.endBalance >= state.safeBuffer);
     }
-    if (lowEl) {
-      if (forecast.lowestBalance < 0) {
-        lowEl.textContent = `⚠ ติดลบ ${fmtMoney(forecast.lowestBalance)} ฿ (${fmtThaiShortDate(forecast.lowestDate)})`;
-        lowEl.className = 'text-[11px] font-black text-[#E74C3C]';
-      } else if (forecast.lowestBalance < state.safeBuffer) {
-        lowEl.textContent = `⚠ ต่ำกว่าสำรอง (${fmtMoney(forecast.lowestBalance)} ฿)`;
-        lowEl.className = 'text-[11px] font-black text-[#E74C3C]';
-      } else {
-        lowEl.textContent = `✓ ต่ำสุด ${fmtMoney(forecast.lowestBalance)} ฿`;
-        lowEl.className = 'text-[11px] font-bold text-[#10B981]';
-      }
+    if (netEl) {
+      netEl.textContent = `เฉลี่ย ${fmtSigned(forecast.monthlyRecurringNet)} / เดือน`;
+      netEl.classList.toggle('text-[#10B981]', forecast.monthlyRecurringNet >= 0);
+      netEl.classList.toggle('text-[#E74C3C]', forecast.monthlyRecurringNet < 0);
     }
   }
 
@@ -537,7 +532,7 @@
     const forecast = buildForecast();
     renderVerdict(forecast);
     renderKpis(forecast);
-    renderChart(forecast);
+    renderBarGraph(forecast);
     renderItemsList();
     renderTimeline(forecast);
   }
@@ -575,26 +570,11 @@
     btn.addEventListener('click', () => setFormType(btn.dataset.itemType));
   });
 
-  const freqSelect = document.getElementById('in-item-freq');
-  const dayWrap = document.getElementById('wrap-day-of-month');
-  const dateIn = document.getElementById('in-item-date');
-  if (dateIn) dateIn.value = addDaysIso(7);
-
-  function syncFreqVisibility() {
-    const isOnce = freqSelect?.value === 'once';
-    dayWrap?.classList.toggle('hidden', isOnce);
-    dayWrap?.classList.toggle('flex', !isOnce);
-    dateIn?.classList.toggle('hidden', !isOnce);
-  }
-
-  freqSelect?.addEventListener('change', syncFreqVisibility);
-
-  // 1-Click Quick Fill Presets
   const QUICK_PRESETS = {
-    salary: { type: 'income', title: 'เงินเดือน / รายรับประจำ', freq: 'monthly', day: 25, cat: 'รายได้' },
-    rent: { type: 'expense', title: 'ค่าห้องพัก + น้ำไฟ', freq: 'monthly', day: 1, cat: 'ที่พัก/บิล' },
-    food: { type: 'expense', title: 'ค่าอาหารรายเดือน', freq: 'monthly', day: 5, cat: 'อาหาร' },
-    buy: { type: 'expense', title: 'ทดลองซื้อของใหม่', freq: 'once', day: 1, cat: 'ทดลองซื้อ' }
+    salary: { type: 'income', title: 'เงินเดือน / ค่าขนม', freq: 'monthly', day: 25 },
+    rent: { type: 'expense', title: 'ค่าห้อง + น้ำไฟ', freq: 'monthly', day: 1 },
+    food: { type: 'expense', title: 'ค่าข้าว & ของกิน', freq: 'monthly', day: 5 },
+    buy: { type: 'expense', title: 'ลองซื้อของที่อยากได้', freq: 'once', day: 1 }
   };
 
   document.querySelectorAll('[data-quick-preset]').forEach((btn) => {
@@ -602,15 +582,12 @@
       const p = QUICK_PRESETS[btn.dataset.quickPreset];
       if (!p) return;
       setFormType(p.type);
+      setFormFreq(p.freq);
       const titleEl = document.getElementById('in-item-title');
       const dayEl = document.getElementById('in-item-day');
-      const catEl = document.getElementById('in-item-cat');
       const amountEl = document.getElementById('in-item-amount');
       if (titleEl) titleEl.value = p.title;
-      if (freqSelect) freqSelect.value = p.freq;
       if (dayEl) dayEl.value = String(p.day);
-      if (catEl) catEl.value = p.cat;
-      syncFreqVisibility();
       amountEl?.focus();
     });
   });
@@ -620,11 +597,9 @@
     const titleEl = document.getElementById('in-item-title');
     const amountEl = document.getElementById('in-item-amount');
     const dayEl = document.getElementById('in-item-day');
-    const catEl = document.getElementById('in-item-cat');
 
     const title = (titleEl?.value || '').trim();
     const amount = Math.max(1, Number(amountEl?.value) || 0);
-    const freq = freqSelect?.value || 'monthly';
     if (!title || !amount) return;
 
     state.items.unshift({
@@ -632,10 +607,9 @@
       title,
       amount,
       type: formType,
-      freq,
+      freq: formFreq,
       day: Math.min(31, Math.max(1, Number(dayEl?.value) || 1)),
-      date: freq === 'once' ? (dateIn?.value || addDaysIso(7)) : '',
-      category: catEl?.value || 'ทั่วไป',
+      date: formFreq === 'once' ? (dateIn?.value || addDaysIso(7)) : '',
       enabled: true
     });
 
@@ -650,7 +624,7 @@
     state = makeSampleState();
     saveState();
     renderAll();
-    showToast('โหลดข้อมูลตัวอย่างแล้ว', 'ย้อนกลับ', () => {
+    showToast('ใส่ตัวอย่างให้แล้ว', 'เอากลับมา', () => {
       state = JSON.parse(prev);
       saveState();
       renderAll();
@@ -663,7 +637,7 @@
     state.items = [];
     saveState();
     renderAll();
-    showToast('ล้างรายการทั้งหมดแล้ว', 'ย้อนกลับ', () => {
+    showToast('ลบรายการทั้งหมดแล้ว', 'เอากลับมา', () => {
       state.items = prev;
       saveState();
       renderAll();
@@ -674,10 +648,10 @@
     const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json;charset=utf-8' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `monthly-budget-${toIsoDate(new Date())}.json`;
+    a.download = `my-money-plan-${toIsoDate(new Date())}.json`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-    showToast('ดาวน์โหลดไฟล์สำรองข้อมูลแล้ว');
+    showToast('บันทึกไฟล์เรียบร้อยแล้ว');
   });
 
   document.getElementById('budget-import-input')?.addEventListener('change', (e) => {
@@ -697,13 +671,15 @@
         };
         saveState();
         renderAll();
-        showToast('กู้คืนข้อมูลเรียบร้อยแล้ว');
+        showToast('เปิดไฟล์เรียบร้อยแล้ว');
       } catch {
-        alert('ไฟล์ JSON ไม่ถูกต้อง');
+        alert('ไฟล์นี้เปิดไม่ได้ ลองเลือกไฟล์ .json ที่บันทึกจากหน้านี้');
       }
     };
     reader.readAsText(file);
   });
 
+  setFormType('expense');
+  setFormFreq('monthly');
   renderAll();
 })();
