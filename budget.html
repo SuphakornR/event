@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="referrer" content="strict-origin-when-cross-origin" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https: data:;" />
-  <title>Monthly Planner &amp; Budget Timeline — HelpDaiCha</title>
+  <title>Monthly Planner &amp; Test Budget — HelpDaiCha</title>
   <meta name="description" content="วางแผนการเงินรายเดือน ทดลองปรับงบ และดูไทม์ไลน์กระแสเงินสดล่วงหน้า 3–12 เดือน" />
   <meta name="theme-color" content="#F4D03F" />
   <link rel="icon" type="image/svg+xml" href="assets/img/logo.svg" />
@@ -15,6 +15,44 @@
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Prompt:wght@600;700;800;900&display=swap" rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="assets/css/vox.css?v=20261123d" />
+  <style>
+    .vox-switch {
+      width: 40px;
+      height: 22px;
+      border-radius: 999px;
+      border: 2px solid #111111;
+      background: #E5E1D4;
+      position: relative;
+      transition: background-color 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+    .vox-switch::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 14px;
+      height: 14px;
+      border-radius: 999px;
+      background: #111111;
+      transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.2s ease;
+    }
+    .vox-switch[aria-checked="true"] {
+      background: #10B981;
+    }
+    .vox-switch[aria-checked="true"]::after {
+      transform: translateX(18px);
+      background: #FFFFFF;
+    }
+    .month-card-flash {
+      animation: voxMonthFlash 0.9s ease;
+    }
+    @keyframes voxMonthFlash {
+      0%, 100% { box-shadow: 3px 3px 0px #111111; }
+      35% { box-shadow: 0 0 0 4px #F4D03F, 4px 4px 0px #111111; }
+    }
+  </style>
 </head>
 <body class="min-h-screen flex flex-col selection:bg-yellow-300 selection:text-black">
   <script src="assets/js/loader.js?v=20261123c"></script>
@@ -38,9 +76,9 @@
       <!-- Horizon Selector + Backup -->
       <div class="flex flex-wrap items-center gap-2 shrink-0">
         <div class="inline-flex items-center bg-[#F8F6F0] border-2 border-[#111111] rounded-xl p-0.5 shadow-[2px_2px_0px_#111111]">
-          <button type="button" data-horizon="3" class="horizon-btn px-2.5 py-1 rounded-lg font-display font-bold text-xs text-[#111111] hover:bg-white cursor-pointer transition-colors">3 เดือน</button>
-          <button type="button" data-horizon="6" class="horizon-btn px-2.5 py-1 rounded-lg font-display font-bold text-xs bg-[#111111] text-[#F4D03F] cursor-pointer transition-colors">6 เดือน</button>
-          <button type="button" data-horizon="12" class="horizon-btn px-2.5 py-1 rounded-lg font-display font-bold text-xs text-[#111111] hover:bg-white cursor-pointer transition-colors">12 เดือน</button>
+          <button type="button" data-horizon="3" class="horizon-btn px-3 py-1 rounded-lg font-display font-bold text-xs text-[#111111] hover:bg-white cursor-pointer transition-colors">3 เดือน</button>
+          <button type="button" data-horizon="6" class="horizon-btn px-3 py-1 rounded-lg font-display font-bold text-xs bg-[#111111] text-[#F4D03F] cursor-pointer transition-colors">6 เดือน</button>
+          <button type="button" data-horizon="12" class="horizon-btn px-3 py-1 rounded-lg font-display font-bold text-xs text-[#111111] hover:bg-white cursor-pointer transition-colors">12 เดือน</button>
         </div>
         <button type="button" id="budget-sample-btn" class="btn-vox bg-white hover:bg-[#F4D03F] text-[#111111] font-display font-bold text-xs px-3 py-1.5 rounded-xl cursor-pointer">ตัวอย่าง</button>
         <button type="button" id="budget-export-btn" class="btn-vox bg-white hover:bg-[#F4D03F] text-[#111111] font-display font-bold text-xs px-3 py-1.5 rounded-xl cursor-pointer">สำรอง (.json)</button>
@@ -51,26 +89,38 @@
       </div>
     </header>
 
+    <!-- Instant Plain-Language Health Verdict Banner -->
+    <div id="budget-verdict-banner" class="vox-card bg-[#10B981]/15 px-4 py-2.5 flex flex-wrap items-center justify-between gap-2 transition-colors duration-200">
+      <div class="flex items-center gap-2.5 min-w-0">
+        <span id="verdict-icon" class="w-7 h-7 rounded-lg border-2 border-[#111111] bg-[#10B981] text-white font-display font-black text-sm flex items-center justify-center shrink-0">✓</span>
+        <p id="verdict-text" class="thai-safe font-display font-bold text-xs sm:text-sm text-[#111111]">กำลังคำนวณสถานะการเงินล่วงหน้า...</p>
+      </div>
+      <div id="test-sim-pill" class="hidden items-center gap-2 bg-white border-2 border-[#111111] rounded-xl px-2.5 py-1 text-[11px] font-display font-bold">
+        <span id="test-sim-label"></span>
+        <button type="button" id="enable-all-items-btn" class="underline text-[#2980B9] hover:text-[#111111] cursor-pointer">เปิดทั้งหมด</button>
+      </div>
+    </div>
+
     <!-- 4 KPI Summary Cards -->
     <section class="grid grid-cols-2 lg:grid-cols-4 gap-3" aria-label="สรุปภาพรวมการเงิน">
       <div class="vox-card bg-white p-3.5 flex flex-col gap-1">
-        <label for="in-start-balance" class="text-[11px] font-display font-extrabold text-[#111111]/60 uppercase">ยอดเงินตั้งต้น (฿)</label>
-        <input id="in-start-balance" type="number" step="100" value="15000" class="font-display font-black text-xl sm:text-2xl text-[#111111] bg-[#F8F6F0] border-2 border-[#111111] rounded-xl px-2.5 py-1 w-full tabular-nums focus:outline-none focus:bg-white" />
+        <label for="in-start-balance" class="text-[11px] font-display font-extrabold text-[#111111]/60 uppercase">1. เงินที่มีอยู่ตอนนี้ (฿)</label>
+        <input id="in-start-balance" type="number" step="100" value="15000" class="font-display font-black text-xl sm:text-2xl text-[#111111] bg-[#F8F6F0] border-2 border-[#111111] rounded-xl px-2.5 py-1 w-full tabular-nums focus:outline-none focus:bg-white transition-colors" />
       </div>
 
       <div class="vox-card bg-white p-3.5 flex flex-col gap-1">
-        <label for="in-safe-buffer" class="text-[11px] font-display font-extrabold text-[#111111]/60 uppercase">เงินสำรองขั้นต่ำ (฿)</label>
-        <input id="in-safe-buffer" type="number" min="0" step="500" value="5000" class="font-display font-black text-xl sm:text-2xl text-[#111111] bg-[#F8F6F0] border-2 border-[#111111] rounded-xl px-2.5 py-1 w-full tabular-nums focus:outline-none focus:bg-white" />
+        <label for="in-safe-buffer" class="text-[11px] font-display font-extrabold text-[#111111]/60 uppercase">2. เงินสำรองห้ามต่ำกว่า (฿)</label>
+        <input id="in-safe-buffer" type="number" min="0" step="500" value="5000" class="font-display font-black text-xl sm:text-2xl text-[#111111] bg-[#F8F6F0] border-2 border-[#111111] rounded-xl px-2.5 py-1 w-full tabular-nums focus:outline-none focus:bg-white transition-colors" />
       </div>
 
       <div class="vox-card bg-white p-3.5 flex flex-col justify-between gap-1">
-        <span class="text-[11px] font-display font-extrabold text-[#111111]/60 uppercase">กระแสเงินสดเฉลี่ย/เดือน</span>
+        <span class="text-[11px] font-display font-extrabold text-[#111111]/60 uppercase">เงินเข้า–ออกประจำ/เดือน</span>
         <div id="kpi-monthly-net" class="font-display font-black text-xl sm:text-2xl tabular-nums text-[#10B981]">+0 ฿</div>
-        <span id="kpi-monthly-sub" class="text-[11px] font-semibold text-[#111111]/60">รายรับ 0 • รายจ่าย 0</span>
+        <span id="kpi-monthly-sub" class="text-[11px] font-semibold text-[#111111]/60">รับ 0 • จ่าย 0</span>
       </div>
 
       <div class="vox-card bg-white p-3.5 flex flex-col justify-between gap-1">
-        <span class="text-[11px] font-display font-extrabold text-[#111111]/60 uppercase">คาดการณ์สิ้นงวด / จุดต่ำสุด</span>
+        <span class="text-[11px] font-display font-extrabold text-[#111111]/60 uppercase">คาดการณ์ปลายงวด</span>
         <div id="kpi-end-balance" class="font-display font-black text-xl sm:text-2xl tabular-nums text-[#111111]">0 ฿</div>
         <span id="kpi-lowest-note" class="text-[11px] font-bold text-[#111111]/65">ปลอดภัยตลอดช่วงเวลา</span>
       </div>
@@ -83,27 +133,36 @@
       <section class="lg:col-span-5 vox-card bg-white p-4 flex flex-col gap-3" aria-label="รายการรับ-จ่ายและทดลองงบ">
         <div class="flex items-center justify-between gap-2 border-b-2 border-[#111111]/10 pb-2">
           <div>
-            <h2 class="font-display font-extrabold text-sm sm:text-base text-[#111111]">รายการแผนการเงิน (Test Budget)</h2>
-            <p class="text-[11px] font-semibold text-[#111111]/55">เปิด/ปิดสวิตช์แต่ละรายการเพื่อจำลองผลลัพธ์ล่วงหน้าทันที</p>
+            <h2 class="font-display font-extrabold text-sm sm:text-base text-[#111111]">3. รายการรับ–จ่าย &amp; ทดลองงบ</h2>
+            <p class="text-[11px] font-semibold text-[#111111]/55">กดสวิตช์เปิด/ปิด เพื่อลองดูว่าอนาคตเงินจะเหลือเท่าไร</p>
           </div>
-          <button type="button" id="budget-clear-btn" class="text-[11px] font-display font-bold text-[#E74C3C] hover:underline shrink-0 cursor-pointer">ล้างรายการ</button>
+          <button type="button" id="budget-clear-btn" class="text-[11px] font-display font-bold text-[#E74C3C] hover:underline shrink-0 cursor-pointer">ล้างทั้งหมด</button>
         </div>
 
-        <form id="budget-add-form" class="bg-[#F8F6F0] border-2 border-[#111111] rounded-2xl p-3 flex flex-col gap-2">
+        <form id="budget-add-form" class="bg-[#F8F6F0] border-2 border-[#111111] rounded-2xl p-3 flex flex-col gap-2.5">
+          <!-- 1-Click Quick Fill Presets -->
+          <div class="flex flex-wrap items-center gap-1">
+            <span class="text-[10px] font-display font-extrabold text-[#111111]/55 mr-0.5">กรอกไว:</span>
+            <button type="button" data-quick-preset="salary" class="px-2 py-0.5 rounded-md border border-[#111111]/40 bg-white hover:bg-[#10B981]/20 font-display font-bold text-[10px] cursor-pointer transition-colors">+ เงินเดือน</button>
+            <button type="button" data-quick-preset="rent" class="px-2 py-0.5 rounded-md border border-[#111111]/40 bg-white hover:bg-[#F4D03F]/50 font-display font-bold text-[10px] cursor-pointer transition-colors">− ค่าห้อง</button>
+            <button type="button" data-quick-preset="food" class="px-2 py-0.5 rounded-md border border-[#111111]/40 bg-white hover:bg-[#F4D03F]/50 font-display font-bold text-[10px] cursor-pointer transition-colors">− ค่าอาหาร</button>
+            <button type="button" data-quick-preset="buy" class="px-2 py-0.5 rounded-md border border-[#111111]/40 bg-white hover:bg-[#E74C3C]/15 font-display font-bold text-[10px] cursor-pointer transition-colors">? ทดลองซื้อของ</button>
+          </div>
+
           <div class="grid grid-cols-2 gap-1.5">
-            <button type="button" data-item-type="income" class="type-toggle-btn py-1.5 rounded-xl border-2 border-[#111111] bg-white text-[#111111] font-display font-extrabold text-xs cursor-pointer transition-colors">+ รายรับ (Income)</button>
-            <button type="button" data-item-type="expense" class="type-toggle-btn py-1.5 rounded-xl border-2 border-[#111111] bg-[#111111] text-[#F4D03F] font-display font-extrabold text-xs cursor-pointer transition-colors">− รายจ่าย (Expense)</button>
+            <button type="button" data-item-type="income" class="type-toggle-btn py-1.5 rounded-xl border-2 border-[#111111] bg-white text-[#111111] font-display font-extrabold text-xs cursor-pointer transition-colors">+ รายรับ</button>
+            <button type="button" data-item-type="expense" class="type-toggle-btn py-1.5 rounded-xl border-2 border-[#111111] bg-[#111111] text-[#F4D03F] font-display font-extrabold text-xs cursor-pointer transition-colors">− รายจ่าย</button>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-12 gap-2">
-            <input id="in-item-title" type="text" required maxlength="80" placeholder="เช่น ค่าเช่าหอ, เงินเดือน, ซื้อของ..." class="thai-safe sm:col-span-7 bg-white border-2 border-[#111111] rounded-xl px-3 py-1.5 text-xs sm:text-sm font-semibold focus:outline-none" />
-            <input id="in-item-amount" type="number" required min="1" step="1" placeholder="จำนวนเงิน (฿)" class="sm:col-span-5 bg-white border-2 border-[#111111] rounded-xl px-3 py-1.5 text-xs sm:text-sm font-display font-bold tabular-nums focus:outline-none" />
+            <input id="in-item-title" type="text" required maxlength="80" placeholder="ชื่อรายการ..." class="thai-safe sm:col-span-7 bg-white border-2 border-[#111111] rounded-xl px-3 py-1.5 text-xs sm:text-sm font-semibold focus:outline-none" />
+            <input id="in-item-amount" type="number" required min="1" step="1" placeholder="บาท (฿)" class="sm:col-span-5 bg-white border-2 border-[#111111] rounded-xl px-3 py-1.5 text-xs sm:text-sm font-display font-bold tabular-nums focus:outline-none" />
           </div>
 
           <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
             <select id="in-item-freq" aria-label="ความถี่" class="bg-white border border-[#111111]/60 rounded-xl px-2 py-1.5 text-xs font-bold cursor-pointer">
-              <option value="monthly">ทุกเดือน (Monthly)</option>
-              <option value="once">ครั้งเดียว (One-time)</option>
+              <option value="monthly">ทุกเดือน</option>
+              <option value="once">ครั้งเดียว</option>
             </select>
             <div id="wrap-day-of-month" class="flex items-center gap-1 bg-white border border-[#111111]/60 rounded-xl px-2 py-1">
               <span class="text-[11px] font-bold text-[#111111]/60 shrink-0">วันที่</span>
@@ -125,7 +184,7 @@
         </form>
 
         <!-- Planned Items List -->
-        <div id="budget-items-list" class="flex flex-col gap-2 max-h-[420px] overflow-y-auto pr-0.5 vox-scroll-area"></div>
+        <div id="budget-items-list" class="flex flex-col gap-2 max-h-[440px] overflow-y-auto pr-0.5 vox-scroll-area"></div>
       </section>
 
       <!-- RIGHT COLUMN (7 cols): Forward Money Chart + Month-by-Month Timeline -->
@@ -135,12 +194,12 @@
         <section class="vox-card bg-white p-4 flex flex-col gap-2.5" aria-label="กราฟเงินล่วงหน้า">
           <div class="flex flex-wrap items-center justify-between gap-2">
             <div>
-              <h2 class="font-display font-extrabold text-sm sm:text-base text-[#111111]">กราฟคาดการณ์เงินคงเหลือล่วงหน้า</h2>
-              <p class="text-[11px] font-semibold text-[#111111]/55">เส้นประสีแดง = เงินสำรองขั้นต่ำ • ชี้/แตะจุดเพื่อดูยอดแต่ละเดือน</p>
+              <h2 class="font-display font-extrabold text-sm sm:text-base text-[#111111]">กราฟเงินคงเหลือล่วงหน้า</h2>
+              <p class="text-[11px] font-semibold text-[#111111]/55">เส้นประสีแดง = เงินสำรอง • คลิกจุดบนกราฟเพื่อกระโดดไปเดือนนั้น</p>
             </div>
-            <span id="chart-hover-readout" class="px-2.5 py-1 rounded-lg bg-[#F8F6F0] border border-[#111111]/30 font-display font-bold text-xs text-[#111111]">เลื่อนเมาส์บนกราฟเพื่อดูยอด</span>
+            <span id="chart-hover-readout" class="px-2.5 py-1 rounded-lg bg-[#111111] text-[#F4D03F] font-display font-bold text-xs tabular-nums">ชี้บนกราฟเพื่อดูยอด</span>
           </div>
-          <div id="budget-chart-wrap" class="w-full h-52 sm:h-60 bg-[#F8F6F0] border-2 border-[#111111] rounded-2xl p-2 relative overflow-hidden"></div>
+          <div id="budget-chart-wrap" class="w-full h-56 sm:h-64 bg-[#F8F6F0] border-2 border-[#111111] rounded-2xl p-2 relative overflow-hidden"></div>
         </section>
 
         <!-- Chronological Month-by-Month Timeline -->
@@ -149,7 +208,7 @@
             <h2 class="font-display font-extrabold text-sm sm:text-base text-[#111111]">ไทม์ไลน์เงินเข้า–ออกล่วงหน้า</h2>
             <span id="timeline-events-count" class="text-xs font-display font-bold text-[#111111]/60">0 รายการ</span>
           </div>
-          <div id="budget-timeline-list" class="flex flex-col gap-3 max-h-[460px] overflow-y-auto pr-1 vox-scroll-area"></div>
+          <div id="budget-timeline-list" class="flex flex-col gap-3 max-h-[480px] overflow-y-auto pr-1 vox-scroll-area"></div>
         </section>
       </div>
     </div>
