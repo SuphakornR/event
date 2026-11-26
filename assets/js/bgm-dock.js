@@ -2,33 +2,6 @@
 (() => {
   'use strict';
 
-  // If running inside the persistent BGM shell iframe, delegate navigation to top shell and skip duplicate dock
-  try {
-    if (window.top !== window.self && window.top.__voxBgmShellActive) {
-      if (window.top.HelpDaiBgm) window.HelpDaiBgm = window.top.HelpDaiBgm;
-      document.addEventListener('click', (e) => {
-        if (e.defaultPrevented) return;
-        const link = e.target.closest('a[href]');
-        if (!link) return;
-        if (link.target === '_blank' || link.hasAttribute('download') || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-        const href = link.getAttribute('href') || '';
-        if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:')) return;
-        try {
-          const url = new URL(link.href, window.location.href);
-          if (url.origin !== window.location.origin) {
-            e.preventDefault();
-            window.top.location.href = url.href;
-            return;
-          }
-          if (url.href === window.location.href) return;
-          e.preventDefault();
-          window.top.__voxShellNavigate?.(url.href, true);
-        } catch (_) {}
-      });
-      return;
-    }
-  } catch (_) {}
-
   const BGM_KEY = 'helpdai_bgm_player_v1';
   const DOCK_POS_KEY = 'helpdai_bgm_dock_pos_v2';
   const PLAY_MODE_KEY = 'helpdai_bgm_playmode_v1';
@@ -137,7 +110,7 @@
     ytFrameHost.style.height = '112px';
     ytFrameHost.style.opacity = '0.001';
     ytFrameHost.style.pointerEvents = 'none';
-    ytFrameHost.style.zIndex = window.__voxBgmShellActive ? '101' : '1';
+    ytFrameHost.style.zIndex = '1';
   };
 
   const mountOverlay = (rect) => {
@@ -870,44 +843,99 @@
     syncUi();
   }
 
-  // Persistent Cross-Page Shell so BGM keeps playing uninterrupted across page changes
-  window.__voxShellNavigate = (targetUrl, push = true) => {
-    window.__voxBgmShellActive = true;
-    let frame = document.getElementById('vox-page-frame');
-    if (!frame) {
-      const keepIds = new Set(['helpdai-bgm-dock', 'helpdai-bgm-modal', 'helpdai-top-yt-host']);
+  // In-place PJAX page swap (no iframe, compatible with GitHub Pages X-Frame-Options: DENY)
+  // Keeps #helpdai-bgm-dock, #helpdai-bgm-modal, and #helpdai-top-yt-host intact so music never interrupts.
+  let pjaxInFlight = false;
+  const BGM_KEEP_IDS = new Set(['helpdai-bgm-dock', 'helpdai-bgm-modal', 'helpdai-top-yt-host']);
+  const SKIP_SCRIPT_RE = /(?:loader\.js|bgm-dock\.js|tailwindcss\.com|Widget_2\.js)/i;
+
+  window.__voxShellNavigate = async (targetUrl, push = true) => {
+    if (pjaxInFlight) return;
+    pjaxInFlight = true;
+    try {
+      const res = await fetch(targetUrl, { credentials: 'same-origin' });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const html = await res.text();
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+
+      if (push) {
+        try { history.pushState({ voxPjax: true, url: targetUrl }, '', targetUrl); } catch (_) {}
+      }
+      document.title = doc.title || document.title;
+      document.body.className = doc.body.className;
+
+      // Mark initial page-specific styles on first swap and replace with target page styles
+      if (!document.documentElement.dataset.voxPjaxInit) {
+        document.documentElement.dataset.voxPjaxInit = '1';
+        document.head.querySelectorAll('style').forEach((st) => {
+          if (!st.textContent.includes('voxPageOut') && !st.textContent.includes('helpdai-bgm')) {
+            st.dataset.voxPageStyle = '1';
+          }
+        });
+      }
+      document.head.querySelectorAll('style[data-vox-page-style="1"]').forEach((st) => st.remove());
+      doc.head.querySelectorAll('style').forEach((st) => {
+        const clone = document.createElement('style');
+        clone.dataset.voxPageStyle = '1';
+        clone.textContent = st.textContent;
+        document.head.appendChild(clone);
+      });
+
+      // Remove old page DOM nodes while preserving the BGM player & YouTube audio host
       Array.from(document.body.children).forEach((el) => {
-        if (!keepIds.has(el.id)) el.remove();
+        if (!BGM_KEEP_IDS.has(el.id)) el.remove();
       });
-      frame = document.createElement('iframe');
-      frame.id = 'vox-page-frame';
-      frame.setAttribute('title', 'Page Content');
-      frame.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;border:0;z-index:100;background:#F8F6F0;';
-      frame.addEventListener('load', () => {
-        try {
-          const t = frame.contentDocument?.title;
-          if (t) document.title = t;
-        } catch (_) {}
+
+      const pendingScripts = [];
+      Array.from(doc.body.children).forEach((node) => {
+        if (node.tagName === 'SCRIPT') {
+          pendingScripts.push(node);
+          return;
+        }
+        node.querySelectorAll('script').forEach((s) => {
+          pendingScripts.push(s);
+          s.remove();
+        });
+        document.body.appendChild(document.importNode(node, true));
       });
-      document.body.appendChild(frame);
-      if (ytFrameHost.style.zIndex === '1') ytFrameHost.style.zIndex = '101';
-    }
-    if (frame.src !== targetUrl) {
-      frame.src = targetUrl;
-    }
-    if (push) {
-      try { history.pushState({ voxShell: true, url: targetUrl }, '', targetUrl); } catch (_) {}
+
+      // Execute target page scripts in order
+      for (const oldScript of pendingScripts) {
+        const src = oldScript.getAttribute('src') || '';
+        const inline = oldScript.textContent || '';
+        if (src && SKIP_SCRIPT_RE.test(src)) continue;
+        if (!src && inline.includes('kofiwidget2')) continue;
+
+        await new Promise((resolve) => {
+          const s = document.createElement('script');
+          if (src) {
+            s.src = src;
+            s.onload = resolve;
+            s.onerror = resolve;
+            document.body.appendChild(s);
+          } else {
+            s.textContent = inline;
+            document.body.appendChild(s);
+            resolve();
+          }
+        });
+      }
+
+      window.scrollTo(0, 0);
+    } catch (_) {
+      window.location.href = targetUrl;
+    } finally {
+      pjaxInFlight = false;
     }
   };
 
   window.addEventListener('popstate', () => {
-    if (window.__voxBgmShellActive) {
-      window.__voxShellNavigate(window.location.href, false);
-    }
+    window.__voxShellNavigate(window.location.href, false);
   });
 
   document.addEventListener('click', (e) => {
     if (e.defaultPrevented) return;
+    if (!location.protocol.startsWith('http')) return;
     const link = e.target.closest('a[href]');
     if (!link) return;
     if (link.target === '_blank' || link.hasAttribute('download') || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
