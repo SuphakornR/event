@@ -1,9 +1,9 @@
-/* HelpDaiCha Cross-Page Cassette Side-Dock Music Player (Chroma-Keyed Animated Loop + Proximity Popup + Custom Menu) */
+/* HelpDaiCha Cross-Page Floating Cassette Player (Shape-Only Chroma-Key, Movable, Side-Hide, Custom Menu & Reliable Audio) */
 (() => {
   'use strict';
 
   const BGM_KEY = 'helpdai_bgm_player_v1';
-  const PIN_KEY = 'helpdai_bgm_pinned_v1';
+  const DOCK_POS_KEY = 'helpdai_bgm_dock_pos_v2';
 
   const extractYoutubeId = (raw) => {
     const s = String(raw || '').trim();
@@ -55,15 +55,10 @@
     return `YouTube (${videoId})`;
   }
 
-  // Persistent hidden YouTube iframe host
+  // Keep YouTube iframe inside the visible viewport (200x112 at 0.001 opacity) so browsers allow audio playback reliably
   const ytFrameHost = document.createElement('div');
   ytFrameHost.id = 'helpdai-top-yt-host';
-  ytFrameHost.className = 'fixed w-64 aspect-video rounded-lg overflow-hidden';
-  ytFrameHost.style.left = '-9999px';
-  ytFrameHost.style.top = '0px';
-  ytFrameHost.style.opacity = '0';
-  ytFrameHost.style.pointerEvents = 'none';
-  ytFrameHost.style.zIndex = '250';
+  ytFrameHost.style.cssText = 'position:fixed;right:4px;bottom:4px;width:200px;height:112px;opacity:0.001;pointer-events:none;z-index:1;overflow:hidden;';
 
   let loadedId = '';
   let loadedPlaying = false;
@@ -82,10 +77,15 @@
   };
 
   const parkOverlay = () => {
-    ytFrameHost.style.left = '-9999px';
-    ytFrameHost.style.top = '0px';
-    ytFrameHost.style.opacity = '0';
+    ytFrameHost.style.right = '4px';
+    ytFrameHost.style.bottom = '4px';
+    ytFrameHost.style.left = 'auto';
+    ytFrameHost.style.top = 'auto';
+    ytFrameHost.style.width = '200px';
+    ytFrameHost.style.height = '112px';
+    ytFrameHost.style.opacity = '0.001';
     ytFrameHost.style.pointerEvents = 'none';
+    ytFrameHost.style.zIndex = '1';
   };
 
   const mountOverlay = (rect) => {
@@ -94,6 +94,8 @@
       parkOverlay();
       return;
     }
+    ytFrameHost.style.right = 'auto';
+    ytFrameHost.style.bottom = 'auto';
     ytFrameHost.style.left = `${Math.round(rect.left)}px`;
     ytFrameHost.style.top = `${Math.round(rect.top)}px`;
     ytFrameHost.style.width = `${Math.round(rect.width)}px`;
@@ -122,16 +124,25 @@
       loadedPlaying = true;
       const originParam = location.protocol.startsWith('http') ? `&origin=${encodeURIComponent(location.origin)}` : '';
       const startParam = st.elapsedSec > 1 ? `&start=${Math.floor(st.elapsedSec)}` : '';
-      ytFrameHost.innerHTML = `<iframe class="w-full h-full rounded-lg border-2 border-[#111111]" src="https://www.youtube.com/embed/${st.videoId}?enablejsapi=1&autoplay=1&rel=0${startParam}${originParam}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin" title="HelpDaiCha BGM"></iframe>`;
+      ytFrameHost.innerHTML = `<iframe class="w-full h-full" src="https://www.youtube.com/embed/${st.videoId}?enablejsapi=1&autoplay=1&mute=0&playsinline=1&rel=0${startParam}${originParam}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin" title="HelpDaiCha BGM"></iframe>`;
       const iframe = ytFrameHost.querySelector('iframe');
       iframe?.addEventListener('load', () => {
         try {
           iframe.contentWindow?.postMessage(JSON.stringify({ event: 'listening', id: 1 }), '*');
+          sendYtCmd('unMute');
+          sendYtCmd('setVolume', [100]);
+          sendYtCmd('playVideo');
         } catch (_) {}
       });
     } else if (st.playing !== loadedPlaying) {
       loadedPlaying = st.playing;
-      sendYtCmd(st.playing ? 'playVideo' : 'pauseVideo');
+      if (st.playing) {
+        sendYtCmd('unMute');
+        sendYtCmd('setVolume', [100]);
+        sendYtCmd('playVideo');
+      } else {
+        sendYtCmd('pauseVideo');
+      }
     }
   };
 
@@ -195,7 +206,7 @@
   });
 
   // ========================================================================
-  // CASSETTE SIDE-DOCK PLAYER + CHROMA-KEY ANIMATION + CUSTOM MENU
+  // SHAPE-ONLY FLOATING CASSETTE DOCK (MOVABLE + SIDE-HIDE + PROXIMITY POPUP)
   // ========================================================================
   function mountCassetteDock() {
     ensureHostMounted();
@@ -203,61 +214,77 @@
 
     if (document.getElementById('cassette-side-dock')) return;
 
+    const loadPos = () => {
+      try {
+        const p = JSON.parse(localStorage.getItem(DOCK_POS_KEY) || 'null');
+        if (p && typeof p.x === 'number' && typeof p.y === 'number') {
+          return {
+            x: p.x,
+            y: p.y,
+            side: p.side === 'left' ? 'left' : 'right',
+            hiddenMode: p.hiddenMode !== false
+          };
+        }
+      } catch (_) {}
+      return { x: Math.max(12, window.innerWidth - 312), y: Math.round(window.innerHeight * 0.42), side: 'right', hiddenMode: true };
+    };
+
+    let dockPos = loadPos();
+    const savePos = () => {
+      try { localStorage.setItem(DOCK_POS_KEY, JSON.stringify(dockPos)); } catch (_) {}
+    };
+
     const dock = document.createElement('aside');
     dock.id = 'cassette-side-dock';
     dock.setAttribute('aria-label', 'เครื่องเล่นเพลงคาสเซ็ต');
     dock.style.cssText = [
       'position: fixed',
-      'right: 0',
-      'top: 52%',
+      'left: 0',
+      'top: 0',
       'z-index: 155',
-      'display: flex',
-      'align-items: center',
-      'transform: translateY(-50%) translateX(calc(100% - 34px))',
+      'width: 300px',
       'transition: transform 0.34s cubic-bezier(0.22, 1, 0.36, 1)',
       'will-change: transform',
-      'pointer-events: auto'
+      'pointer-events: auto',
+      'user-select: none'
     ].join(';');
 
+    // Pure Cassette Shape (no outer rectangular box!) + floating pill controls on hover
     dock.innerHTML = `
-      <!-- Side Peeking Handle Tab -->
-      <button type="button" id="cassette-peek-tab" title="ชี้เมาส์หรือคลิกเพื่อเปิดเครื่องเล่นคาสเซ็ต"
-        class="w-[34px] py-3 rounded-l-xl border-[2.5px] border-r-0 border-[#111111] bg-[#111111] text-[#F4D03F] shadow-[-3px_3px_0px_rgba(17,17,17,0.35)] flex flex-col items-center justify-center gap-2 cursor-pointer select-none">
-        <span id="cassette-peek-dot" class="w-2.5 h-2.5 rounded-full bg-[#F4D03F]/40 border border-white/25 transition-colors"></span>
-        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-        <span class="font-display font-black text-[9px] tracking-widest uppercase" style="writing-mode: vertical-rl;">TAPE</span>
-      </button>
+      <div id="cassette-shell" class="relative w-[300px] group">
+        <!-- Side Peek Tab (shown when hidden to left/right edge) -->
+        <button type="button" id="cassette-peek-tab" title="ชี้เมาส์หรือคลิกเพื่อเปิดคาสเซ็ต"
+          class="hidden absolute top-1/2 -translate-y-1/2 w-[30px] py-2.5 border-2 border-[#111111] bg-[#111111] text-[#F4D03F] flex-col items-center justify-center gap-1.5 cursor-pointer shadow-[2px_2px_0px_rgba(17,17,17,0.45)] z-20">
+          <span id="cassette-peek-dot" class="w-2.5 h-2.5 rounded-full bg-[#F4D03F]/40 border border-white/25"></span>
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+        </button>
 
-      <!-- Main Cassette Body -->
-      <div class="relative bg-[#F8F6F0] border-[3px] border-r-0 border-[#111111] rounded-l-2xl shadow-[-6px_6px_0px_#111111] p-2.5 pr-3 flex flex-col gap-2 w-[310px] sm:w-[330px]">
-        <!-- Cassette Visual Stage (Chroma-keyed MP4 Video -> Canvas + Dynamic Label) -->
-        <div id="cassette-visual-box" class="relative w-full aspect-[880/582] select-none cursor-pointer group" title="คลิกเพื่อเล่น/พัก • คลิกขวาเปิดเมนู">
-          <canvas id="cassette-canvas" width="440" height="291" class="w-full h-full block drop-shadow-[3px_4px_0px_rgba(17,17,17,0.55)]"></canvas>
+        <!-- Pure Cassette Silhouette (Chroma-Keyed MP4 -> Canvas) -->
+        <div id="cassette-visual-box" class="relative w-full aspect-[880/582] cursor-grab active:cursor-grabbing" title="ลากเพื่อย้าย • คลิกเพื่อเล่น/พัก • คลิกขวาเปิดเมนู">
+          <canvas id="cassette-canvas" width="440" height="291" class="w-full h-full block drop-shadow-[4px_6px_0px_rgba(17,17,17,0.7)]"></canvas>
 
-          <!-- Dynamic Title Printed Directly on Cassette Side-A Label -->
-          <div class="pointer-events-none absolute top-[12%] left-[31%] right-[13%] h-[15%] flex flex-col justify-center overflow-hidden px-1.5">
-            <p id="cassette-tape-title" class="thai-safe-tight font-display font-black text-[11px] sm:text-xs text-[#111111] truncate leading-tight">ยังไม่ได้เลือกเพลง</p>
-            <p id="cassette-tape-sub" class="font-display font-bold text-[9px] text-[#111111]/60 truncate">คลิกเพื่อเลือกเพลง YouTube</p>
+          <!-- Dynamic Video Title on Cassette Side-A Label -->
+          <div class="pointer-events-none absolute top-[12%] left-[31%] right-[13%] h-[15%] flex flex-col justify-center overflow-hidden px-1">
+            <p id="cassette-tape-title" class="thai-safe-tight font-display font-black text-[10px] sm:text-[11px] text-[#111111] truncate leading-tight">ยังไม่ได้เลือกเพลง</p>
+            <p id="cassette-tape-sub" class="font-display font-bold text-[8.5px] text-[#111111]/65 truncate">คลิกเพื่อเลือกเพลง YouTube</p>
           </div>
         </div>
 
-        <!-- Custom Compact Controls Bar -->
-        <div class="flex items-center justify-between gap-1.5 bg-white border-2 border-[#111111] rounded-xl px-2 py-1.5 shadow-[2px_2px_0px_#111111]">
-          <button type="button" id="cassette-play-btn" class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-black text-xs px-3 py-1 rounded-lg inline-flex items-center gap-1.5 cursor-pointer">
+        <!-- Floating Minimal Controls Pill (appears cleanly below cassette on hover or when paused/active) -->
+        <div class="mt-1 flex items-center justify-center gap-1.5 opacity-90 group-hover:opacity-100 transition-opacity">
+          <button type="button" id="cassette-play-btn" class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-black text-[11px] px-2.5 py-1 rounded-lg inline-flex items-center gap-1 cursor-pointer">
             <span id="cassette-play-icon" class="flex items-center"></span>
             <span id="cassette-play-label">เลือกเพลง</span>
           </button>
-
-          <div class="flex items-center gap-1">
-            <button type="button" id="cassette-stop-btn" title="หยุดและนำเทปออก" class="hidden w-7 h-7 rounded-lg border-2 border-[#111111] bg-white hover:bg-red-50 text-[#E74C3C] items-center justify-center cursor-pointer transition-colors">
-              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
-            </button>
-            <button type="button" id="cassette-menu-btn" title="เมนูเครื่องเล่น" class="w-7 h-7 rounded-lg border-2 border-[#111111] bg-[#F8F6F0] hover:bg-[#F4D03F] text-[#111111] font-display font-black text-xs flex items-center justify-center cursor-pointer transition-colors">⋯</button>
-          </div>
+          <button type="button" id="cassette-stop-btn" title="หยุดและนำเทปออก" class="hidden w-7 h-7 rounded-lg border-2 border-[#111111] bg-white hover:bg-red-50 text-[#E74C3C] items-center justify-center cursor-pointer shadow-[2px_2px_0px_#111111]">
+            <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
+          </button>
+          <button type="button" id="cassette-hide-btn" title="ซ่อนเข้าขอบจอ / แสดงค้าง" class="w-7 h-7 rounded-lg border-2 border-[#111111] bg-white hover:bg-[#F4D03F] text-[#111111] font-display font-black text-[11px] flex items-center justify-center cursor-pointer shadow-[2px_2px_0px_#111111]">⇄</button>
+          <button type="button" id="cassette-menu-btn" title="เมนูเครื่องเล่น" class="w-7 h-7 rounded-lg border-2 border-[#111111] bg-[#111111] text-[#F4D03F] font-display font-black text-xs flex items-center justify-center cursor-pointer shadow-[2px_2px_0px_#111111]">⋯</button>
         </div>
 
         <!-- Custom Cassette Popover Menu -->
-        <div id="cassette-custom-menu" class="hidden absolute right-3 bottom-14 z-50 w-56 vox-card bg-[#F8F6F0] p-1.5 flex-col gap-1 vox-panel-enter">
+        <div id="cassette-custom-menu" class="hidden absolute left-1/2 -translate-x-1/2 bottom-10 z-50 w-56 vox-card bg-[#F8F6F0] p-1.5 flex-col gap-1 vox-panel-enter">
           <div class="px-2 py-1 border-b border-[#111111]/15 font-display font-black text-[10px] uppercase tracking-wider text-[#111111]/60">Cassette Menu</div>
           <button type="button" data-cas-act="choose" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-[#F4D03F] font-display font-bold text-xs text-[#111111] flex items-center gap-2 cursor-pointer transition-colors">
             <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
@@ -265,11 +292,11 @@
           </button>
           <button type="button" data-cas-act="toggle" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-[#F4D03F] font-display font-bold text-xs text-[#111111] flex items-center gap-2 cursor-pointer transition-colors">
             <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l15 8-15 8V4z"/></svg>
-            <span id="cas-menu-toggle-label">เล่น / พักเพลง</span>
+            <span>เล่น / พักเพลง</span>
           </button>
-          <button type="button" data-cas-act="pin" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-[#F4D03F] font-display font-bold text-xs text-[#111111] flex items-center justify-between cursor-pointer transition-colors">
-            <span>ปักหมุดแสดงค้างไว้</span>
-            <span id="cas-menu-pin-badge" class="text-[10px] px-1.5 py-0.5 rounded bg-white border border-[#111111]">OFF</span>
+          <button type="button" data-cas-act="toggle-hide" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-[#F4D03F] font-display font-bold text-xs text-[#111111] flex items-center justify-between cursor-pointer transition-colors">
+            <span>ซ่อนเข้าขอบจออัตโนมัติ</span>
+            <span id="cas-menu-hide-badge" class="text-[10px] px-1.5 py-0.5 rounded bg-white border border-[#111111]">ON</span>
           </button>
           <button type="button" data-cas-act="stop" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-red-100 font-display font-bold text-xs text-[#E74C3C] flex items-center gap-2 cursor-pointer transition-colors">
             <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
@@ -281,7 +308,7 @@
 
     document.body.appendChild(dock);
 
-    // Hidden looping cassette video source (chroma-keyed onto canvas)
+    // Hidden looping cassette video source
     const videoEl = document.createElement('video');
     videoEl.src = 'assets/video/cassette-loop.mp4';
     videoEl.muted = true;
@@ -299,12 +326,12 @@
     const offCtx = offCanvas.getContext('2d', { willReadFrequently: true });
 
     let animRaf = null;
-    let isDockOpen = false;
-    let isPinned = false;
-    try { isPinned = localStorage.getItem(PIN_KEY) === '1'; } catch (_) {}
+    let isHoveredOrOpen = false;
+    let hideTimer = null;
 
     const customMenu = document.getElementById('cassette-custom-menu');
-    const pinBadge = document.getElementById('cas-menu-pin-badge');
+    const hideBadge = document.getElementById('cas-menu-hide-badge');
+    const peekTab = document.getElementById('cassette-peek-tab');
     const peekDot = document.getElementById('cassette-peek-dot');
     const tapeTitleEl = document.getElementById('cassette-tape-title');
     const tapeSubEl = document.getElementById('cassette-tape-sub');
@@ -312,11 +339,10 @@
     const playIconEl = document.getElementById('cassette-play-icon');
     const playLabelEl = document.getElementById('cassette-play-label');
     const stopBtn = document.getElementById('cassette-stop-btn');
+    const visualBox = document.getElementById('cassette-visual-box');
 
-    // Draw cropped cassette frame & strip chroma-key green (#00FF00)
     function drawCassetteFrame() {
       if (!ctx || !offCtx || videoEl.readyState < 2) return;
-      // Crop tightly around cassette shell in 1280x720 source (x:200..1080, y:69..651)
       offCtx.drawImage(videoEl, 200, 69, 880, 582, 0, 0, 440, 291);
       const frame = offCtx.getImageData(0, 0, 440, 291);
       const d = frame.data;
@@ -344,53 +370,142 @@
       }
     }
 
-    videoEl.addEventListener('loadeddata', () => {
-      drawCassetteFrame();
-    }, { once: true });
+    videoEl.addEventListener('loadeddata', () => { drawCassetteFrame(); }, { once: true });
 
-    // Side-dock open/close with mouse proximity
-    let hideTimer = null;
-    function setDockVisible(open) {
-      isDockOpen = Boolean(open || isPinned || (customMenu && !customMenu.classList.contains('hidden')));
-      dock.style.transform = isDockOpen
-        ? 'translateY(-50%) translateX(0)'
-        : 'translateY(-50%) translateX(calc(100% - 34px))';
+    function applyDockPosition() {
+      const W = window.innerWidth;
+      const H = window.innerHeight;
+      const dockW = 300;
+      const dockH = 235;
+      const clampedY = Math.max(12, Math.min(H - dockH, dockPos.y));
+      dockPos.y = clampedY;
+
+      const menuOpen = customMenu && !customMenu.classList.contains('hidden');
+      const shouldHide = dockPos.hiddenMode && !isHoveredOrOpen && !menuOpen;
+
+      if (peekTab) {
+        if (dockPos.hiddenMode) {
+          peekTab.classList.remove('hidden');
+          peekTab.classList.add('flex');
+          if (dockPos.side === 'left') {
+            peekTab.style.left = 'auto';
+            peekTab.style.right = '-30px';
+            peekTab.className = peekTab.className.replace(/rounded-[lr]-xl/g, '') + ' rounded-r-xl';
+          } else {
+            peekTab.style.right = 'auto';
+            peekTab.style.left = '-30px';
+            peekTab.className = peekTab.className.replace(/rounded-[lr]-xl/g, '') + ' rounded-l-xl';
+          }
+        } else {
+          peekTab.classList.add('hidden');
+          peekTab.classList.remove('flex');
+        }
+      }
+
+      let tx = Math.max(8, Math.min(W - dockW - 8, dockPos.x));
+      if (shouldHide) {
+        tx = dockPos.side === 'left' ? -dockW : W;
+      } else if (dockPos.hiddenMode) {
+        tx = dockPos.side === 'left' ? 12 : Math.max(12, W - dockW - 12);
+      }
+      dock.style.transform = `translate3d(${Math.round(tx)}px, ${Math.round(clampedY)}px, 0)`;
     }
 
     function scheduleHide() {
       if (hideTimer) clearTimeout(hideTimer);
       hideTimer = setTimeout(() => {
-        if (!isPinned && customMenu?.classList.contains('hidden')) {
-          setDockVisible(false);
-        }
+        isHoveredOrOpen = false;
+        applyDockPosition();
       }, 320);
     }
 
     dock.addEventListener('mouseenter', () => {
       if (hideTimer) clearTimeout(hideTimer);
-      setDockVisible(true);
+      isHoveredOrOpen = true;
+      applyDockPosition();
     });
     dock.addEventListener('mouseleave', () => {
       scheduleHide();
     });
 
-    // Proximity popup when mouse gets near right edge around dock
+    // Proximity popup when mouse gets near the docked edge
     window.addEventListener('mousemove', (e) => {
-      if (isPinned) return;
-      const nearRightEdge = (window.innerWidth - e.clientX) <= 72;
-      const dockRect = dock.getBoundingClientRect();
-      const nearVertical = e.clientY >= (dockRect.top - 50) && e.clientY <= (dockRect.bottom + 50);
-      if (nearRightEdge && nearVertical) {
+      if (!dockPos.hiddenMode) return;
+      const nearEdge = dockPos.side === 'left'
+        ? e.clientX <= 64
+        : (window.innerWidth - e.clientX) <= 64;
+      const nearY = e.clientY >= (dockPos.y - 45) && e.clientY <= (dockPos.y + 260);
+      if (nearEdge && nearY) {
         if (hideTimer) clearTimeout(hideTimer);
-        if (!isDockOpen) setDockVisible(true);
+        if (!isHoveredOrOpen) {
+          isHoveredOrOpen = true;
+          applyDockPosition();
+        }
       }
     }, { passive: true });
 
-    document.getElementById('cassette-peek-tab')?.addEventListener('click', () => {
-      setDockVisible(!isDockOpen);
+    peekTab?.addEventListener('click', () => {
+      isHoveredOrOpen = !isHoveredOrOpen;
+      applyDockPosition();
     });
 
-    // Modal for choosing YouTube music
+    // Drag to move anywhere on screen
+    let dragState = null;
+    visualBox?.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0) return;
+      dragState = {
+        startX: e.clientX,
+        startY: e.clientY,
+        origX: dockPos.hiddenMode ? (dockPos.side === 'left' ? 12 : Math.max(12, window.innerWidth - 312)) : dockPos.x,
+        origY: dockPos.y,
+        moved: false
+      };
+      dock.style.transition = 'none';
+      e.preventDefault();
+    });
+
+    window.addEventListener('pointermove', (e) => {
+      if (!dragState) return;
+      const dx = e.clientX - dragState.startX;
+      const dy = e.clientY - dragState.startY;
+      if (!dragState.moved && (Math.abs(dx) > 5 || Math.abs(dy) > 5)) {
+        dragState.moved = true;
+        dockPos.hiddenMode = false;
+      }
+      if (dragState.moved) {
+        dockPos.x = Math.max(8, Math.min(window.innerWidth - 308, dragState.origX + dx));
+        dockPos.y = Math.max(12, Math.min(window.innerHeight - 235, dragState.origY + dy));
+        dockPos.side = (dockPos.x + 150) < (window.innerWidth / 2) ? 'left' : 'right';
+        applyDockPosition();
+      }
+    });
+
+    window.addEventListener('pointerup', () => {
+      if (!dragState) return;
+      dock.style.transition = 'transform 0.34s cubic-bezier(0.22, 1, 0.36, 1)';
+      if (dragState.moved) {
+        // Auto-snap to side hide if dragged right up against left or right edge
+        if (dockPos.x <= 18) {
+          dockPos.side = 'left';
+          dockPos.hiddenMode = true;
+        } else if (dockPos.x >= window.innerWidth - 318) {
+          dockPos.side = 'right';
+          dockPos.hiddenMode = true;
+        }
+        savePos();
+        applyDockPosition();
+      } else {
+        // Simple click on cassette toggles play/modal
+        const cur = readBgm();
+        if (!cur.videoId) openMusicModal();
+        else window.HelpDaiBgm.setPlaying(!cur.playing);
+      }
+      dragState = null;
+    });
+
+    window.addEventListener('resize', applyDockPosition);
+
+    // YouTube Chooser Modal
     let modal = document.getElementById('hub-bgm-modal');
     if (!modal) {
       modal = document.createElement('div');
@@ -489,13 +604,13 @@
     goBtn?.addEventListener('click', handleSearchOrUrl);
     inpEl?.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); handleSearchOrUrl(); } });
 
-    // Custom Menu Handlers
     function toggleCustomMenu(force) {
       if (!customMenu) return;
       const open = typeof force === 'boolean' ? force : customMenu.classList.contains('hidden');
       customMenu.classList.toggle('hidden', !open);
       customMenu.classList.toggle('flex', open);
-      if (open) setDockVisible(true);
+      if (open) isHoveredOrOpen = true;
+      applyDockPosition();
     }
 
     document.getElementById('cassette-menu-btn')?.addEventListener('click', (e) => {
@@ -503,15 +618,17 @@
       toggleCustomMenu();
     });
 
-    document.getElementById('cassette-visual-box')?.addEventListener('contextmenu', (e) => {
-      e.preventDefault();
-      toggleCustomMenu(true);
+    document.getElementById('cassette-hide-btn')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      dockPos.hiddenMode = !dockPos.hiddenMode;
+      isHoveredOrOpen = !dockPos.hiddenMode;
+      savePos();
+      syncUi();
     });
 
-    document.getElementById('cassette-visual-box')?.addEventListener('click', () => {
-      const cur = readBgm();
-      if (!cur.videoId) openMusicModal();
-      else window.HelpDaiBgm.setPlaying(!cur.playing);
+    visualBox?.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      toggleCustomMenu(true);
     });
 
     document.addEventListener('click', (e) => {
@@ -537,24 +654,26 @@
           const cur = readBgm();
           if (!cur.videoId) openMusicModal();
           else window.HelpDaiBgm.setPlaying(!cur.playing);
-        } else if (act === 'pin') {
-          isPinned = !isPinned;
-          try { localStorage.setItem(PIN_KEY, isPinned ? '1' : '0'); } catch (_) {}
-          if (pinBadge) pinBadge.textContent = isPinned ? 'ON' : 'OFF';
-          setDockVisible(isPinned);
+        } else if (act === 'toggle-hide') {
+          dockPos.hiddenMode = !dockPos.hiddenMode;
+          isHoveredOrOpen = !dockPos.hiddenMode;
+          savePos();
+          syncUi();
         } else if (act === 'stop') {
           window.HelpDaiBgm.stop();
         }
       });
     });
 
-    playBtn?.addEventListener('click', () => {
+    playBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
       const cur = readBgm();
       if (!cur.videoId) openMusicModal();
       else window.HelpDaiBgm.setPlaying(!cur.playing);
     });
 
-    stopBtn?.addEventListener('click', () => {
+    stopBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
       window.HelpDaiBgm.stop();
     });
 
@@ -564,7 +683,7 @@
       const hasTrack = Boolean(st.videoId);
       const isPlaying = Boolean(hasTrack && st.playing);
 
-      if (pinBadge) pinBadge.textContent = isPinned ? 'ON' : 'OFF';
+      if (hideBadge) hideBadge.textContent = dockPos.hiddenMode ? 'ON' : 'OFF';
 
       if (tapeTitleEl) {
         tapeTitleEl.textContent = hasTrack ? (st.title || `YouTube (${st.videoId})`) : 'ยังไม่ได้เลือกเพลง';
@@ -597,7 +716,6 @@
         stopBtn.classList.toggle('flex', hasTrack);
       }
 
-      // Start/stop cassette MP4 animation ONLY when music is playing
       if (isPlaying) {
         videoEl.play().then(() => {
           if (!animRaf) loopCassetteRender();
@@ -607,7 +725,7 @@
         drawCassetteFrame();
       }
 
-      setDockVisible(isPinned);
+      applyDockPosition();
     };
 
     window.addEventListener('helpdai-bgm-change', syncUi);
