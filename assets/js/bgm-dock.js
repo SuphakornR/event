@@ -871,11 +871,26 @@
     return false;
   };
 
+  const prefetchedScripts = new Set();
   const prefetchUrl = (url) => {
     if (!url || prefetchedHtml.has(url) || !location.protocol.startsWith('http')) return;
     fetch(url, { credentials: 'same-origin' })
       .then((r) => (r.ok ? r.text() : ''))
-      .then((html) => { if (html) prefetchedHtml.set(url, html); })
+      .then((html) => {
+        if (!html) return;
+        prefetchedHtml.set(url, html);
+        // Pre-warm script cache in parallel so page switch is instant
+        const matches = html.matchAll(/<script[^>]+src=["']([^"']+)["']/gi);
+        for (const m of matches) {
+          const src = m[1];
+          if (!src || SKIP_SCRIPT_RE.test(src) || isAlreadyLoadedLib(src)) continue;
+          const abs = new URL(src, url).href;
+          if (!prefetchedScripts.has(abs)) {
+            prefetchedScripts.add(abs);
+            fetch(abs, { credentials: 'same-origin' }).catch(() => {});
+          }
+        }
+      })
       .catch(() => {});
   };
 
@@ -933,26 +948,36 @@
         document.body.appendChild(document.importNode(node, true));
       });
 
-      // Execute target page scripts in order
+      // Download all external scripts in parallel while preserving execution order (async = false)
+      const externalPromises = [];
+      const inlineScripts = [];
       for (const oldScript of pendingScripts) {
         const src = oldScript.getAttribute('src') || '';
         const inline = oldScript.textContent || '';
         if (src && (SKIP_SCRIPT_RE.test(src) || isAlreadyLoadedLib(src))) continue;
         if (!src && inline.includes('kofiwidget2')) continue;
 
-        await new Promise((resolve) => {
-          const s = document.createElement('script');
-          if (src) {
+        if (src) {
+          externalPromises.push(new Promise((resolve) => {
+            const s = document.createElement('script');
+            s.async = false;
             s.src = src;
             s.onload = resolve;
             s.onerror = resolve;
             document.body.appendChild(s);
-          } else {
-            s.textContent = inline;
-            document.body.appendChild(s);
-            resolve();
-          }
-        });
+          }));
+        } else if (inline.trim()) {
+          inlineScripts.push(inline);
+        }
+      }
+
+      if (externalPromises.length) {
+        await Promise.all(externalPromises);
+      }
+      for (const code of inlineScripts) {
+        const s = document.createElement('script');
+        s.textContent = code;
+        document.body.appendChild(s);
       }
 
       window.scrollTo(0, 0);
@@ -1002,5 +1027,20 @@
     document.addEventListener('DOMContentLoaded', mountCassetteDock, { once: true });
   } else {
     mountCassetteDock();
+  }
+
+  // Pre-warm main pages & their scripts during browser idle time so switching is instant
+  const warmPages = () => {
+    ['index.html', 'calendar.html', 'scoreboard.html'].forEach((page) => {
+      try {
+        const u = new URL(page, window.location.href).href;
+        if (u !== window.location.href) prefetchUrl(u);
+      } catch (_) {}
+    });
+  };
+  if ('requestIdleCallback' in window) {
+    window.requestIdleCallback(warmPages, { timeout: 1500 });
+  } else {
+    setTimeout(warmPages, 800);
   }
 })();
