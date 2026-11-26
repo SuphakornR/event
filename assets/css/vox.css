@@ -1064,7 +1064,7 @@
     /* ==========================================================================
        UNIFIED SMOOTH MODAL, POPOVER & VIEW TRANSITION SYSTEM
        ========================================================================== */
-    #helpdai-bgm-dock {
+    #cassette-side-dock {
       view-transition-name: bgm-dock;
     }
     ::view-transition-group(bgm-dock) {

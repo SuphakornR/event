@@ -861,7 +861,7 @@
   // In-place PJAX page swap with link-hover prefetching (keeps music player uninterrupted)
   let pjaxInFlight = false;
   const prefetchedHtml = new Map();
-  const BGM_KEEP_IDS = new Set(['helpdai-bgm-dock', 'helpdai-bgm-modal', 'helpdai-top-yt-host']);
+  const BGM_KEEP_IDS = new Set(['cassette-side-dock', 'hub-bgm-modal', 'helpdai-top-yt-host']);
   const SKIP_SCRIPT_RE = /(?:loader\.js|bgm-dock\.js|tailwindcss\.com|Widget_2\.js)/i;
 
   const isAlreadyLoadedLib = (src) => {
