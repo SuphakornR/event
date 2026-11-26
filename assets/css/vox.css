@@ -1067,13 +1067,32 @@
     #cassette-side-dock {
       view-transition-name: bgm-dock;
     }
-    ::view-transition-group(bgm-dock) {
+    #stopwatch-side-dock {
+      view-transition-name: stopwatch-dock;
+    }
+    ::view-transition-group(bgm-dock),
+    ::view-transition-group(stopwatch-dock) {
       animation: none !important;
     }
     ::view-transition-old(bgm-dock),
-    ::view-transition-new(bgm-dock) {
+    ::view-transition-new(bgm-dock),
+    ::view-transition-old(stopwatch-dock),
+    ::view-transition-new(stopwatch-dock) {
       animation: none !important;
       mix-blend-mode: normal;
+    }
+
+    @keyframes swRingingShake {
+      0%, 100% { transform: rotate(0deg) scale(1); }
+      15% { transform: rotate(-9deg) scale(1.04); }
+      30% { transform: rotate(9deg) scale(1.04); }
+      45% { transform: rotate(-8deg) scale(1.04); }
+      60% { transform: rotate(8deg) scale(1.04); }
+      75% { transform: rotate(-5deg) scale(1.02); }
+    }
+    .sw-ringing-shake {
+      transform-origin: 50% 55%;
+      animation: swRingingShake 0.42s ease-in-out infinite;
     }
 
     .vox-brand-mark {

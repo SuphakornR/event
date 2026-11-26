@@ -16,10 +16,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin />
-  <link rel="preload" href="assets/css/vox.css?v=20261126i" as="style" />
+  <link rel="preload" href="assets/css/vox.css?v=20261126j" as="style" />
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Prompt:wght@600;700;800;900&display=swap" rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="assets/css/vox.css?v=20261126i" />
+  <link rel="stylesheet" href="assets/css/vox.css?v=20261126j" />
 </head>
 <body class="flex flex-col selection:bg-yellow-300 selection:text-black">
   <script src="assets/js/loader.js?v=20261126h"></script>
@@ -148,7 +148,8 @@
   <script src="assets/js/config.js?v=20261126h" defer></script>
   <script src="assets/js/security.js?v=20261126h" defer></script>
   <script src="assets/js/mascots.js?v=20261126h"></script>
-  <script src="assets/js/bgm-dock.js?v=20261126h" defer></script>
+  <script src="assets/js/bgm-dock.js?v=20261126j" defer></script>
+  <script src="assets/js/stopwatch-dock.js?v=20261126j" defer></script>
   <script src="assets/js/auth.js?v=20261126h" defer></script>
   <script src="assets/js/tos.js?v=20261126h" defer></script>
   <script src="assets/js/tutorial.js?v=20261126h" defer></script>
@@ -389,12 +390,12 @@
                 <span class="shrink-0 w-8 h-8 rounded-lg bg-[#111111] text-white font-display font-black text-xs flex items-center justify-center">02</span>
               </button>
 
-              <button type="button" data-start-tutorial class="btn-vox flex items-center justify-between gap-3 px-4 py-3.5 rounded-xl bg-[#10B981] text-[#111111] text-left cursor-pointer sm:col-span-2 lg:col-span-1">
+              <button type="button" data-hub-action="open-stopwatch" class="btn-vox flex items-center justify-between gap-3 px-4 py-3.5 rounded-xl bg-[#10B981] text-[#111111] text-left cursor-pointer sm:col-span-2 lg:col-span-1">
                 <div class="min-w-0">
-                  <div class="font-display font-black text-sm">เริ่มคู่มือแบบโต้ตอบ</div>
-                  <div class="text-xs font-semibold text-[#111111]/80 truncate">แนะนำการใช้งานทีละขั้นตอน</div>
+                  <div class="font-display font-black text-sm">นาฬิกาจับเวลาพกพา</div>
+                  <div class="text-xs font-semibold text-[#111111]/80 truncate">ลากโยนได้ หมุนลูกกลิ้งตั้งเวลาได้</div>
                 </div>
-                <span class="shrink-0 w-8 h-8 rounded-lg bg-[#111111] text-[#F4D03F] font-display font-black text-sm flex items-center justify-center">?</span>
+                <span class="shrink-0 w-8 h-8 rounded-lg bg-[#111111] text-[#F4D03F] font-display font-black text-sm flex items-center justify-center">⏱</span>
               </button>
             </div>
           </div>
@@ -625,6 +626,7 @@
         if (actionBtn) {
           const act = actionBtn.dataset.hubAction;
           if (act === 'open-bgm') openBgmDock();
+          else if (act === 'open-stopwatch') window.VoxStopwatch?.open?.();
           else if (act === 'goto-event') renderFolder('event');
           else if (act === 'open-sugg') document.getElementById('open-sugg-btn')?.click();
           else if (act === 'open-changelog') document.getElementById('open-changelog-btn')?.click();
