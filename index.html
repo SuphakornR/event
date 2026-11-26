@@ -57,8 +57,42 @@
       </aside>
     </header>
 
-    <!-- Tool cards (3-column balanced Vox Editorial Grid) -->
-    <section id="tool-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 flex-1 min-h-0 content-center" aria-label="เครื่องมือทั้งหมด"></section>
+    <!-- Folder-Style Navigation Binder -->
+    <section class="flex-1 min-h-0 flex flex-col justify-center" aria-label="หมวดหมู่เครื่องมือแบบแฟ้มเอกสาร">
+      <!-- Physical Folder Tabs -->
+      <div id="folder-tabs-row" role="tablist" aria-label="เลือกแฟ้มเครื่องมือ" class="flex items-end gap-1 sm:gap-1.5 pl-1 overflow-x-auto no-scrollbar shrink-0">
+        <button type="button" role="tab" aria-selected="true" data-folder-tab="all" class="folder-tab relative z-10 -mb-[3px] px-3.5 sm:px-4 py-2 rounded-t-xl border-[3px] border-b-0 border-[#111111] bg-white font-display font-black text-xs sm:text-sm text-[#111111] inline-flex items-center gap-1.5 shrink-0 cursor-pointer transition-all">
+          <span class="w-2.5 h-2.5 rounded-sm bg-[#F4D03F] border border-[#111111]"></span>
+          <span>01 • ทั้งหมด</span>
+          <span class="folder-count text-[10px] px-1.5 py-0.5 rounded bg-[#111111] text-[#F4D03F] tabular-nums">4</span>
+        </button>
+        <button type="button" role="tab" aria-selected="false" data-folder-tab="event" class="folder-tab px-3.5 sm:px-4 py-1.5 rounded-t-xl border-[2.5px] border-b-0 border-[#111111] bg-[#EAE6DA] hover:bg-[#FFF8DC] font-display font-bold text-xs sm:text-sm text-[#111111]/75 hover:text-[#111111] inline-flex items-center gap-1.5 shrink-0 cursor-pointer transition-all">
+          <span class="w-2.5 h-2.5 rounded-sm bg-[#E74C3C] border border-[#111111]"></span>
+          <span>02 • กิจกรรม &amp; เวที</span>
+        </button>
+        <button type="button" role="tab" aria-selected="false" data-folder-tab="money" class="folder-tab px-3.5 sm:px-4 py-1.5 rounded-t-xl border-[2.5px] border-b-0 border-[#111111] bg-[#EAE6DA] hover:bg-[#FFF8DC] font-display font-bold text-xs sm:text-sm text-[#111111]/75 hover:text-[#111111] inline-flex items-center gap-1.5 shrink-0 cursor-pointer transition-all">
+          <span class="w-2.5 h-2.5 rounded-sm bg-[#10B981] border border-[#111111]"></span>
+          <span>03 • วางแผนการเงิน</span>
+        </button>
+        <button type="button" role="tab" aria-selected="false" data-folder-tab="soon" class="folder-tab px-3.5 sm:px-4 py-1.5 rounded-t-xl border-[2.5px] border-b-0 border-[#111111] bg-[#EAE6DA] hover:bg-[#FFF8DC] font-display font-bold text-xs sm:text-sm text-[#111111]/75 hover:text-[#111111] inline-flex items-center gap-1.5 shrink-0 cursor-pointer transition-all">
+          <span class="w-2.5 h-2.5 rounded-sm bg-[#2980B9] border border-[#111111]"></span>
+          <span>04 • เร็วๆ นี้</span>
+        </button>
+      </div>
+
+      <!-- Open Folder Sheet -->
+      <div id="folder-sheet" class="vox-card bg-white rounded-tl-none rounded-tr-2xl rounded-b-2xl p-4 sm:p-5 flex flex-col gap-3.5 min-h-0">
+        <div class="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b-2 border-[#111111]/10 shrink-0">
+          <div class="flex items-center gap-2">
+            <span id="folder-active-dot" class="w-3 h-3 rounded-sm border-2 border-[#111111] bg-[#F4D03F]"></span>
+            <h2 id="folder-active-title" class="thai-safe-tight font-display font-black text-sm sm:text-base text-[#111111]">เครื่องมือทั้งหมด (All Tools)</h2>
+          </div>
+          <span id="folder-active-sub" class="text-[11px] font-display font-bold text-[#111111]/55">เลือกแฟ้มด้านบนเพื่อสลับหมวดหมู่</span>
+        </div>
+
+        <div id="tool-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4" aria-label="เครื่องมือในแฟ้ม"></div>
+      </div>
+    </section>
 
     <footer class="mt-auto pt-3 border-t-2 border-[#111111]/15 shrink-0 flex flex-wrap items-center justify-between gap-2.5 text-xs font-semibold text-[#111111]/60">
       <span class="shrink-0">HelpDaiCha • Event Toolkit</span>
@@ -156,64 +190,153 @@
         }
       } catch (_) {}
 
+      let savedBudgetSummary = null;
+      try {
+        const rawBg = localStorage.getItem('helpdai_budget_planner_v1');
+        if (rawBg) {
+          const parsedBg = JSON.parse(rawBg);
+          if (parsedBg && Array.isArray(parsedBg.items)) {
+            savedBudgetSummary = {
+              balance: Math.round(Number(parsedBg.startBalance) || 0).toLocaleString('th-TH'),
+              count: parsedBg.items.length
+            };
+          }
+        }
+      } catch (_) {}
+
       const TOOLS = [
         {
           id: 'scoreboard',
+          folder: 'event',
           status: 'live',
           shape: 0,
           title: 'Stage Scoreboard',
-          desc: 'กระดานคะแนนสดบนเวที ปรับเพิ่ม-ลดทีมและกิจกรรมได้อิสระ พร้อมตัวจับเวลา โหวตสด QR Poll เพลง YouTube แชร์จอห้องใหญ่ และฉลองผู้ชนะในหน้าเดียว',
+          desc: 'กระดานคะแนนสดบนเวที ปรับเพิ่ม-ลดทีมและกิจกรรม จับเวลา โหวตสด เพลงพื้นหลัง และฉลองผู้ชนะ',
           savedNote: savedEventSummary ? `งานล่าสุด: ${savedEventSummary.title} (${savedEventSummary.teams} ทีม)` : '',
           actions: [
             { label: savedEventSummary ? 'เปิดใช้งานต่อ' : 'เปิดใช้งาน', href: 'scoreboard.html', primary: true }
           ]
         },
         {
+          id: 'poll',
+          folder: 'event',
+          status: 'live',
+          shape: 0,
+          title: 'Live QR Poll',
+          desc: 'สร้างโพลโหวตสดในห้องประชุมหรืออีเวนต์ สแกน QR จากมือถือ โชว์ผลเรียลไทม์บนจอใหญ่',
+          actions: [
+            { label: 'เปิดโพล', href: 'poll.html', primary: true }
+          ]
+        },
+        {
           id: 'budget',
+          folder: 'money',
           status: 'live',
           shape: 1,
-          title: 'Monthly Planner & Budget',
-          desc: 'วางแผนการเงินรายเดือน ทดลองเปิด-ปิดงบรายจ่ายล่วงหน้า และดูกราฟไทม์ไลน์เงินคงเหลือล่วงหน้า 3–12 เดือน พร้อมจุดเตือนเงินต่ำกว่าสำรอง',
+          title: 'วางแผนเงินล่วงหน้า',
+          desc: 'ดูเงินเข้า–ออกล่วงหน้า 3–12 เดือน ลองเปิด-ปิดรายจ่ายเพื่อเช็กอนาคต พร้อมกราฟเข้าใจง่าย',
+          savedNote: savedBudgetSummary ? `ตั้งต้น ${savedBudgetSummary.balance} ฿ (${savedBudgetSummary.count} รายการ)` : '',
           actions: [
-            { label: 'เปิดใช้งาน', href: 'budget.html', primary: true }
+            { label: savedBudgetSummary ? 'ดูแผนเงินต่อ' : 'เริ่มวางแผน', href: 'budget.html', primary: true }
           ]
         },
         {
           id: 'coming-soon',
+          folder: 'soon',
           status: 'soon',
           shape: 2,
           title: 'Live Quiz & Buzzer',
-          desc: 'เกมตอบคำถามชิงไหวพริบ กดปุ่ม Buzzer แย่งตอบสดจากมือถือ พร้อมระบบคำนวณคะแนนอัตโนมัติบนเวที',
+          desc: 'เกมตอบคำถามชิงไหวพริบ กดปุ่ม Buzzer แย่งตอบสดจากมือถือ พร้อมคิดคะแนนอัตโนมัติบนเวที',
           actions: []
         }
       ];
+
+      const FOLDER_META = {
+        all:   { title: 'เครื่องมือทั้งหมด (All Tools)', sub: 'เลือกเปิดใช้งานเครื่องมือได้ทันที', color: '#F4D03F', cols: 'lg:grid-cols-4' },
+        event: { title: 'แฟ้ม: กิจกรรม & เวที (Event & Stage)', sub: 'กระดานคะแนนสดบนเวทีและระบบโหวต QR', color: '#E74C3C', cols: 'lg:grid-cols-2' },
+        money: { title: 'แฟ้ม: วางแผนการเงิน (Money Timeline)', sub: 'ทดสอบงบและดูเงินคงเหลือล่วงหน้า', color: '#10B981', cols: 'lg:grid-cols-2' },
+        soon:  { title: 'แฟ้ม: กำลังพัฒนา (Upcoming)', sub: 'เครื่องมือใหม่ที่กำลังจะเปิดให้ใช้งาน', color: '#2980B9', cols: 'lg:grid-cols-2' }
+      };
 
       const esc = (v) => String(v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
       function toolCard(t) {
         const live = t.status === 'live';
-        const mascot = VoxMascots.svg(t.shape, live ? undefined : '#E5E1D4', 'w-16 h-16');
+        const mascot = VoxMascots.svg(t.shape, live ? undefined : '#E5E1D4', 'w-14 h-14');
         const badge = live
-          ? '<span class="text-[11px] font-display font-black px-2.5 py-0.5 rounded-md border-2 border-[#111111] bg-[#F4D03F] shadow-[2px_2px_0px_#111111]">พร้อมใช้งาน</span>'
-          : '<span class="text-[11px] font-display font-bold px-2 py-0.5 rounded-md border border-[#111111]/35 bg-white text-[#111111]/60">กำลังพัฒนา</span>';
+          ? '<span class="text-[10px] font-display font-black px-2 py-0.5 rounded-md border-2 border-[#111111] bg-[#F4D03F] shadow-[2px_2px_0px_#111111]">พร้อมใช้งาน</span>'
+          : '<span class="text-[10px] font-display font-bold px-2 py-0.5 rounded-md border border-[#111111]/35 bg-white text-[#111111]/60">กำลังพัฒนา</span>';
         const actions = live
-          ? `<div class="flex flex-wrap items-center justify-between gap-2.5 mt-auto pt-3 border-t-2 border-dashed border-[#111111]/10">${t.actions.map(a => `
-              <a href="${esc(a.href)}" class="btn-vox ${a.primary ? 'bg-[#F4D03F] hover:bg-[#f2c61d]' : 'bg-white hover:bg-yellow-50'} text-[#111111] font-display font-black text-sm px-5 py-2.5 rounded-xl inline-flex items-center gap-1.5">${esc(a.label)} <span aria-hidden="true">→</span></a>`).join('')}${t.id === 'scoreboard' ? '<div id="hub-bgm-slot" aria-label="เครื่องเล่นเพลงพื้นหลัง" class="hidden shrink-0"></div>' : ''}</div>`
-          : '<div class="mt-auto pt-3 border-t-2 border-dashed border-[#111111]/10 text-xs font-semibold text-[#111111]/55">จะเปิดให้ใช้งานเร็วๆ นี้</div>';
+          ? `<div class="flex flex-wrap items-center justify-between gap-2 mt-auto pt-2.5 border-t-2 border-dashed border-[#111111]/10">${t.actions.map(a => `
+              <a href="${esc(a.href)}" class="btn-vox ${a.primary ? 'bg-[#F4D03F] hover:bg-[#f2c61d]' : 'bg-white hover:bg-yellow-50'} text-[#111111] font-display font-black text-xs sm:text-sm px-4 py-2 rounded-xl inline-flex items-center gap-1.5">${esc(a.label)} <span aria-hidden="true">→</span></a>`).join('')}</div>`
+          : '<div class="mt-auto pt-2.5 border-t-2 border-dashed border-[#111111]/10 text-xs font-semibold text-[#111111]/55">จะเปิดให้ใช้งานเร็วๆ นี้</div>';
         return `
-          <article class="vox-card p-5 sm:p-6 flex flex-col gap-3 ${live ? 'vox-card-hover bg-white' : 'opacity-65 border-dashed bg-[#F8F6F0] !shadow-none'}">
-            <div class="flex items-start justify-between gap-3">
+          <article class="vox-panel-enter vox-card p-4 sm:p-5 flex flex-col gap-2.5 ${live ? 'vox-card-hover bg-[#F8F6F0]' : 'opacity-65 border-dashed bg-[#F8F6F0] !shadow-none'}">
+            <div class="flex items-start justify-between gap-2">
               ${mascot}
               ${badge}
             </div>
-            <h2 class="thai-safe-tight font-display font-extrabold text-xl sm:text-2xl text-[#111111]">${esc(t.title)}</h2>
-            <p class="text-sm text-[#111111]/75 leading-relaxed">${esc(t.desc)}</p>
-            ${t.savedNote ? `<div class="inline-flex items-center gap-1.5 self-start bg-[#F8F6F0] border border-[#111111]/35 rounded-lg px-2.5 py-1 text-xs font-semibold text-[#111111]/85"><span class="w-2 h-2 rounded-full bg-[#2ECC71] shrink-0"></span><span class="truncate max-w-[240px]">${esc(t.savedNote)}</span></div>` : ''}
+            <h3 class="thai-safe-tight font-display font-extrabold text-lg sm:text-xl text-[#111111]">${esc(t.title)}</h3>
+            <p class="text-xs sm:text-sm text-[#111111]/75 leading-relaxed">${esc(t.desc)}</p>
+            ${t.savedNote ? `<div class="inline-flex items-center gap-1.5 self-start bg-white border border-[#111111]/35 rounded-lg px-2 py-0.5 text-[11px] font-semibold text-[#111111]/85"><span class="w-2 h-2 rounded-full bg-[#2ECC71] shrink-0"></span><span class="truncate max-w-[200px]">${esc(t.savedNote)}</span></div>` : ''}
             ${actions}
           </article>`;
       }
 
-      document.getElementById('tool-grid').innerHTML = TOOLS.map(toolCard).join('');
+      let activeFolder = 'all';
+      try {
+        const savedTab = sessionStorage.getItem('helpdai_active_folder');
+        if (savedTab && FOLDER_META[savedTab]) activeFolder = savedTab;
+      } catch (_) {}
+
+      const gridEl = document.getElementById('tool-grid');
+      const folderSheetEl = document.getElementById('folder-sheet');
+      const folderTitleEl = document.getElementById('folder-active-title');
+      const folderSubEl = document.getElementById('folder-active-sub');
+      const folderDotEl = document.getElementById('folder-active-dot');
+
+      function renderFolder(folderKey) {
+        activeFolder = FOLDER_META[folderKey] ? folderKey : 'all';
+        try { sessionStorage.setItem('helpdai_active_folder', activeFolder); } catch (_) {}
+        const meta = FOLDER_META[activeFolder];
+        const items = activeFolder === 'all' ? TOOLS : TOOLS.filter(t => t.folder === activeFolder);
+
+        if (folderTitleEl) folderTitleEl.textContent = meta.title;
+        if (folderSubEl) folderSubEl.textContent = meta.sub;
+        if (folderDotEl) folderDotEl.style.backgroundColor = meta.color;
+        if (folderSheetEl) {
+          folderSheetEl.classList.toggle('rounded-tl-none', activeFolder === 'all');
+          folderSheetEl.classList.toggle('rounded-tl-2xl', activeFolder !== 'all');
+        }
+
+        document.querySelectorAll('[data-folder-tab]').forEach((tab) => {
+          const on = tab.dataset.folderTab === activeFolder;
+          tab.setAttribute('aria-selected', String(on));
+          tab.classList.toggle('z-10', on);
+          tab.classList.toggle('-mb-[3px]', on);
+          tab.classList.toggle('border-[3px]', on);
+          tab.classList.toggle('border-[2.5px]', !on);
+          tab.classList.toggle('py-2', on);
+          tab.classList.toggle('py-1.5', !on);
+          tab.classList.toggle('bg-white', on);
+          tab.classList.toggle('bg-[#EAE6DA]', !on);
+          tab.classList.toggle('font-black', on);
+          tab.classList.toggle('font-bold', !on);
+          tab.classList.toggle('text-[#111111]', on);
+          tab.classList.toggle('text-[#111111]/75', !on);
+        });
+
+        if (gridEl) {
+          gridEl.className = `grid grid-cols-1 sm:grid-cols-2 ${meta.cols} gap-3.5 sm:gap-4`;
+          gridEl.innerHTML = items.map(toolCard).join('');
+        }
+      }
+
+      document.querySelectorAll('[data-folder-tab]').forEach((tab) => {
+        tab.addEventListener('click', () => renderFolder(tab.dataset.folderTab));
+      });
+
+      renderFolder(activeFolder);
       document.getElementById('hub-mascots').innerHTML = [0, 1, 2].map(i => VoxMascots.svg(i, undefined, 'w-8 h-8')).join('');
 
       // Suggestion Box
