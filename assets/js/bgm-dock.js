@@ -2,6 +2,33 @@
 (() => {
   'use strict';
 
+  // If running inside the persistent BGM shell iframe, delegate navigation to top shell and skip duplicate dock
+  try {
+    if (window.top !== window.self && window.top.__voxBgmShellActive) {
+      if (window.top.HelpDaiBgm) window.HelpDaiBgm = window.top.HelpDaiBgm;
+      document.addEventListener('click', (e) => {
+        if (e.defaultPrevented) return;
+        const link = e.target.closest('a[href]');
+        if (!link) return;
+        if (link.target === '_blank' || link.hasAttribute('download') || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        const href = link.getAttribute('href') || '';
+        if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:')) return;
+        try {
+          const url = new URL(link.href, window.location.href);
+          if (url.origin !== window.location.origin) {
+            e.preventDefault();
+            window.top.location.href = url.href;
+            return;
+          }
+          if (url.href === window.location.href) return;
+          e.preventDefault();
+          window.top.__voxShellNavigate?.(url.href, true);
+        } catch (_) {}
+      });
+      return;
+    }
+  } catch (_) {}
+
   const BGM_KEY = 'helpdai_bgm_player_v1';
   const DOCK_POS_KEY = 'helpdai_bgm_dock_pos_v2';
   const PLAY_MODE_KEY = 'helpdai_bgm_playmode_v1';
@@ -110,7 +137,7 @@
     ytFrameHost.style.height = '112px';
     ytFrameHost.style.opacity = '0.001';
     ytFrameHost.style.pointerEvents = 'none';
-    ytFrameHost.style.zIndex = '1';
+    ytFrameHost.style.zIndex = window.__voxBgmShellActive ? '101' : '1';
   };
 
   const mountOverlay = (rect) => {
@@ -842,6 +869,57 @@
     window.addEventListener('storage', (e) => { if (e.key === BGM_KEY) syncUi(); });
     syncUi();
   }
+
+  // Persistent Cross-Page Shell so BGM keeps playing uninterrupted across page changes
+  window.__voxShellNavigate = (targetUrl, push = true) => {
+    window.__voxBgmShellActive = true;
+    let frame = document.getElementById('vox-page-frame');
+    if (!frame) {
+      const keepIds = new Set(['helpdai-bgm-dock', 'helpdai-bgm-modal', 'helpdai-top-yt-host']);
+      Array.from(document.body.children).forEach((el) => {
+        if (!keepIds.has(el.id)) el.remove();
+      });
+      frame = document.createElement('iframe');
+      frame.id = 'vox-page-frame';
+      frame.setAttribute('title', 'Page Content');
+      frame.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;border:0;z-index:100;background:#F8F6F0;';
+      frame.addEventListener('load', () => {
+        try {
+          const t = frame.contentDocument?.title;
+          if (t) document.title = t;
+        } catch (_) {}
+      });
+      document.body.appendChild(frame);
+      if (ytFrameHost.style.zIndex === '1') ytFrameHost.style.zIndex = '101';
+    }
+    if (frame.src !== targetUrl) {
+      frame.src = targetUrl;
+    }
+    if (push) {
+      try { history.pushState({ voxShell: true, url: targetUrl }, '', targetUrl); } catch (_) {}
+    }
+  };
+
+  window.addEventListener('popstate', () => {
+    if (window.__voxBgmShellActive) {
+      window.__voxShellNavigate(window.location.href, false);
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    if (e.defaultPrevented) return;
+    const link = e.target.closest('a[href]');
+    if (!link) return;
+    if (link.target === '_blank' || link.hasAttribute('download') || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    const href = link.getAttribute('href') || '';
+    if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:')) return;
+    try {
+      const url = new URL(link.href, window.location.href);
+      if (url.origin !== window.location.origin || url.href === window.location.href) return;
+      e.preventDefault();
+      window.__voxShellNavigate(url.href, true);
+    } catch (_) {}
+  });
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', mountCassetteDock, { once: true });

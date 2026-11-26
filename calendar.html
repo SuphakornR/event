@@ -6,7 +6,7 @@
   <meta name="referrer" content="strict-origin-when-cross-origin" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https: data:;" />
   <title>Calendar — suphakorn.rukkarn</title>
-  <meta name="description" content="ปฏิทินจัดตารางกิจกรรม นัดหมาย และสิ่งที่ต้องทำแบบเรียบง่าย" />
+  <meta name="description" content="ปฏิทินกระดาษเรียบง่าย พร้อมกระดาษโน้ตแปะวัน" />
   <meta name="theme-color" content="#F4D03F" />
   <link rel="icon" type="image/svg+xml" href="assets/img/logo.svg" />
 
@@ -16,60 +16,184 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="assets/css/vox.css?v=20261123d" />
   <style>
+    body.cal-page {
+      background-color: #F8F6F0;
+      overflow-x: hidden;
+    }
+
+    /* Prevent loader.js main fade/slide from fighting the paper slide-in on 1st or 2nd open */
+    body.cal-page > main {
+      animation: none !important;
+      transition: none !important;
+      opacity: 1 !important;
+      transform: none !important;
+    }
+
+    /* Clean Plain Paper Sheet matching the editorial ink-and-cream theme */
+    .paper-sheet {
+      background: #FFFFFF;
+      border: 2px solid #111111;
+      box-shadow: 8px 8px 0px #111111;
+      will-change: transform, opacity;
+    }
+
+    @keyframes paperSlideFromRight {
+      0% {
+        opacity: 0;
+        transform: translateX(88vw) rotate(1.4deg);
+      }
+      66% {
+        opacity: 1;
+        transform: translateX(-8px) rotate(-0.3deg);
+      }
+      85% {
+        transform: translateX(3px) rotate(0.1deg);
+      }
+      100% {
+        opacity: 1;
+        transform: translateX(0) rotate(0deg);
+      }
+    }
+
+    .paper-sheet.is-sliding-in {
+      animation: paperSlideFromRight 0.78s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    /* Sticky note papers in editorial pastel tones */
+    .note-paper {
+      --note-tilt: -1.2deg;
+      position: relative;
+      transform: rotate(var(--note-tilt));
+      border: 1px solid rgba(17, 17, 17, 0.35);
+      box-shadow: 2px 2px 0px rgba(17, 17, 17, 0.16);
+      transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.18s ease;
+      will-change: transform;
+    }
+    .note-paper::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      width: 8px;
+      height: 8px;
+      background: linear-gradient(135deg, rgba(17, 17, 17, 0.14) 48%, rgba(255, 255, 255, 0.7) 50%);
+      pointer-events: none;
+    }
+    .note-paper:hover {
+      transform: rotate(0deg) translateY(-2px) scale(1.03);
+      box-shadow: 3px 4px 0px rgba(17, 17, 17, 0.25);
+      z-index: 10;
+    }
+
+    @keyframes noteSlideInertia {
+      0% {
+        transform: translateX(16px) rotate(calc(var(--note-tilt) + 5.5deg));
+      }
+      55% {
+        transform: translateX(-8px) rotate(calc(var(--note-tilt) - 4deg));
+      }
+      78% {
+        transform: translateX(3px) rotate(calc(var(--note-tilt) + 1.5deg));
+      }
+      100% {
+        transform: translateX(0) rotate(var(--note-tilt));
+      }
+    }
+
+    .paper-sheet.is-sliding-in .note-paper {
+      animation: noteSlideInertia 0.92s cubic-bezier(0.22, 1, 0.36, 1) var(--note-delay, 0.04s) both;
+    }
+
+    /* Editorial Brass & Obsidian Paperweight */
+    .paperweight {
+      position: relative;
+      width: 54px;
+      height: 54px;
+      border-radius: 9999px;
+      background:
+        radial-gradient(circle at 34% 30%, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0.08) 28%, transparent 55%),
+        radial-gradient(circle at 50% 50%, #262626 0%, #111111 72%, #000000 100%);
+      border: 3px solid #F4D03F;
+      box-shadow:
+        4px 5px 0px rgba(17, 17, 17, 0.28),
+        0 10px 20px rgba(17, 17, 17, 0.22);
+      transition: transform 0.24s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.24s ease;
+      cursor: grab;
+      user-select: none;
+    }
+    .paperweight::before {
+      content: '';
+      position: absolute;
+      inset: 6px;
+      border-radius: 9999px;
+      border: 1px solid rgba(244, 208, 63, 0.35);
+      pointer-events: none;
+    }
+    .paperweight:hover {
+      transform: translate(-1px, -2px) scale(1.04);
+      box-shadow:
+        5px 7px 0px rgba(17, 17, 17, 0.32),
+        0 14px 24px rgba(17, 17, 17, 0.25);
+    }
+    .paperweight:active {
+      cursor: grabbing;
+      transform: scale(0.97);
+    }
+
+    @keyframes paperweightSettle {
+      0% { transform: translateX(12px); }
+      62% { transform: translateX(-5px); }
+      85% { transform: translateX(2px); }
+      100% { transform: translateX(0); }
+    }
+    .paper-sheet.is-sliding-in .paperweight {
+      animation: paperweightSettle 0.88s cubic-bezier(0.22, 1, 0.36, 1) 0.04s both;
+    }
+
     .cal-day-cell {
-      transition: transform 0.14s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.15s ease, box-shadow 0.14s ease;
+      transition: background-color 0.14s ease;
     }
     .cal-day-cell:hover {
-      transform: translateY(-1px);
+      background-color: rgba(244, 208, 63, 0.10);
+    }
+    .cal-day-cell.is-drop-target {
+      background-color: rgba(244, 208, 63, 0.26);
+      outline: 2px dashed #111111;
+      outline-offset: -2px;
     }
   </style>
 </head>
-<body class="min-h-screen flex flex-col selection:bg-yellow-300 selection:text-black">
+<body class="cal-page min-h-screen flex flex-col selection:bg-yellow-300 selection:text-black">
   <script src="assets/js/loader.js?v=20261126b"></script>
 
-  <main class="w-full max-w-7xl mx-auto px-3.5 sm:px-6 py-4 flex-1 flex flex-col gap-4">
+  <main class="w-full max-w-6xl mx-auto px-3.5 sm:px-6 py-5 sm:py-8 flex-1 flex flex-col justify-center">
+    <!-- Plain Paper Sheet -->
+    <section id="calendar-paper" class="paper-sheet relative rounded-2xl px-4 py-5 sm:px-8 sm:py-7 flex flex-col gap-4" aria-label="ปฏิทินกระดาษ">
 
-    <!-- Editorial Header -->
-    <header class="border-b-[3px] border-[#111111] pb-3 flex flex-wrap items-center justify-between gap-3">
-      <div class="flex items-center gap-2.5 min-w-0">
-        <a href="index.html" title="กลับหน้าหลัก" aria-label="กลับหน้าหลัก" class="btn-vox bg-white hover:bg-[#F4D03F] text-[#111111] w-9 h-9 rounded-lg font-display font-black text-sm flex items-center justify-center shrink-0">
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-        </a>
-        <img src="assets/img/logo.svg" alt="suphakorn.rukkarn" class="w-8 h-8 shrink-0 hidden sm:block" />
-        <div class="min-w-0">
-          <h1 class="thai-safe-tight font-display font-black text-xl sm:text-2xl text-[#111111] truncate">ปฏิทิน (Calendar)</h1>
-          <p id="cal-header-sub" class="text-xs font-semibold text-[#111111]/60">จัดการนัดหมายและตารางกิจกรรม</p>
-        </div>
+      <!-- Paperweight on top-right corner -->
+      <div id="cal-paperweight" class="paperweight absolute -top-5 right-6 sm:right-12 z-20 flex items-center justify-center" title="ที่ทับกระดาษ (ลากย้ายได้)">
+        <span class="w-2 h-2 rounded-full bg-[#F4D03F]/80 -translate-x-2 -translate-y-2 pointer-events-none"></span>
       </div>
 
-      <!-- Month Navigation & Backup -->
-      <div class="flex flex-wrap items-center gap-2 shrink-0">
-        <div class="inline-flex items-center bg-[#F8F6F0] border-2 border-[#111111] rounded-xl p-0.5 shadow-[2px_2px_0px_#111111]">
-          <button type="button" id="cal-prev-btn" aria-label="เดือนก่อนหน้า" class="px-2.5 py-1 rounded-lg hover:bg-white font-display font-black text-xs cursor-pointer transition-colors">‹</button>
-          <button type="button" id="cal-today-btn" class="px-3 py-1 rounded-lg bg-[#111111] text-[#F4D03F] font-display font-bold text-xs cursor-pointer">วันนี้</button>
-          <button type="button" id="cal-next-btn" aria-label="เดือนถัดไป" class="px-2.5 py-1 rounded-lg hover:bg-white font-display font-black text-xs cursor-pointer transition-colors">›</button>
-        </div>
-        <button type="button" id="cal-export-ics-btn" title="ส่งออกไฟล์ปฏิทิน (.ics)" class="btn-vox bg-white hover:bg-[#F4D03F] text-[#111111] font-display font-bold text-xs px-3 py-1.5 rounded-xl cursor-pointer">ส่งออก .ics</button>
-        <button type="button" id="cal-export-btn" class="btn-vox bg-white hover:bg-[#F4D03F] text-[#111111] font-display font-bold text-xs px-3 py-1.5 rounded-xl cursor-pointer">สำรอง</button>
-        <label class="btn-vox bg-white hover:bg-[#F4D03F] text-[#111111] font-display font-bold text-xs px-3 py-1.5 rounded-xl cursor-pointer">
-          <span>เปิดไฟล์</span>
-          <input type="file" id="cal-import-input" accept=".json,application/json" class="hidden" />
-        </label>
-      </div>
-    </header>
-
-    <!-- Main 2-Column Calendar + Day Agenda -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 flex-1 items-start">
-
-      <!-- LEFT (8 cols): Month Grid -->
-      <section class="lg:col-span-8 vox-card bg-white p-4 flex flex-col gap-3" aria-label="ตารางปฏิทินรายเดือน">
-        <div class="flex items-center justify-between gap-2 pb-2 border-b-2 border-[#111111]/10">
-          <h2 id="cal-month-title" class="thai-safe font-display font-black text-lg sm:text-xl text-[#111111]"></h2>
-          <span id="cal-month-count" class="text-xs font-display font-bold text-[#111111]/60">0 กิจกรรมในเดือนนี้</span>
+      <!-- Minimal Paper Header -->
+      <header class="flex items-center justify-between gap-3 pb-3 border-b-2 border-[#111111]/12 pr-14 sm:pr-20">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <a href="index.html" title="กลับหน้าหลัก" aria-label="กลับหน้าหลัก" class="w-8 h-8 rounded-lg border-2 border-[#111111]/20 hover:border-[#111111] hover:bg-[#F4D03F] flex items-center justify-center text-[#111111] transition-colors shrink-0">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+          </a>
+          <h1 id="cal-month-title" class="thai-safe-tight font-display font-black text-xl sm:text-3xl text-[#111111] tracking-tight truncate"></h1>
         </div>
 
-        <!-- Weekday Headers -->
-        <div class="grid grid-cols-7 gap-1.5 text-center font-display font-extrabold text-[11px] text-[#111111]/60">
+        <div class="flex items-center gap-1 shrink-0">
+          <button type="button" id="cal-prev-btn" aria-label="เดือนก่อนหน้า" class="w-8 h-8 rounded-lg hover:bg-[#F8F6F0] text-[#111111]/75 hover:text-[#111111] font-display font-black text-base cursor-pointer transition-colors">‹</button>
+          <button type="button" id="cal-today-btn" class="px-3 py-1 rounded-lg hover:bg-[#F4D03F]/45 text-[#111111] font-display font-bold text-xs cursor-pointer transition-colors">วันนี้</button>
+          <button type="button" id="cal-next-btn" aria-label="เดือนถัดไป" class="w-8 h-8 rounded-lg hover:bg-[#F8F6F0] text-[#111111]/75 hover:text-[#111111] font-display font-black text-base cursor-pointer transition-colors">›</button>
+        </div>
+      </header>
+
+      <!-- Plain Paper Calendar Grid -->
+      <div>
+        <div class="grid grid-cols-7 text-center font-display font-extrabold text-[11px] sm:text-xs tracking-wide text-[#111111]/55 pb-2">
           <div class="text-[#E74C3C]">อา.</div>
           <div>จ.</div>
           <div>อ.</div>
@@ -78,53 +202,46 @@
           <div>ศ.</div>
           <div class="text-[#2980B9]">ส.</div>
         </div>
+        <div id="cal-grid" class="grid grid-cols-7 border-t border-l border-[#111111]/15 rounded-lg overflow-hidden"></div>
+      </div>
 
-        <!-- 42-Cell Calendar Grid -->
-        <div id="cal-grid" class="grid grid-cols-7 gap-1.5"></div>
-      </section>
-
-      <!-- RIGHT (4 cols): Selected Day Agenda + Upcoming -->
-      <aside class="lg:col-span-4 flex flex-col gap-4">
-        <section class="vox-card bg-white p-4 flex flex-col gap-3" aria-label="รายละเอียดวันที่เลือก">
-          <div class="flex items-center justify-between gap-2 border-b-2 border-[#111111]/10 pb-2">
-            <div>
-              <span class="text-[10px] font-display font-black uppercase tracking-wider text-[#111111]/55">วันที่เลือก</span>
-              <h2 id="cal-selected-title" class="thai-safe font-display font-black text-base text-[#111111]"></h2>
-            </div>
-            <span id="cal-day-badge" class="px-2 py-0.5 rounded-lg bg-[#F4D03F] border-2 border-[#111111] font-display font-black text-[11px]">0 งาน</span>
-          </div>
-
-          <!-- Add Event Form -->
-          <form id="cal-add-form" class="bg-[#F8F6F0] border-2 border-[#111111] rounded-2xl p-3 flex flex-col gap-2">
-            <input id="cal-in-title" type="text" required maxlength="100" placeholder="เพิ่มกิจกรรม นัดหมาย หรือสิ่งที่ต้องทำ..." class="thai-safe bg-white border-2 border-[#111111] rounded-xl px-3 py-2 text-xs sm:text-sm font-semibold focus:outline-none" />
-            <div class="grid grid-cols-2 gap-2">
-              <input id="cal-in-time" type="time" aria-label="เวลา" class="bg-white border-2 border-[#111111]/50 rounded-xl px-2.5 py-1.5 text-xs font-mono font-bold focus:outline-none" />
-              <div class="flex items-center justify-end gap-1.5 bg-white border-2 border-[#111111]/50 rounded-xl px-2 py-1" role="radiogroup" aria-label="สีป้ายกำกับ">
-                <button type="button" data-cal-color="#F4D03F" title="กิจกรรม" class="cal-color-btn w-5 h-5 rounded-full bg-[#F4D03F] border-2 border-[#111111] ring-2 ring-[#111111] ring-offset-1 cursor-pointer"></button>
-                <button type="button" data-cal-color="#2980B9" title="งาน/เรียน" class="cal-color-btn w-5 h-5 rounded-full bg-[#2980B9] border-2 border-[#111111] cursor-pointer"></button>
-                <button type="button" data-cal-color="#E74C3C" title="สำคัญ" class="cal-color-btn w-5 h-5 rounded-full bg-[#E74C3C] border-2 border-[#111111] cursor-pointer"></button>
-                <button type="button" data-cal-color="#10B981" title="ส่วนตัว" class="cal-color-btn w-5 h-5 rounded-full bg-[#10B981] border-2 border-[#111111] cursor-pointer"></button>
-              </div>
-            </div>
-            <input id="cal-in-note" type="text" maxlength="140" placeholder="สถานที่ / หมายเหตุ (ถ้ามี)" class="thai-safe bg-white border border-[#111111]/40 rounded-xl px-3 py-1.5 text-xs font-medium focus:outline-none" />
-            <button type="submit" class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-black text-xs py-2 rounded-xl cursor-pointer">+ เพิ่มลงปฏิทิน</button>
-          </form>
-
-          <!-- Events for Selected Date -->
-          <div id="cal-day-events" class="flex flex-col gap-2 max-h-[260px] overflow-y-auto pr-0.5 vox-scroll-area"></div>
-        </section>
-
-        <!-- Upcoming Events -->
-        <section class="vox-card bg-white p-4 flex flex-col gap-2.5" aria-label="กิจกรรมที่กำลังจะมาถึง">
-          <h3 class="font-display font-black text-xs uppercase tracking-wider text-[#111111]/65 border-b border-[#111111]/15 pb-1.5">กำลังจะมาถึง (Upcoming)</h3>
-          <div id="cal-upcoming-list" class="flex flex-col gap-1.5 max-h-[180px] overflow-y-auto pr-0.5 vox-scroll-area"></div>
-        </section>
-      </aside>
-    </div>
+      <p class="text-[11px] font-medium text-[#111111]/40 text-right select-none">คลิกที่วันเพื่อแปะกระดาษโน้ต • ลากโน้ตเพื่อย้ายวัน</p>
+    </section>
   </main>
 
+  <!-- Minimal Note Paper Modal -->
+  <div id="note-modal" class="fixed inset-0 z-[120] hidden items-center justify-center p-4 bg-[#111111]/30 backdrop-blur-[2px]">
+    <form id="note-form" class="w-full max-w-xs rounded-xl p-5 shadow-[6px_6px_0px_#111111] border-2 border-[#111111] flex flex-col gap-3 transition-colors" style="background:#FFF3A8;">
+      <div class="flex items-center justify-between gap-2">
+        <span id="note-modal-date" class="thai-safe font-display font-extrabold text-xs text-[#111111]/75"></span>
+        <button type="button" id="note-modal-close" aria-label="ปิด" class="w-6 h-6 rounded-md hover:bg-[#111111]/10 text-[#111111]/65 hover:text-[#111111] text-xs font-black cursor-pointer">✕</button>
+      </div>
+
+      <textarea id="note-in-text" rows="3" required maxlength="120" placeholder="เขียนโน้ตสั้นๆ..." class="thai-safe w-full bg-transparent border-b-2 border-[#111111]/20 pb-2 text-sm font-semibold text-[#111111] placeholder:text-[#111111]/40 resize-none focus:outline-none focus:border-[#111111]"></textarea>
+
+      <div class="flex items-center justify-between gap-2 pt-0.5">
+        <input id="note-in-time" type="time" aria-label="เวลา (ถ้ามี)" class="bg-white/75 border border-[#111111]/30 rounded-lg px-2 py-1 text-[11px] font-mono font-bold text-[#111111] focus:outline-none" />
+        <div class="flex items-center gap-1.5" role="radiogroup" aria-label="สีกระดาษโน้ต">
+          <button type="button" data-note-color="#FFF3A8" title="เหลืองอ่อน" class="note-color-dot w-4 h-4 rounded-full border border-[#111111] cursor-pointer ring-1 ring-[#111111] ring-offset-1" style="background:#FFF3A8"></button>
+          <button type="button" data-note-color="#FFD6DF" title="ชมพูอ่อน" class="note-color-dot w-4 h-4 rounded-full border border-[#111111] cursor-pointer" style="background:#FFD6DF"></button>
+          <button type="button" data-note-color="#D7F7E3" title="เขียวมินต์" class="note-color-dot w-4 h-4 rounded-full border border-[#111111] cursor-pointer" style="background:#D7F7E3"></button>
+          <button type="button" data-note-color="#D6ECFF" title="ฟ้าอ่อน" class="note-color-dot w-4 h-4 rounded-full border border-[#111111] cursor-pointer" style="background:#D6ECFF"></button>
+          <button type="button" data-note-color="#F8F6F0" title="ครีม" class="note-color-dot w-4 h-4 rounded-full border border-[#111111] cursor-pointer" style="background:#F8F6F0"></button>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between gap-2 pt-1">
+        <div class="flex items-center gap-1.5">
+          <button type="button" id="note-toggle-done" class="hidden px-2.5 py-1 rounded-lg border border-[#111111]/30 text-[11px] font-bold bg-white/75 hover:bg-white text-[#111111] cursor-pointer"></button>
+          <button type="button" id="note-delete-btn" class="hidden px-2.5 py-1 rounded-lg text-[11px] font-bold text-[#C0392B] hover:bg-[#E74C3C]/15 cursor-pointer">ดึงออก</button>
+        </div>
+        <button type="submit" class="ml-auto px-3.5 py-1.5 rounded-lg bg-[#111111] text-[#F4D03F] font-display font-extrabold text-xs hover:bg-[#222222] cursor-pointer transition-colors">แปะโน้ต</button>
+      </div>
+    </form>
+  </div>
+
   <script src="assets/js/security.js"></script>
-  <script src="assets/js/calendar.js"></script>
-  <script src="assets/js/bgm-dock.js?v=20261126b" defer></script>
+  <script src="assets/js/calendar.js?v=20261126c"></script>
+  <script src="assets/js/bgm-dock.js?v=20261126c" defer></script>
 </body>
 </html>

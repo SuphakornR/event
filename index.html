@@ -168,7 +168,7 @@
       const esc = (v) => String(v || '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
       function toolCard(t) {
-        const mascot = VoxMascots.svg(t.shape, undefined, 'js-mascot-svg w-28 h-28 sm:w-32 sm:h-32 transition-transform duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.45] group-active:scale-95');
+        const mascot = VoxMascots.svg(t.shape, undefined, 'js-mascot-svg pointer-events-none w-28 h-28 sm:w-32 sm:h-32 will-change-transform');
         return `
           <a href="${esc(t.href)}" aria-label="${esc(t.title)}" title="${esc(t.title)}" class="js-mascot-card vox-panel-enter group flex flex-col items-center justify-center gap-3 p-4 no-underline">
             ${mascot}
@@ -180,35 +180,66 @@
       if (gridEl) {
         gridEl.innerHTML = TOOLS.map(toolCard).join('');
 
-        // Proximity + hover enlargement when mouse moves near or over each mascot
-        const cards = Array.from(gridEl.querySelectorAll('.js-mascot-card'));
+        // Glitch-free proximity + hover enlargement using unscaled card center + rAF smoothing
+        const items = Array.from(gridEl.querySelectorAll('.js-mascot-card')).map((card) => ({
+          card,
+          svg: card.querySelector('.js-mascot-svg'),
+          cur: 1,
+          target: 1
+        })).filter((it) => it.svg);
+
         const PROXIMITY_PX = 240;
-        const resetScales = () => {
-          cards.forEach((card) => {
-            const svg = card.querySelector('.js-mascot-svg');
-            if (svg) svg.style.transform = '';
-          });
+        let rafId = 0;
+
+        const tick = () => {
+          let moving = false;
+          for (const it of items) {
+            const diff = it.target - it.cur;
+            if (Math.abs(diff) > 0.002) {
+              it.cur += diff * 0.22;
+              moving = true;
+            } else {
+              it.cur = it.target;
+            }
+            it.svg.style.transform = it.cur === 1 ? '' : `scale(${it.cur.toFixed(3)})`;
+          }
+          rafId = moving ? requestAnimationFrame(tick) : 0;
         };
+
+        const scheduleTick = () => {
+          if (!rafId) rafId = requestAnimationFrame(tick);
+        };
+
+        const resetScales = () => {
+          items.forEach((it) => { it.target = 1; });
+          scheduleTick();
+        };
+
         document.addEventListener('pointermove', (e) => {
           if (e.pointerType && e.pointerType !== 'mouse') return;
-          cards.forEach((card) => {
-            const svg = card.querySelector('.js-mascot-svg');
-            if (!svg) return;
-            const rect = svg.getBoundingClientRect();
+          items.forEach((it) => {
+            if (it.card.matches(':hover')) {
+              it.target = 1.46;
+              return;
+            }
+            const rect = it.card.getBoundingClientRect();
             const cx = rect.left + rect.width / 2;
             const cy = rect.top + rect.height / 2;
             const dist = Math.hypot(e.clientX - cx, e.clientY - cy);
-            if (card.matches(':hover')) {
-              svg.style.transform = 'scale(1.48)';
-            } else if (dist < PROXIMITY_PX) {
+            if (dist < PROXIMITY_PX) {
               const t = 1 - dist / PROXIMITY_PX;
-              const scale = 1 + t * t * 0.42;
-              svg.style.transform = `scale(${scale.toFixed(3)})`;
+              it.target = 1 + t * t * 0.36;
             } else {
-              svg.style.transform = '';
+              it.target = 1;
             }
           });
+          scheduleTick();
         }, { passive: true });
+
+        items.forEach((it) => {
+          it.card.addEventListener('pointerdown', () => { it.target = 0.95; scheduleTick(); });
+          it.card.addEventListener('pointerup', () => { it.target = it.card.matches(':hover') ? 1.46 : 1; scheduleTick(); });
+        });
         document.addEventListener('pointerleave', resetScales);
         window.addEventListener('blur', resetScales);
       }
