@@ -1144,4 +1144,127 @@
     .vox-autosync-spin.is-syncing {
       animation: voxAutoSyncSpin 0.9s linear infinite;
     }
+
+    /* ==========================================================================
+       VOX SOLID-COLOR FOLDER BINDER NAVIGATION (HUB)
+       ========================================================================== */
+    .vox-folder-tabs {
+      display: flex;
+      align-items: flex-end;
+      gap: 6px;
+      padding: 4px 8px 0 8px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .vox-folder-tabs::-webkit-scrollbar {
+      display: none;
+    }
+
+    .vox-folder-tab {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 16px 10px 16px;
+      border: 3px solid #111111;
+      border-bottom: none;
+      border-radius: 14px 14px 0 0;
+      background-color: var(--tab-bg, #F4D03F);
+      color: var(--tab-fg, #111111);
+      font-family: 'Prompt', sans-serif;
+      font-weight: 800;
+      font-size: 0.8125rem;
+      line-height: 1.25;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transform: translateY(5px);
+      opacity: 0.86;
+      filter: saturate(0.88);
+      transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+                  opacity 0.18s ease,
+                  filter 0.18s ease,
+                  padding 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+      user-select: none;
+      cursor: pointer;
+    }
+
+    .vox-folder-tab:hover:not(.is-active) {
+      transform: translateY(1px);
+      opacity: 1;
+      filter: saturate(1);
+    }
+
+    .vox-folder-tab.is-active {
+      z-index: 12;
+      margin-bottom: -3px;
+      padding-top: 11px;
+      padding-bottom: 13px;
+      transform: translateY(0);
+      opacity: 1;
+      filter: none;
+      box-shadow: 4px -2px 0px rgba(17, 17, 17, 0.12);
+    }
+
+    .vox-folder-tab .tab-index {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 22px;
+      height: 20px;
+      padding: 0 5px;
+      border-radius: 6px;
+      background: #111111;
+      color: #F8F6F0;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 0.02em;
+    }
+
+    .vox-folder-jacket {
+      position: relative;
+      z-index: 10;
+      background-color: var(--folder-bg, #F4D03F);
+      color: var(--folder-fg, #111111);
+      border: 3px solid #111111;
+      border-radius: 18px;
+      box-shadow: 7px 7px 0px #111111;
+      padding: 16px;
+      transition: background-color 0.22s ease;
+    }
+
+    @media (min-width: 640px) {
+      .vox-folder-jacket {
+        padding: 20px;
+      }
+      .vox-folder-tab {
+        padding: 10px 20px 11px 20px;
+        font-size: 0.875rem;
+      }
+    }
+
+    .vox-folder-jacket.is-first-tab {
+      border-top-left-radius: 0;
+    }
+
+    .vox-folder-sheet {
+      background: #FFFFFF;
+      color: #111111;
+      border: 3px solid #111111;
+      border-radius: 14px;
+      box-shadow: 4px 4px 0px #111111;
+      padding: 16px;
+    }
+
+    @media (min-width: 640px) {
+      .vox-folder-sheet {
+        padding: 22px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .vox-folder-tab,
+      .vox-folder-jacket {
+        transition-duration: 0.01ms !important;
+      }
+    }
   

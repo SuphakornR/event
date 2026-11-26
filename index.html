@@ -16,10 +16,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin />
-  <link rel="preload" href="assets/css/vox.css?v=20261126h" as="style" />
+  <link rel="preload" href="assets/css/vox.css?v=20261126i" as="style" />
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Prompt:wght@600;700;800;900&display=swap" rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="assets/css/vox.css?v=20261126h" />
+  <link rel="stylesheet" href="assets/css/vox.css?v=20261126i" />
 </head>
 <body class="flex flex-col selection:bg-yellow-300 selection:text-black">
   <script src="assets/js/loader.js?v=20261126h"></script>
@@ -47,9 +47,45 @@
       </nav>
     </header>
 
-    <!-- Pure Mascot Centerpiece Navigation -->
-    <section class="flex-1 flex flex-col items-center justify-center py-6" aria-label="เลือกเครื่องมือ">
-      <div id="tool-grid" class="flex flex-wrap items-center justify-center gap-12 sm:gap-20" aria-label="รายการเครื่องมือ"></div>
+    <!-- Solid-Color Editorial Folder Binder Navigation -->
+    <section id="folder-binder" class="flex-1 flex flex-col justify-center py-2 sm:py-4" aria-label="แฟ้มนำทางเครื่องมือ">
+      <!-- Physical Solid-Color Folder Tabs -->
+      <div id="folder-tabs" role="tablist" aria-label="เลือกแฟ้ม" class="vox-folder-tabs">
+        <button type="button" role="tab" id="tab-tools" aria-controls="folder-panel" aria-selected="true" data-folder-tab="tools" class="vox-folder-tab is-active" style="--tab-bg:#F4D03F;--tab-fg:#111111;">
+          <span class="tab-index">01</span>
+          <span>เครื่องมือ</span>
+        </button>
+        <button type="button" role="tab" id="tab-event" aria-controls="folder-panel" aria-selected="false" data-folder-tab="event" class="vox-folder-tab" style="--tab-bg:#2980B9;--tab-fg:#FFFFFF;">
+          <span class="tab-index">02</span>
+          <span>งานล่าสุด</span>
+        </button>
+        <button type="button" role="tab" id="tab-bgm" aria-controls="folder-panel" aria-selected="false" data-folder-tab="bgm" class="vox-folder-tab" style="--tab-bg:#E74C3C;--tab-fg:#FFFFFF;">
+          <span class="tab-index">03</span>
+          <span>เพลงเวที</span>
+        </button>
+        <button type="button" role="tab" id="tab-system" aria-controls="folder-panel" aria-selected="false" data-folder-tab="system" class="vox-folder-tab" style="--tab-bg:#10B981;--tab-fg:#111111;">
+          <span class="tab-index">04</span>
+          <span>ระบบ &amp; คู่มือ</span>
+        </button>
+      </div>
+
+      <!-- Solid-Color Folder Jacket + Crisp Inner Document Sheet -->
+      <div id="folder-jacket" class="vox-folder-jacket is-first-tab" style="--folder-bg:#F4D03F;--folder-fg:#111111;">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3.5 px-1">
+          <div class="flex items-center gap-2.5 min-w-0">
+            <span id="folder-badge" class="inline-flex items-center justify-center px-2 py-0.5 rounded-md bg-[#111111] text-[#F8F6F0] font-display font-black text-[11px] tracking-wide shrink-0">01</span>
+            <h2 id="folder-heading" class="thai-safe-tight font-display font-black text-base sm:text-lg tracking-tight truncate">เครื่องมือบนเวที</h2>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <span id="folder-subtitle" class="text-xs font-bold opacity-85 hidden sm:inline">เลือกเครื่องมือและเริ่มจัดกิจกรรมได้ทันที</span>
+            <span class="hidden md:inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#111111] text-[#F8F6F0] font-display font-bold text-[10px] tracking-wide">ปุ่ม 1–4</span>
+          </div>
+        </div>
+
+        <div id="folder-panel" role="tabpanel" aria-labelledby="tab-tools" class="vox-folder-sheet">
+          <div id="tool-grid" class="min-h-[260px] flex flex-col justify-center" aria-label="เนื้อหาภายในแฟ้ม"></div>
+        </div>
+      </div>
     </section>
 
     <!-- Minimal Footer -->
@@ -121,48 +157,101 @@
       const ac = new AbortController();
       const { signal } = ac;
 
-      let savedEventSummary = null;
-      try {
-        const rawSb = localStorage.getItem('vox_scoreboard_clean_v3');
-        if (rawSb) {
-          const parsedSb = JSON.parse(rawSb);
-          if (parsedSb?.eventTitle && Array.isArray(parsedSb?.teams)) {
-            savedEventSummary = `${parsedSb.eventTitle} • ${parsedSb.teams.length} ทีม`;
-          }
+      const FOLDER_KEY = 'vox_hub_folder_v1';
+      const FOLDERS = {
+        tools: {
+          code: '01',
+          bg: '#F4D03F',
+          fg: '#111111',
+          heading: 'เครื่องมือบนเวที',
+          subtitle: 'เลือกเครื่องมือและเริ่มจัดกิจกรรมได้ทันที'
+        },
+        event: {
+          code: '02',
+          bg: '#2980B9',
+          fg: '#FFFFFF',
+          heading: 'งานที่บันทึกไว้ล่าสุด',
+          subtitle: 'ตรวจสอบคะแนนทีมและเปิดต่อบนเวทีได้ในคลิกเดียว'
+        },
+        bgm: {
+          code: '03',
+          bg: '#E74C3C',
+          fg: '#FFFFFF',
+          heading: 'เพลงพื้นหลังเวที (BGM)',
+          subtitle: 'ควบคุมคิวเพลง YouTube ที่เล่นต่อเนื่องข้ามหน้า'
+        },
+        system: {
+          code: '04',
+          bg: '#10B981',
+          fg: '#111111',
+          heading: 'ระบบ ซิงค์ & คู่มือ',
+          subtitle: 'สถานะบัญชี คู่มือใช้งาน และบันทึกการอัปเดต'
         }
-      } catch (_) {}
-
-      const TOOLS = [
-        {
-          id: 'scoreboard',
-          shape: 0,
-          href: 'scoreboard.html',
-          title: 'Stage Scoreboard',
-          note: savedEventSummary || 'กระดานคะแนนสดบนเวที'
-        }
-      ];
+      };
+      const FOLDER_ORDER = ['tools', 'event', 'bgm', 'system'];
 
       const esc = (v) => String(v || '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-      function toolCard(t) {
-        const mascot = VoxMascots.svg(t.shape, undefined, 'js-mascot-svg pointer-events-none w-28 h-28 sm:w-32 sm:h-32 will-change-transform');
-        return `
-          <a href="${esc(t.href)}" aria-label="${esc(t.title)}" class="js-mascot-card vox-panel-enter group relative flex flex-col items-center justify-center gap-3.5 p-5 no-underline select-none">
-            ${mascot}
-            <div class="flex flex-col items-center gap-1">
-              <span class="thai-safe-tight font-display font-extrabold text-sm sm:text-base text-[#111111]/75 group-hover:text-[#111111] transition-colors duration-200">${esc(t.title)}</span>
-              <span class="thai-safe-tight text-[11px] font-semibold text-[#111111]/55 opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200 pointer-events-none">${esc(t.note)}</span>
-            </div>
-          </a>`;
-      }
+      const readSavedScoreboard = () => {
+        try {
+          const raw = localStorage.getItem('vox_scoreboard_clean_v3');
+          if (!raw) return null;
+          const parsed = JSON.parse(raw);
+          if (parsed && Array.isArray(parsed.teams)) return parsed;
+        } catch (_) {}
+        return null;
+      };
+
+      const readBgmState = () => {
+        let player = { videoId: '', title: '', playing: false };
+        let queue = [];
+        let mode = 'loop';
+        try {
+          const p = JSON.parse(localStorage.getItem('helpdai_bgm_player_v1') || 'null');
+          if (p && typeof p.videoId === 'string') player = p;
+        } catch (_) {}
+        try {
+          const q = JSON.parse(localStorage.getItem('helpdai_bgm_queue_v1') || '[]');
+          if (Array.isArray(q)) queue = q;
+        } catch (_) {}
+        try {
+          const m = localStorage.getItem('helpdai_bgm_playmode_v1');
+          if (m === 'loop' || m === 'next' || m === 'stop') mode = m;
+        } catch (_) {}
+        return { player, queue, mode };
+      };
+
+      const readAuthUser = () => {
+        try {
+          const a = JSON.parse(localStorage.getItem('helpdai_auth_v1') || 'null');
+          return a?.user || null;
+        } catch (_) {
+          return null;
+        }
+      };
+
+      const openBgmDock = () => {
+        const dock = document.getElementById('cassette-side-dock');
+        const btn = dock?.querySelector('button, [role="button"]') || dock;
+        if (btn) btn.click();
+      };
 
       let rafId = 0;
-      const gridEl = document.getElementById('tool-grid');
-      if (gridEl) {
-        gridEl.innerHTML = TOOLS.map(toolCard).join('');
+      let pointerCleanup = null;
+      const stopMascotPhysics = () => {
+        if (rafId) {
+          cancelAnimationFrame(rafId);
+          rafId = 0;
+        }
+        if (pointerCleanup) {
+          pointerCleanup();
+          pointerCleanup = null;
+        }
+      };
 
-        // Damped harmonic spring proximity + magnetic hover on unscaled card center
-        const items = Array.from(gridEl.querySelectorAll('.js-mascot-card')).map((card) => ({
+      const bindMascotPhysics = (container) => {
+        stopMascotPhysics();
+        const items = Array.from(container.querySelectorAll('.js-mascot-card')).map((card) => ({
           card,
           svg: card.querySelector('.js-mascot-svg'),
           scale: 1,
@@ -176,12 +265,15 @@
           targetRot: 0
         })).filter((it) => it.svg);
 
-        const PROXIMITY_PX = 250;
+        if (!items.length) return;
+
+        const localAc = new AbortController();
+        const s = localAc.signal;
+        const PROXIMITY_PX = 220;
 
         const tick = () => {
           let active = false;
           for (const it of items) {
-            // Spring physics for scale (stiffness 0.18, damping 0.72)
             it.vScale = (it.vScale + (it.targetScale - it.scale) * 0.18) * 0.72;
             it.scale += it.vScale;
             it.tx += (it.targetTx - it.tx) * 0.22;
@@ -211,17 +303,9 @@
           rafId = active ? requestAnimationFrame(tick) : 0;
         };
 
-        const scheduleTick = () => {
-          if (!rafId) rafId = requestAnimationFrame(tick);
-        };
-
+        const scheduleTick = () => { if (!rafId) rafId = requestAnimationFrame(tick); };
         const resetScales = () => {
-          items.forEach((it) => {
-            it.targetScale = 1;
-            it.targetTx = 0;
-            it.targetTy = 0;
-            it.targetRot = 0;
-          });
+          items.forEach((it) => { it.targetScale = 1; it.targetTx = 0; it.targetTy = 0; it.targetRot = 0; });
           scheduleTick();
         };
 
@@ -236,16 +320,16 @@
             const dist = Math.hypot(dx, dy);
 
             if (it.card.matches(':hover')) {
-              it.targetScale = 1.48;
-              it.targetTx = Math.max(-8, Math.min(8, dx * 0.08));
-              it.targetTy = Math.max(-8, Math.min(8, dy * 0.08)) - 4;
-              it.targetRot = Math.max(-5, Math.min(5, dx * 0.04));
+              it.targetScale = 1.18;
+              it.targetTx = Math.max(-6, Math.min(6, dx * 0.05));
+              it.targetTy = Math.max(-6, Math.min(6, dy * 0.05)) - 3;
+              it.targetRot = Math.max(-4, Math.min(4, dx * 0.03));
             } else if (dist < PROXIMITY_PX) {
               const t = 1 - dist / PROXIMITY_PX;
-              it.targetScale = 1 + t * t * 0.36;
-              it.targetTx = dx * 0.03 * t;
-              it.targetTy = dy * 0.03 * t;
-              it.targetRot = dx * 0.015 * t;
+              it.targetScale = 1 + t * t * 0.14;
+              it.targetTx = dx * 0.02 * t;
+              it.targetTy = dy * 0.02 * t;
+              it.targetRot = dx * 0.01 * t;
             } else {
               it.targetScale = 1;
               it.targetTx = 0;
@@ -254,21 +338,338 @@
             }
           });
           scheduleTick();
-        }, { passive: true, signal });
+        }, { passive: true, signal: s });
 
         items.forEach((it) => {
-          it.card.addEventListener('pointerdown', () => {
-            it.targetScale = 0.94;
-            scheduleTick();
-          }, { signal });
-          it.card.addEventListener('pointerup', () => {
-            it.targetScale = it.card.matches(':hover') ? 1.48 : 1;
-            scheduleTick();
-          }, { signal });
+          it.card.addEventListener('pointerdown', () => { it.targetScale = 0.95; scheduleTick(); }, { signal: s });
+          it.card.addEventListener('pointerup', () => { it.targetScale = it.card.matches(':hover') ? 1.18 : 1; scheduleTick(); }, { signal: s });
         });
-        document.addEventListener('pointerleave', resetScales, { signal });
-        window.addEventListener('blur', resetScales, { signal });
+        document.addEventListener('pointerleave', resetScales, { signal: s });
+        window.addEventListener('blur', resetScales, { signal: s });
+        pointerCleanup = () => localAc.abort();
+      };
+
+      const renderToolsFolder = () => {
+        const sb = readSavedScoreboard();
+        const savedSummary = sb
+          ? `${sb.eventTitle || 'งานปัจจุบัน'} • ${sb.teams.length} ทีม${Array.isArray(sb.games) ? ` • ${sb.games.length} กิจกรรม` : ''}`
+          : 'พร้อมเริ่มจัดกิจกรรมใหม่บนเวที';
+        const mascot = VoxMascots.svg(0, '#F4D03F', 'js-mascot-svg pointer-events-none w-24 h-24 sm:w-28 sm:h-28 will-change-transform');
+        return `
+          <div class="vox-panel-enter grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+            <a href="scoreboard.html" class="js-mascot-card vox-card-hover lg:col-span-7 flex flex-col sm:flex-row items-center gap-5 p-5 rounded-xl border-[3px] border-[#111111] bg-[#F8F6F0] shadow-[4px_4px_0px_#111111] no-underline text-[#111111] group">
+              <div class="shrink-0 flex items-center justify-center w-28 h-28 rounded-xl border-[2.5px] border-[#111111] bg-[#FFFFFF]">
+                ${mascot}
+              </div>
+              <div class="flex-1 min-w-0 flex flex-col items-center sm:items-start text-center sm:text-left gap-2">
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-[#111111] text-[#F4D03F] font-display font-black text-[11px] tracking-wide">READY TO PRESENT</span>
+                <h3 class="thai-safe-tight font-display font-black text-xl sm:text-2xl text-[#111111]">Stage Scoreboard</h3>
+                <p class="text-xs sm:text-sm font-semibold text-[#111111]/75 leading-relaxed">${esc(savedSummary)}</p>
+                <span class="mt-1 btn-vox inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#F4D03F] text-[#111111] font-display font-black text-xs sm:text-sm">
+                  <span>เปิดกระดานคะแนน</span>
+                  <span aria-hidden="true">→</span>
+                </span>
+              </div>
+            </a>
+
+            <div class="lg:col-span-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3">
+              <button type="button" data-hub-action="open-bgm" class="btn-vox flex items-center justify-between gap-3 px-4 py-3.5 rounded-xl bg-[#E74C3C] text-white text-left cursor-pointer">
+                <div class="min-w-0">
+                  <div class="font-display font-black text-sm">เปิดเพลงพื้นหลัง (BGM)</div>
+                  <div class="text-xs font-medium text-white/90 truncate">เปิดตลับเพลง YouTube ลอยข้ามหน้า</div>
+                </div>
+                <span class="shrink-0 w-8 h-8 rounded-lg bg-[#111111] text-[#F4D03F] font-display font-black text-sm flex items-center justify-center">♪</span>
+              </button>
+
+              <button type="button" data-hub-action="goto-event" class="btn-vox flex items-center justify-between gap-3 px-4 py-3.5 rounded-xl bg-[#2980B9] text-white text-left cursor-pointer">
+                <div class="min-w-0">
+                  <div class="font-display font-black text-sm">ดูสรุปงานล่าสุด</div>
+                  <div class="text-xs font-medium text-white/90 truncate">เช็กอันดับทีมหรือสำรองไฟล์ JSON</div>
+                </div>
+                <span class="shrink-0 w-8 h-8 rounded-lg bg-[#111111] text-white font-display font-black text-xs flex items-center justify-center">02</span>
+              </button>
+
+              <button type="button" data-start-tutorial class="btn-vox flex items-center justify-between gap-3 px-4 py-3.5 rounded-xl bg-[#10B981] text-[#111111] text-left cursor-pointer sm:col-span-2 lg:col-span-1">
+                <div class="min-w-0">
+                  <div class="font-display font-black text-sm">เริ่มคู่มือแบบโต้ตอบ</div>
+                  <div class="text-xs font-semibold text-[#111111]/80 truncate">แนะนำการใช้งานทีละขั้นตอน</div>
+                </div>
+                <span class="shrink-0 w-8 h-8 rounded-lg bg-[#111111] text-[#F4D03F] font-display font-black text-sm flex items-center justify-center">?</span>
+              </button>
+            </div>
+          </div>
+        `;
+      };
+
+      const renderEventFolder = () => {
+        const sb = readSavedScoreboard();
+        if (!sb || !sb.teams.length) {
+          return `
+            <div class="vox-panel-enter flex flex-col sm:flex-row items-center justify-between gap-4 p-5 rounded-xl border-[2.5px] border-dashed border-[#111111]/40 bg-[#F8F6F0]">
+              <div class="flex items-center gap-4">
+                ${VoxMascots.svg(2, '#2980B9', 'w-14 h-14')}
+                <div>
+                  <h3 class="thai-safe-tight font-display font-black text-base sm:text-lg text-[#111111]">ยังไม่มีงานที่บันทึกไว้ในเครื่องนี้</h3>
+                  <p class="text-xs sm:text-sm font-medium text-[#111111]/70">เปิด Stage Scoreboard เพื่อสร้างทีมและเริ่มเก็บคะแนนได้เลย</p>
+                </div>
+              </div>
+              <a href="scoreboard.html" class="btn-vox shrink-0 px-4 py-2.5 rounded-xl bg-[#2980B9] text-white font-display font-black text-xs sm:text-sm no-underline">เริ่มสร้างงานใหม่ →</a>
+            </div>
+          `;
+        }
+
+        const sorted = [...sb.teams].sort((a, b) => (Number(b.score) || 0) - (Number(a.score) || 0));
+        const maxScore = Math.max(1, ...sorted.map((t) => Math.max(0, Number(t.score) || 0)));
+        const gamesCount = Array.isArray(sb.games) ? sb.games.length : 0;
+
+        const rowsHtml = sorted.slice(0, 6).map((t, idx) => {
+          const score = Number(t.score) || 0;
+          const pct = Math.max(8, Math.round((Math.max(0, score) / maxScore) * 100));
+          const color = /^#[0-9a-fA-F]{6}$/.test(t.color || '') ? t.color : ['#F4D03F', '#E74C3C', '#2980B9', '#10B981'][idx % 4];
+          return `
+            <div class="flex items-center gap-3 p-2.5 rounded-xl border-2 border-[#111111] bg-[#F8F6F0]">
+              <span class="w-7 h-7 rounded-lg bg-[#111111] text-[#F8F6F0] font-display font-black text-xs flex items-center justify-center shrink-0 tabular-nums">#${idx + 1}</span>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between gap-2 mb-1">
+                  <span class="thai-safe-tight font-display font-extrabold text-xs sm:text-sm text-[#111111] truncate">${esc(t.name || `ทีม ${idx + 1}`)}</span>
+                  <span class="font-display font-black text-sm text-[#111111] tabular-nums shrink-0">${score}</span>
+                </div>
+                <div class="h-2.5 w-full rounded-md border-[1.5px] border-[#111111] bg-white overflow-hidden">
+                  <div class="h-full" style="width:${pct}%;background:${color};"></div>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        return `
+          <div class="vox-panel-enter flex flex-col gap-4">
+            <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b-2 border-[#111111]/15">
+              <div class="min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="px-2 py-0.5 rounded bg-[#2980B9] text-white font-display font-black text-[10px]">SAVED SESSION</span>
+                  <span class="text-xs font-bold text-[#111111]/65">${sb.teams.length} ทีม • ${gamesCount} กิจกรรม</span>
+                </div>
+                <h3 class="thai-safe-tight font-display font-black text-lg sm:text-xl text-[#111111] mt-1 truncate">${esc(sb.eventTitle || 'งานกิจกรรมบนเวที')}</h3>
+              </div>
+              <div class="flex flex-wrap items-center gap-2 shrink-0">
+                <button type="button" data-hub-action="export-event" class="btn-vox px-3.5 py-2 rounded-xl bg-white hover:bg-[#F4D03F] text-[#111111] font-display font-extrabold text-xs cursor-pointer">สำรองไฟล์ JSON</button>
+                <a href="scoreboard.html" class="btn-vox px-4 py-2 rounded-xl bg-[#2980B9] text-white font-display font-black text-xs no-underline">เปิดต่อบนเวที →</a>
+              </div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">${rowsHtml}</div>
+          </div>
+        `;
+      };
+
+      const renderBgmFolder = () => {
+        const { player, queue, mode } = readBgmState();
+        const modeLabels = { loop: 'วนซ้ำเพลงเดิม', next: 'เล่นเพลงถัดไป', stop: 'หยุดเมื่อจบ' };
+        const hasTrack = Boolean(player.videoId);
+        const queueHtml = queue.length
+          ? queue.slice().reverse().slice(0, 5).map((item) => {
+              const active = item.id === player.videoId;
+              return `
+                <button type="button" data-play-track="${esc(item.id)}" data-play-title="${esc(item.title || '')}" class="btn-vox w-full flex items-center justify-between gap-3 px-3.5 py-2.5 rounded-xl ${active ? 'bg-[#F4D03F] text-[#111111]' : 'bg-[#F8F6F0] hover:bg-white text-[#111111]'} text-left cursor-pointer">
+                  <div class="flex items-center gap-2.5 min-w-0">
+                    <span class="w-6 h-6 rounded-md bg-[#111111] text-[#F4D03F] font-display font-black text-[11px] flex items-center justify-center shrink-0">${active ? '▶' : '♪'}</span>
+                    <span class="text-xs sm:text-sm font-bold truncate">${esc(item.title || `YouTube (${item.id})`)}</span>
+                  </div>
+                  <span class="shrink-0 font-display font-black text-[10px] px-2 py-0.5 rounded bg-[#111111] text-white">${active ? 'กำลังเลือก' : 'เล่น'}</span>
+                </button>
+              `;
+            }).join('')
+          : `<div class="p-4 rounded-xl border-2 border-dashed border-[#111111]/30 bg-[#F8F6F0] text-xs font-semibold text-[#111111]/65">ยังไม่มีประวัติคิวเพลง กด "เปิดตลับเพลง" เพื่อวางลิงก์ YouTube</div>`;
+
+        return `
+          <div class="vox-panel-enter grid grid-cols-1 lg:grid-cols-12 gap-4">
+            <div class="lg:col-span-5 flex flex-col justify-between gap-4 p-4 rounded-xl border-[2.5px] border-[#111111] bg-[#F8F6F0]">
+              <div class="flex flex-col gap-2">
+                <div class="flex items-center justify-between gap-2">
+                  <span class="px-2 py-0.5 rounded ${player.playing ? 'bg-[#10B981] text-[#111111]' : 'bg-[#111111] text-[#F4D03F]'} font-display font-black text-[10px]">${player.playing ? 'NOW PLAYING' : 'STANDBY'}</span>
+                  <span class="text-[11px] font-display font-bold text-[#111111]/65">${esc(modeLabels[mode] || mode)}</span>
+                </div>
+                <h3 class="thai-safe-tight font-display font-black text-base sm:text-lg text-[#111111] break-words">${esc(hasTrack ? (player.title || `YouTube (${player.videoId})`) : 'ยังไม่ได้เลือกเพลงพื้นหลัง')}</h3>
+                <p class="text-xs font-medium text-[#111111]/70">เพลงจะเล่นต่อเนื่องอัตโนมัติเมื่อคุณสลับไปหน้า Stage Scoreboard</p>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                <button type="button" data-hub-action="open-bgm" class="btn-vox flex-1 px-4 py-2.5 rounded-xl bg-[#E74C3C] text-white font-display font-black text-xs cursor-pointer">เปิดตลับเพลง (BGM)</button>
+                <a href="scoreboard.html" class="btn-vox px-3.5 py-2.5 rounded-xl bg-white hover:bg-[#F4D03F] text-[#111111] font-display font-extrabold text-xs no-underline">ไปหน้าเวที →</a>
+              </div>
+            </div>
+
+            <div class="lg:col-span-7 flex flex-col gap-2">
+              <div class="flex items-center justify-between px-0.5">
+                <span class="font-display font-black text-xs text-[#111111]">คิวเพลงล่าสุด (${queue.length})</span>
+                <span class="text-[11px] font-semibold text-[#111111]/55">คลิกเพื่อเล่นทันที</span>
+              </div>
+              <div class="flex flex-col gap-2">${queueHtml}</div>
+            </div>
+          </div>
+        `;
+      };
+
+      const renderSystemFolder = () => {
+        const user = readAuthUser();
+        const ver = document.getElementById('changelog-build-label')?.textContent || 'v0.1.0';
+        const authStatus = user
+          ? `เชื่อมต่อแล้ว (${user.email || user.name || 'Signed in'})`
+          : 'โหมดใช้งานในเครื่อง (Local Only)';
+
+        return `
+          <div class="vox-panel-enter flex flex-col gap-4">
+            <div class="flex flex-wrap items-center justify-between gap-3 p-4 rounded-xl border-[2.5px] border-[#111111] bg-[#F8F6F0]">
+              <div class="flex items-center gap-3 min-w-0">
+                <span class="w-3.5 h-3.5 rounded-full border-2 border-[#111111] ${user ? 'bg-[#10B981]' : 'bg-[#F4D03F]'} shrink-0"></span>
+                <div class="min-w-0">
+                  <div class="font-display font-black text-xs sm:text-sm text-[#111111]">สถานะการซิงค์ข้อมูล</div>
+                  <div class="text-xs font-semibold text-[#111111]/70 truncate">${esc(authStatus)}</div>
+                </div>
+              </div>
+              <span class="px-2.5 py-1 rounded-lg bg-[#111111] text-[#F4D03F] font-display font-black text-[11px] tabular-nums shrink-0">${esc(ver)}</span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              <button type="button" data-start-tutorial class="btn-vox p-4 rounded-xl bg-[#F4D03F] text-[#111111] text-left flex flex-col gap-1 cursor-pointer">
+                <span class="font-display font-black text-sm">? คู่มือใช้งาน</span>
+                <span class="text-xs font-semibold text-[#111111]/80">เริ่มทัวร์แนะนำทีละขั้น</span>
+              </button>
+              <button type="button" data-hub-action="open-sugg" class="btn-vox p-4 rounded-xl bg-[#2980B9] text-white text-left flex flex-col gap-1 cursor-pointer">
+                <span class="font-display font-black text-sm">กล่องเสนอแนะ</span>
+                <span class="text-xs font-medium text-white/90">ส่งไอเดียหรือแจ้งบั๊ก</span>
+              </button>
+              <button type="button" data-hub-action="open-changelog" class="btn-vox p-4 rounded-xl bg-[#E74C3C] text-white text-left flex flex-col gap-1 cursor-pointer">
+                <span class="font-display font-black text-sm">บันทึกการอัปเดต</span>
+                <span class="text-xs font-medium text-white/90">ดูฟีเจอร์ใหม่ใน ${esc(ver)}</span>
+              </button>
+              <button type="button" data-open-tos class="btn-vox p-4 rounded-xl bg-[#10B981] text-[#111111] text-left flex flex-col gap-1 cursor-pointer">
+                <span class="font-display font-black text-sm">ข้อตกลง (ToS)</span>
+                <span class="text-xs font-semibold text-[#111111]/80">เงื่อนไขและสิทธิ์การใช้งาน</span>
+              </button>
+            </div>
+          </div>
+        `;
+      };
+
+      const gridEl = document.getElementById('tool-grid');
+      const jacketEl = document.getElementById('folder-jacket');
+      const panelEl = document.getElementById('folder-panel');
+      const badgeEl = document.getElementById('folder-badge');
+      const headingEl = document.getElementById('folder-heading');
+      const subtitleEl = document.getElementById('folder-subtitle');
+      const tabButtons = Array.from(document.querySelectorAll('[data-folder-tab]'));
+
+      let activeFolder = 'tools';
+      const hashFolder = location.hash.replace('#', '');
+      if (FOLDERS[hashFolder]) {
+        activeFolder = hashFolder;
+      } else {
+        try {
+          const saved = sessionStorage.getItem(FOLDER_KEY);
+          if (saved && FOLDERS[saved]) activeFolder = saved;
+        } catch (_) {}
       }
+
+      const renderFolder = (key) => {
+        activeFolder = FOLDERS[key] ? key : 'tools';
+        try { sessionStorage.setItem(FOLDER_KEY, activeFolder); } catch (_) {}
+        const meta = FOLDERS[activeFolder];
+
+        if (jacketEl) {
+          jacketEl.style.setProperty('--folder-bg', meta.bg);
+          jacketEl.style.setProperty('--folder-fg', meta.fg);
+          jacketEl.classList.toggle('is-first-tab', activeFolder === 'tools');
+        }
+        if (panelEl) panelEl.setAttribute('aria-labelledby', `tab-${activeFolder}`);
+        if (badgeEl) badgeEl.textContent = meta.code;
+        if (headingEl) headingEl.textContent = meta.heading;
+        if (subtitleEl) subtitleEl.textContent = meta.subtitle;
+
+        tabButtons.forEach((btn) => {
+          const on = btn.dataset.folderTab === activeFolder;
+          btn.classList.toggle('is-active', on);
+          btn.setAttribute('aria-selected', String(on));
+          btn.tabIndex = on ? 0 : -1;
+        });
+
+        stopMascotPhysics();
+        if (!gridEl) return;
+
+        if (activeFolder === 'tools') {
+          gridEl.innerHTML = renderToolsFolder();
+          bindMascotPhysics(gridEl);
+        } else if (activeFolder === 'event') {
+          gridEl.innerHTML = renderEventFolder();
+        } else if (activeFolder === 'bgm') {
+          gridEl.innerHTML = renderBgmFolder();
+        } else {
+          gridEl.innerHTML = renderSystemFolder();
+        }
+      };
+
+      tabButtons.forEach((btn, idx) => {
+        btn.addEventListener('click', () => renderFolder(btn.dataset.folderTab), { signal });
+        btn.addEventListener('keydown', (e) => {
+          if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+            e.preventDefault();
+            const dir = e.key === 'ArrowRight' ? 1 : -1;
+            const next = tabButtons[(idx + dir + tabButtons.length) % tabButtons.length];
+            renderFolder(next.dataset.folderTab);
+            next.focus();
+          }
+        }, { signal });
+      });
+
+      gridEl?.addEventListener('click', (e) => {
+        const actionBtn = e.target.closest('[data-hub-action]');
+        if (actionBtn) {
+          const act = actionBtn.dataset.hubAction;
+          if (act === 'open-bgm') openBgmDock();
+          else if (act === 'goto-event') renderFolder('event');
+          else if (act === 'open-sugg') document.getElementById('open-sugg-btn')?.click();
+          else if (act === 'open-changelog') document.getElementById('open-changelog-btn')?.click();
+          else if (act === 'export-event') {
+            const sb = readSavedScoreboard();
+            if (!sb) return;
+            const blob = new Blob([JSON.stringify(sb, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `scoreboard-${(sb.eventTitle || 'backup').replace(/[^a-zA-Z0-9ก-๙_-]+/g, '-').slice(0, 32)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+          }
+          return;
+        }
+
+        const trackBtn = e.target.closest('[data-play-track]');
+        if (trackBtn) {
+          const id = trackBtn.dataset.playTrack;
+          const title = trackBtn.dataset.playTitle || `YouTube (${id})`;
+          const next = { videoId: id, title, playing: true, elapsedSec: 0, startedAt: Date.now() };
+          try { localStorage.setItem('helpdai_bgm_player_v1', JSON.stringify(next)); } catch (_) {}
+          window.dispatchEvent(new CustomEvent('helpdai-bgm-change', { detail: next }));
+          renderFolder('bgm');
+        }
+      }, { signal });
+
+      window.addEventListener('keydown', (e) => {
+        if (e.metaKey || e.ctrlKey || e.altKey) return;
+        const tag = document.activeElement?.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || document.activeElement?.isContentEditable) return;
+        const idx = Number(e.key) - 1;
+        if (idx >= 0 && idx < FOLDER_ORDER.length) {
+          renderFolder(FOLDER_ORDER[idx]);
+        }
+      }, { signal });
+
+      window.addEventListener('helpdai-bgm-change', () => {
+        if (activeFolder === 'bgm') renderFolder('bgm');
+      }, { signal });
+
+      renderFolder(activeFolder);
 
       // Suggestion Box with smooth modal open/close
       (() => {
@@ -370,7 +771,7 @@
 
       window.__voxRegisterCleanup?.(() => {
         ac.abort();
-        if (rafId) cancelAnimationFrame(rafId);
+        stopMascotPhysics();
       });
     })();
   </script>

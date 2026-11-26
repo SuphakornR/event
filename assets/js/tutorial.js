@@ -7,10 +7,10 @@
   const STEPS_BY_PAGE = {
     hub: [
       {
-        selector: '#tool-grid',
+        selector: '#folder-binder',
         mascot: 0,
-        title: 'เข้าสู่กระดานคะแนนเวที',
-        text: 'เลื่อนเมาส์เข้าใกล้แล้วคลิกที่มาสคอต Stage Scoreboard เพื่อเปิดใช้งานกระดานคะแนนสดบนเวทีได้ทันที'
+        title: 'สลับแฟ้มเมนูได้รวดเร็ว',
+        text: 'คลิกแท็บสีด้านบน (หรือกดปุ่ม 1–4) เพื่อสลับดูเครื่องมือ งานล่าสุด เพลงเวที และคู่มือได้อย่างรวดเร็ว'
       },
       {
         selector: '#helpdai-auth-slot, #open-sugg-btn',
