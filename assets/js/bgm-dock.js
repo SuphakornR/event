@@ -737,7 +737,22 @@
       toggleCustomMenu(true);
     });
 
-    document.addEventListener('click', (e) => {
+    const handlePrefetch = (e) => {
+    const link = e.target.closest?.('a[href]');
+    if (!link) return;
+    const href = link.getAttribute('href') || '';
+    if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:')) return;
+    try {
+      const url = new URL(link.href, window.location.href);
+      if (url.origin === window.location.origin && url.href !== window.location.href) {
+        prefetchUrl(url.href);
+      }
+    } catch (_) {}
+  };
+  document.addEventListener('pointerenter', handlePrefetch, true);
+  document.addEventListener('focusin', handlePrefetch, true);
+
+  document.addEventListener('click', (e) => {
       if (customMenu && !customMenu.classList.contains('hidden') && !dock.contains(e.target)) {
         toggleCustomMenu(false);
         scheduleHide();
@@ -843,19 +858,38 @@
     syncUi();
   }
 
-  // In-place PJAX page swap (no iframe, compatible with GitHub Pages X-Frame-Options: DENY)
-  // Keeps #helpdai-bgm-dock, #helpdai-bgm-modal, and #helpdai-top-yt-host intact so music never interrupts.
+  // In-place PJAX page swap with link-hover prefetching (keeps music player uninterrupted)
   let pjaxInFlight = false;
+  const prefetchedHtml = new Map();
   const BGM_KEEP_IDS = new Set(['helpdai-bgm-dock', 'helpdai-bgm-modal', 'helpdai-top-yt-host']);
   const SKIP_SCRIPT_RE = /(?:loader\.js|bgm-dock\.js|tailwindcss\.com|Widget_2\.js)/i;
+
+  const isAlreadyLoadedLib = (src) => {
+    if (/config\.js/i.test(src) && window.HELPDAI_CONFIG) return true;
+    if (/security\.js/i.test(src) && window.VoxSecurity) return true;
+    if (/mascots\.js/i.test(src) && window.VoxMascots) return true;
+    return false;
+  };
+
+  const prefetchUrl = (url) => {
+    if (!url || prefetchedHtml.has(url) || !location.protocol.startsWith('http')) return;
+    fetch(url, { credentials: 'same-origin' })
+      .then((r) => (r.ok ? r.text() : ''))
+      .then((html) => { if (html) prefetchedHtml.set(url, html); })
+      .catch(() => {});
+  };
 
   window.__voxShellNavigate = async (targetUrl, push = true) => {
     if (pjaxInFlight) return;
     pjaxInFlight = true;
     try {
-      const res = await fetch(targetUrl, { credentials: 'same-origin' });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      const html = await res.text();
+      let html = prefetchedHtml.get(targetUrl);
+      if (!html) {
+        const res = await fetch(targetUrl, { credentials: 'same-origin' });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        html = await res.text();
+        prefetchedHtml.set(targetUrl, html);
+      }
       const doc = new DOMParser().parseFromString(html, 'text/html');
 
       if (push) {
@@ -903,7 +937,7 @@
       for (const oldScript of pendingScripts) {
         const src = oldScript.getAttribute('src') || '';
         const inline = oldScript.textContent || '';
-        if (src && SKIP_SCRIPT_RE.test(src)) continue;
+        if (src && (SKIP_SCRIPT_RE.test(src) || isAlreadyLoadedLib(src))) continue;
         if (!src && inline.includes('kofiwidget2')) continue;
 
         await new Promise((resolve) => {
@@ -932,6 +966,21 @@
   window.addEventListener('popstate', () => {
     window.__voxShellNavigate(window.location.href, false);
   });
+
+  const handlePrefetch = (e) => {
+    const link = e.target.closest?.('a[href]');
+    if (!link) return;
+    const href = link.getAttribute('href') || '';
+    if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:')) return;
+    try {
+      const url = new URL(link.href, window.location.href);
+      if (url.origin === window.location.origin && url.href !== window.location.href) {
+        prefetchUrl(url.href);
+      }
+    } catch (_) {}
+  };
+  document.addEventListener('pointerenter', handlePrefetch, true);
+  document.addEventListener('focusin', handlePrefetch, true);
 
   document.addEventListener('click', (e) => {
     if (e.defaultPrevented) return;

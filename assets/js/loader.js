@@ -6,22 +6,22 @@
   style.textContent = `
     @view-transition { navigation: auto; }
     ::view-transition-old(root) {
-      animation: voxPageOut 0.18s cubic-bezier(0.4, 0, 1, 1) both;
+      animation: voxPageOut 0.12s cubic-bezier(0.4, 0, 1, 1) both;
     }
     ::view-transition-new(root) {
-      animation: voxPageIn 0.26s cubic-bezier(0.22, 1, 0.36, 1) both;
+      animation: voxPageIn 0.16s cubic-bezier(0.22, 1, 0.36, 1) both;
     }
     @keyframes voxPageOut {
       from { opacity: 1; transform: translateY(0); }
-      to   { opacity: 0; transform: translateY(-6px); }
+      to   { opacity: 0; transform: translateY(-4px); }
     }
     @keyframes voxPageIn {
-      from { opacity: 0; transform: translateY(8px); }
+      from { opacity: 0; transform: translateY(5px); }
       to   { opacity: 1; transform: translateY(0); }
     }
     body > main {
-      animation: voxPageIn 0.26s cubic-bezier(0.22, 1, 0.36, 1) both;
-      transition: opacity 0.16s cubic-bezier(0.4, 0, 0.2, 1), transform 0.16s cubic-bezier(0.4, 0, 0.2, 1);
+      animation: voxPageIn 0.16s cubic-bezier(0.22, 1, 0.36, 1) both;
+      transition: opacity 0.12s cubic-bezier(0.4, 0, 0.2, 1), transform 0.12s cubic-bezier(0.4, 0, 0.2, 1);
       will-change: opacity, transform;
     }
     html.vox-page-leaving body > main {

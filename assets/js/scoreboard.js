@@ -71,6 +71,7 @@
           }
         ],
         winnerAnnounced: false,
+        winnerAnnouncedAt: 0,
         activeGameAccordion: null,
         isMediaZoomed: false,
         isVideoMuted: false,
@@ -185,6 +186,7 @@
           };
         });
         base.winnerAnnounced = Boolean(parsed.winnerAnnounced);
+        base.winnerAnnouncedAt = Number(parsed.winnerAnnouncedAt) || 0;
         base.activeGameAccordion = (typeof parsed.activeGameAccordion === 'number' && parsed.activeGameAccordion >= 0 && parsed.activeGameAccordion < gCount)
           ? parsed.activeGameAccordion
           : null;
@@ -237,6 +239,7 @@
             st.timer.endAt = null;
           }
           st.winnerAnnounced = false;
+          st.winnerAnnouncedAt = 0;
           return st;
         } catch (err) {
           console.warn('Recovering default state due to storage read error:', err);
@@ -594,7 +597,8 @@
             syncTheaterZoomState();
           }
 
-          if (triggerConfettiIfNewWinner && !wasWinner && state.winnerAnnounced) {
+          const isFreshRemoteWinner = Boolean(state.winnerAnnouncedAt) && (Date.now() - state.winnerAnnouncedAt < 15000);
+          if (triggerConfettiIfNewWinner && !wasWinner && state.winnerAnnounced && isFreshRemoteWinner) {
             triggerVictorySequence();
           } else if (wasWinner && !state.winnerAnnounced) {
             hideVictorySpotlight();
@@ -2902,6 +2906,7 @@
       if (btnWinner) {
         btnWinner.addEventListener('click', () => {
           state.winnerAnnounced = !state.winnerAnnounced;
+          state.winnerAnnouncedAt = state.winnerAnnounced ? Date.now() : 0;
           saveAndBroadcast();
           renderLeaderboard(true);
           if (state.winnerAnnounced) triggerVictorySequence();
@@ -3585,6 +3590,7 @@
       if (adminVictoryBtn) {
         adminVictoryBtn.addEventListener('click', () => {
           state.winnerAnnounced = !state.winnerAnnounced;
+          state.winnerAnnouncedAt = state.winnerAnnounced ? Date.now() : 0;
           saveAndBroadcast();
           renderAdminUI();
         });
@@ -3664,6 +3670,7 @@
         hideVictorySpotlight();
         if (state.winnerAnnounced) {
           state.winnerAnnounced = false;
+          state.winnerAnnouncedAt = 0;
           saveAndBroadcast();
           renderLeaderboard(true);
         }
@@ -4026,11 +4033,13 @@
           );
           if (isOverlayOpen) {
             state.winnerAnnounced = false;
+            state.winnerAnnouncedAt = 0;
             saveAndBroadcast();
             renderLeaderboard(true);
             hideVictorySpotlight();
           } else {
             state.winnerAnnounced = true;
+            state.winnerAnnouncedAt = Date.now();
             saveAndBroadcast();
             renderLeaderboard(true);
             triggerVictorySequence();
