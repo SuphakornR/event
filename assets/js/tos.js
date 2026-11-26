@@ -1,5 +1,9 @@
 /* Shared Terms of Service & Privacy Policy Gate (TH/EN, PDPA & International Compliance) */
 (() => {
+  if (window.VoxTos) {
+    window.VoxTos.check();
+    return;
+  }
   const TOS_KEY = 'vox_tos_accepted_v2';
 
   function isAccepted() {
@@ -21,7 +25,7 @@
       sections: [
         {
           h: '1. ขอบเขตบริการและความปลอดภัยของข้อมูล (Data Safety)',
-          p: 'suphakorn.rukkarn ให้บริการเครื่องมือจัดกิจกรรมและวางแผน (Stage Scoreboard, Calendar) โดยเชื่อมต่อผ่าน HTTPS/TLS และระบบฐานข้อมูลที่มีการแยกสิทธิ์การเข้าถึงระดับแถว (Row-Level Security) หากใช้งานแบบไม่เข้าสู่ระบบ (Guest) ข้อมูลจะไม่ถูกซิงค์ขึ้นคลาวด์และจะรีเซ็ตเมื่อปิด/รีเฟรชหน้า เว้นแต่ผู้ใช้เลือกบันทึกในเครื่องหรือเข้าสู่ระบบ'
+          p: 'suphakorn.rukkarn ให้บริการเครื่องมือจัดกิจกรรมบนเวที (Stage Scoreboard) โดยเชื่อมต่อผ่าน HTTPS/TLS และระบบฐานข้อมูลที่มีการแยกสิทธิ์การเข้าถึงระดับแถว (Row-Level Security) หากใช้งานแบบไม่เข้าสู่ระบบ (Guest) ข้อมูลจะไม่ถูกซิงค์ขึ้นคลาวด์และจะรีเซ็ตเมื่อปิด/รีเฟรชหน้า เว้นแต่ผู้ใช้เลือกบันทึกในเครื่องหรือเข้าสู่ระบบ'
         },
         {
           h: '2. การคุ้มครองข้อมูลส่วนบุคคล (PDPA ไทย & GDPR/CCPA สากล)',
@@ -200,13 +204,19 @@
     });
   }
 
-  document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('[data-open-tos]').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        showTosModal(true);
-      });
-    });
-    showTosModal(false);
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('[data-open-tos]')) {
+      e.preventDefault();
+      showTosModal(true);
+    }
   });
+
+  const checkTos = () => showTosModal(false);
+  window.VoxTos = Object.freeze({ open: () => showTosModal(true), check: checkTos });
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', checkTos, { once: true });
+  } else {
+    checkTos();
+  }
 })();

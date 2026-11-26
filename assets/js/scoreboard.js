@@ -1,5 +1,7 @@
 /* Live Scoreboard tool: state, sync (BroadcastChannel + PeerJS), stage & backstage views */
     (() => {
+      const sbAbort = new AbortController();
+      const sbSignal = sbAbort.signal;
       const STORAGE_KEY = 'vox_scoreboard_clean_v3';
       const ROOM_STORAGE_KEY = 'vox_freshy_marketing_room_code_v1';
       const CHANNEL_NAME = 'vox_event_toolkit_sync_channel';
@@ -379,9 +381,12 @@
         };
 
         const closeStageMenu = () => {
-          popEl.classList.add('hidden');
-          popEl.classList.remove('flex');
-          menuBtn.setAttribute('aria-expanded', 'false');
+          if (window.VoxUI) window.VoxUI.setPopover(popEl, false, menuBtn);
+          else {
+            popEl.classList.add('hidden');
+            popEl.classList.remove('flex');
+            menuBtn.setAttribute('aria-expanded', 'false');
+          }
         };
 
         const renderStageMenu = () => {
@@ -495,20 +500,23 @@
 
         menuBtn.addEventListener('click', (e) => {
           e.stopPropagation();
-          const isHidden = popEl.classList.contains('hidden');
-          if (isHidden) {
+          const isOpen = popEl.classList.contains('is-open') || (!window.VoxUI && !popEl.classList.contains('hidden'));
+          if (!isOpen) {
             renderStageMenu();
-            popEl.classList.remove('hidden');
-            popEl.classList.add('flex');
-            menuBtn.setAttribute('aria-expanded', 'true');
+            if (window.VoxUI) window.VoxUI.setPopover(popEl, true, menuBtn);
+            else {
+              popEl.classList.remove('hidden');
+              popEl.classList.add('flex');
+              menuBtn.setAttribute('aria-expanded', 'true');
+            }
           } else {
             closeStageMenu();
           }
-        });
+        }, { signal: sbSignal });
         document.addEventListener('click', (e) => {
           if (!popEl.contains(e.target) && e.target !== menuBtn && !menuBtn.contains(e.target)) closeStageMenu();
-        });
-        window.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeStageMenu(); });
+        }, { signal: sbSignal });
+        window.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeStageMenu(); }, { signal: sbSignal });
       })();
 
       function saveAndBroadcast(options = { broadcast: true }) {
@@ -532,7 +540,7 @@
           persistStateToStorage();
         }
         syncStageSyncPill();
-      });
+      }, { signal: sbSignal });
 
       window.addEventListener('helpdai-slot-change', () => {
         state = cloneDefaultState();
@@ -631,7 +639,7 @@
             applyIncomingState(parsed, !isInitialCloudHydrate);
           } catch (_) {}
         }
-      });
+      }, { signal: sbSignal });
 
       function buildAdminUrl(code) {
         const url = new URL(window.location.href);
@@ -2862,18 +2870,24 @@
       if (viewSettingsBtn && viewSettingsPopover) {
         viewSettingsBtn.addEventListener('click', (e) => {
           e.stopPropagation();
-          const isHidden = viewSettingsPopover.classList.contains('hidden');
-          viewSettingsPopover.classList.toggle('hidden', !isHidden);
-          viewSettingsPopover.classList.toggle('flex', isHidden);
-          viewSettingsBtn.setAttribute('aria-expanded', String(isHidden));
-        });
-        document.addEventListener('click', (e) => {
-          if (!viewSettingsPopover.contains(e.target) && e.target !== viewSettingsBtn) {
-            viewSettingsPopover.classList.add('hidden');
-            viewSettingsPopover.classList.remove('flex');
-            viewSettingsBtn.setAttribute('aria-expanded', 'false');
+          const isOpen = viewSettingsPopover.classList.contains('is-open') || (!window.VoxUI && !viewSettingsPopover.classList.contains('hidden'));
+          if (window.VoxUI) window.VoxUI.setPopover(viewSettingsPopover, !isOpen, viewSettingsBtn);
+          else {
+            viewSettingsPopover.classList.toggle('hidden', isOpen);
+            viewSettingsPopover.classList.toggle('flex', !isOpen);
+            viewSettingsBtn.setAttribute('aria-expanded', String(!isOpen));
           }
-        });
+        }, { signal: sbSignal });
+        document.addEventListener('click', (e) => {
+          if (!viewSettingsPopover.contains(e.target) && e.target !== viewSettingsBtn && !viewSettingsBtn.contains(e.target)) {
+            if (window.VoxUI) window.VoxUI.setPopover(viewSettingsPopover, false, viewSettingsBtn);
+            else {
+              viewSettingsPopover.classList.add('hidden');
+              viewSettingsPopover.classList.remove('flex');
+              viewSettingsBtn.setAttribute('aria-expanded', 'false');
+            }
+          }
+        }, { signal: sbSignal });
       }
 
       document.querySelectorAll('[data-view-detail]').forEach(btn => {
@@ -2935,9 +2949,12 @@
         }
         if (e.key === 'Escape') {
           if (viewSettingsPopover && !viewSettingsPopover.classList.contains('hidden')) {
-            viewSettingsPopover.classList.add('hidden');
-            viewSettingsPopover.classList.remove('flex');
-            viewSettingsBtn?.setAttribute('aria-expanded', 'false');
+            if (window.VoxUI) window.VoxUI.setPopover(viewSettingsPopover, false, viewSettingsBtn);
+            else {
+              viewSettingsPopover.classList.add('hidden');
+              viewSettingsPopover.classList.remove('flex');
+              viewSettingsBtn?.setAttribute('aria-expanded', 'false');
+            }
             return;
           }
           if (document.getElementById('victory-celebration-overlay') || document.getElementById('victory-drumroll-overlay')) {
@@ -3649,7 +3666,7 @@
         confettiCanvas.width = window.innerWidth;
         confettiCanvas.height = window.innerHeight;
       }
-      window.addEventListener('resize', resizeConfettiCanvas);
+      window.addEventListener('resize', resizeConfettiCanvas, { signal: sbSignal });
       resizeConfettiCanvas();
 
       let victoryTimers = [];
@@ -4194,5 +4211,12 @@
       syncStageSyncPill();
       window.__voxStageReady = true;
       window.dispatchEvent(new Event('vox-stage-ready'));
+
+      window.__voxRegisterCleanup?.(() => {
+        sbAbort.abort();
+        hideVictorySpotlight();
+        try { bc?.close(); } catch (_) {}
+        try { peerInstance?.destroy(); } catch (_) {}
+      });
     })();
   

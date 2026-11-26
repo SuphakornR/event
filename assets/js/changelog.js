@@ -224,23 +224,31 @@
 
   const openCl = () => {
     renderList();
-    modalEl?.classList.remove('hidden');
-    modalEl?.classList.add('flex');
-    modalEl?.setAttribute('aria-hidden', 'false');
+    if (window.VoxUI) window.VoxUI.openModal(modalEl);
+    else {
+      modalEl?.classList.remove('hidden');
+      modalEl?.classList.add('flex');
+      modalEl?.setAttribute('aria-hidden', 'false');
+    }
   };
 
   const closeCl = () => {
-    modalEl?.classList.add('hidden');
-    modalEl?.classList.remove('flex');
-    modalEl?.setAttribute('aria-hidden', 'true');
+    if (window.VoxUI) window.VoxUI.closeModal(modalEl);
+    else {
+      modalEl?.classList.add('hidden');
+      modalEl?.classList.remove('flex');
+      modalEl?.setAttribute('aria-hidden', 'true');
+    }
   };
 
-  openBtn?.addEventListener('click', openCl);
-  closeBtn?.addEventListener('click', closeCl);
-  modalEl?.addEventListener('click', (e) => { if (e.target === modalEl) closeCl(); });
+  const clAbort = new AbortController();
+  openBtn?.addEventListener('click', openCl, { signal: clAbort.signal });
+  closeBtn?.addEventListener('click', closeCl, { signal: clAbort.signal });
+  modalEl?.addEventListener('click', (e) => { if (e.target === modalEl) closeCl(); }, { signal: clAbort.signal });
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && modalEl && !modalEl.classList.contains('hidden')) closeCl();
-  });
+  }, { signal: clAbort.signal });
+  window.__voxRegisterCleanup?.(() => clAbort.abort());
 
   window.VoxChangelog = Object.freeze({
     getVersion: () => latestRelease.version,

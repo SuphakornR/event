@@ -307,7 +307,13 @@
     }
   }
 
+  let activeAuthChangeHandler = null;
+
   function mountAuthBadge() {
+    if (activeAuthChangeHandler) {
+      window.removeEventListener('helpdai-auth-change', activeAuthChangeHandler);
+      activeAuthChangeHandler = null;
+    }
     // Only render the visible login/account button on pages that opt in via #helpdai-auth-slot (Hub)
     const slot = document.getElementById('helpdai-auth-slot');
     if (!slot) return;
@@ -316,7 +322,7 @@
       btn = document.createElement('button');
       btn.id = 'helpdai-auth-btn';
       btn.type = 'button';
-      btn.className = 'inline-flex items-center gap-1.5 border-2 border-[#111111] px-2.5 py-0.5 rounded-md font-display font-extrabold text-[11px] shadow-[2px_2px_0px_#111111] transition-colors cursor-pointer whitespace-nowrap';
+      btn.className = 'btn-vox inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-display font-extrabold text-xs transition-colors cursor-pointer whitespace-nowrap';
       slot.appendChild(btn);
       btn.addEventListener('click', openAuthModal);
     }
@@ -375,12 +381,14 @@
       }
     };
     syncLabel();
+    activeAuthChangeHandler = syncLabel;
     window.addEventListener('helpdai-auth-change', syncLabel);
   }
 
   window.HelpDaiAuth = Object.freeze({
     getSession: readSession,
     openLogin: openAuthModal,
+    mountBadge: mountAuthBadge,
     signInWithGoogle,
     refresh: refreshSessionIfNeeded,
     signOut: () => writeSession(null)

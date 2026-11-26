@@ -868,6 +868,9 @@
     if (/config\.js/i.test(src) && window.HELPDAI_CONFIG) return true;
     if (/security\.js/i.test(src) && window.VoxSecurity) return true;
     if (/mascots\.js/i.test(src) && window.VoxMascots) return true;
+    if (/auth\.js/i.test(src) && window.HelpDaiAuth) return true;
+    if (/tos\.js/i.test(src) && window.VoxTos) return true;
+    if (/tutorial\.js/i.test(src) && window.VoxTutorial) return true;
     return false;
   };
 
@@ -907,81 +910,105 @@
       }
       const doc = new DOMParser().parseFromString(html, 'text/html');
 
-      if (push) {
-        try { history.pushState({ voxPjax: true, url: targetUrl }, '', targetUrl); } catch (_) {}
-      }
-      document.title = doc.title || document.title;
-      document.body.className = doc.body.className;
+      const applyDomSwap = async () => {
+        // Dispose any previous page listeners, intervals, and channels cleanly
+        window.__voxRunPageCleanups?.();
 
-      // Mark initial page-specific styles on first swap and replace with target page styles
-      if (!document.documentElement.dataset.voxPjaxInit) {
-        document.documentElement.dataset.voxPjaxInit = '1';
-        document.head.querySelectorAll('style').forEach((st) => {
-          if (!st.textContent.includes('voxPageOut') && !st.textContent.includes('helpdai-bgm')) {
-            st.dataset.voxPageStyle = '1';
+        if (push) {
+          try { history.pushState({ voxPjax: true, url: targetUrl }, '', targetUrl); } catch (_) {}
+        }
+        document.title = doc.title || document.title;
+        document.body.className = doc.body.className;
+
+        // Mark initial page-specific styles on first swap and replace with target page styles
+        if (!document.documentElement.dataset.voxPjaxInit) {
+          document.documentElement.dataset.voxPjaxInit = '1';
+          document.head.querySelectorAll('style').forEach((st) => {
+            if (st.id !== 'vox-transition-styles' && !st.textContent.includes('helpdai-bgm')) {
+              st.dataset.voxPageStyle = '1';
+            }
+          });
+        }
+        document.head.querySelectorAll('style[data-vox-page-style="1"]').forEach((st) => st.remove());
+        doc.head.querySelectorAll('style').forEach((st) => {
+          const clone = document.createElement('style');
+          clone.dataset.voxPageStyle = '1';
+          clone.textContent = st.textContent;
+          document.head.appendChild(clone);
+        });
+
+        // Remove old page DOM nodes while preserving the BGM player & YouTube audio host
+        Array.from(document.body.children).forEach((el) => {
+          if (!BGM_KEEP_IDS.has(el.id) && el.id !== 'helpdai-auth-modal' && el.id !== 'vox-tos-modal') {
+            el.remove();
           }
         });
-      }
-      document.head.querySelectorAll('style[data-vox-page-style="1"]').forEach((st) => st.remove());
-      doc.head.querySelectorAll('style').forEach((st) => {
-        const clone = document.createElement('style');
-        clone.dataset.voxPageStyle = '1';
-        clone.textContent = st.textContent;
-        document.head.appendChild(clone);
-      });
 
-      // Remove old page DOM nodes while preserving the BGM player & YouTube audio host
-      Array.from(document.body.children).forEach((el) => {
-        if (!BGM_KEEP_IDS.has(el.id)) el.remove();
-      });
-
-      const pendingScripts = [];
-      Array.from(doc.body.children).forEach((node) => {
-        if (node.tagName === 'SCRIPT') {
-          pendingScripts.push(node);
-          return;
-        }
-        node.querySelectorAll('script').forEach((s) => {
-          pendingScripts.push(s);
-          s.remove();
+        const pendingScripts = [];
+        Array.from(doc.body.children).forEach((node) => {
+          if (node.tagName === 'SCRIPT') {
+            pendingScripts.push(node);
+            return;
+          }
+          node.querySelectorAll('script').forEach((s) => {
+            pendingScripts.push(s);
+            s.remove();
+          });
+          document.body.appendChild(document.importNode(node, true));
         });
-        document.body.appendChild(document.importNode(node, true));
-      });
 
-      // Download all external scripts in parallel while preserving execution order (async = false)
-      const externalPromises = [];
-      const inlineScripts = [];
-      for (const oldScript of pendingScripts) {
-        const src = oldScript.getAttribute('src') || '';
-        const inline = oldScript.textContent || '';
-        if (src && (SKIP_SCRIPT_RE.test(src) || isAlreadyLoadedLib(src))) continue;
-        if (!src && inline.includes('kofiwidget2')) continue;
+        // Download all external scripts in parallel while preserving execution order (async = false)
+        const externalPromises = [];
+        const inlineScripts = [];
+        for (const oldScript of pendingScripts) {
+          const src = oldScript.getAttribute('src') || '';
+          const inline = oldScript.textContent || '';
+          if (src && (SKIP_SCRIPT_RE.test(src) || isAlreadyLoadedLib(src))) continue;
+          if (!src && inline.includes('kofiwidget2')) continue;
 
-        if (src) {
-          externalPromises.push(new Promise((resolve) => {
-            const s = document.createElement('script');
-            s.async = false;
-            s.src = src;
-            s.onload = resolve;
-            s.onerror = resolve;
-            document.body.appendChild(s);
-          }));
-        } else if (inline.trim()) {
-          inlineScripts.push(inline);
+          if (src) {
+            externalPromises.push(new Promise((resolve) => {
+              const s = document.createElement('script');
+              s.async = false;
+              s.src = src;
+              s.onload = resolve;
+              s.onerror = resolve;
+              document.body.appendChild(s);
+            }));
+          } else if (inline.trim()) {
+            inlineScripts.push(inline);
+          }
         }
-      }
 
-      if (externalPromises.length) {
-        await Promise.all(externalPromises);
-      }
-      for (const code of inlineScripts) {
-        const s = document.createElement('script');
-        s.textContent = code;
-        document.body.appendChild(s);
-      }
+        if (externalPromises.length) {
+          await Promise.all(externalPromises);
+        }
+        for (const code of inlineScripts) {
+          const s = document.createElement('script');
+          s.textContent = code;
+          document.body.appendChild(s);
+        }
 
-      window.scrollTo(0, 0);
+        // Re-mount shared singletons onto newly swapped DOM slots in 0ms
+        window.HelpDaiAuth?.mountBadge?.();
+        window.VoxTos?.check?.();
+        window.scrollTo(0, 0);
+      };
+
+      const prefersReduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+      if (document.startViewTransition && !prefersReduced) {
+        const vt = document.startViewTransition(applyDomSwap);
+        await vt.finished.catch(() => {});
+      } else {
+        if (!prefersReduced) {
+          document.documentElement.classList.add('vox-pjax-out');
+          await new Promise((r) => setTimeout(r, 120));
+        }
+        await applyDomSwap();
+        document.documentElement.classList.remove('vox-pjax-out');
+      }
     } catch (_) {
+      document.documentElement.classList.remove('vox-pjax-out');
       window.location.href = targetUrl;
     } finally {
       pjaxInFlight = false;
@@ -1031,7 +1058,7 @@
 
   // Pre-warm main pages & their scripts during browser idle time so switching is instant
   const warmPages = () => {
-    ['index.html', 'calendar.html', 'scoreboard.html'].forEach((page) => {
+    ['index.html', 'scoreboard.html'].forEach((page) => {
       try {
         const u = new URL(page, window.location.href).href;
         if (u !== window.location.href) prefetchUrl(u);

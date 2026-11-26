@@ -1,21 +1,22 @@
 /* Vox Documentary Mascot Guided Tutorial (Spotlight + Mascot Speech Bubble + Replay) */
 (() => {
-  const PAGE_ID = document.getElementById('stage-container') ? 'scoreboard' : 'hub';
-  const TOUR_KEY = `vox_tour_${PAGE_ID}_v1`;
+  if (window.VoxTutorial) return;
+
+  const getPageId = () => (document.getElementById('stage-container') ? 'scoreboard' : 'hub');
 
   const STEPS_BY_PAGE = {
     hub: [
       {
-        selector: '#promo-banner',
+        selector: '#tool-grid',
         mascot: 0,
-        title: 'จุดประชาสัมพันธ์',
-        text: 'ปัดซ้าย-ขวา กดเลือกรายการด้านข้าง หรือคลิกขวาเพื่อเปลี่ยนภาพแบนเนอร์ได้ทันที'
+        title: 'เข้าสู่กระดานคะแนนเวที',
+        text: 'เลื่อนเมาส์เข้าใกล้แล้วคลิกที่มาสคอต Stage Scoreboard เพื่อเปิดใช้งานกระดานคะแนนสดบนเวทีได้ทันที'
       },
       {
-        selector: '#tool-grid',
+        selector: '#helpdai-auth-slot, #open-sugg-btn',
         mascot: 1,
-        title: 'เลือกเครื่องมือใช้งาน',
-        text: 'กดปุ่ม "เปิดใช้งาน" บนการ์ด Stage Scoreboard เพื่อเข้าสู่หน้ากระดานคะแนนสดบนเวที'
+        title: 'ซิงค์ข้อมูล & เสนอแนะ',
+        text: 'เข้าสู่ระบบเพื่อซิงค์ข้อมูลกิจกรรมข้ามอุปกรณ์อัตโนมัติ หรือส่งไอเดียฟีเจอร์ใหม่ได้ที่ปุ่มเสนอแนะ'
       },
       {
         selector: '[data-start-tutorial]',
@@ -179,7 +180,8 @@
   }
 
   function startTour() {
-    activeSteps = (STEPS_BY_PAGE[PAGE_ID] || []).filter(s => document.querySelector(s.selector));
+    const pageId = getPageId();
+    activeSteps = (STEPS_BY_PAGE[pageId] || []).filter(s => document.querySelector(s.selector));
     if (activeSteps.length === 0) return;
     buildTourDom();
     stepIdx = 0;
@@ -188,7 +190,8 @@
   }
 
   function endTour() {
-    try { localStorage.setItem(TOUR_KEY, '1'); } catch (_) {}
+    const tourKey = `vox_tour_${getPageId()}_v1`;
+    try { localStorage.setItem(tourKey, '1'); } catch (_) {}
     if (overlayEl) overlayEl.classList.add('hidden');
   }
 
@@ -199,8 +202,9 @@
   });
 
   function maybeAutoStart() {
+    const tourKey = `vox_tour_${getPageId()}_v1`;
     try {
-      if (localStorage.getItem(TOUR_KEY) === '1') return;
+      if (localStorage.getItem(tourKey) === '1') return;
     } catch (_) {}
 
     const waitAndRun = () => {

@@ -16,15 +16,14 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin />
-  <link rel="preload" href="assets/css/vox.css?v=20261123b" as="style" />
+  <link rel="preload" href="assets/css/vox.css?v=20261126h" as="style" />
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Prompt:wght@600;700;800;900&display=swap" rel="stylesheet" />
-  <style>html,body{cursor:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 26 26'%3E%3Cpath d='M4 3 L20 13 L12.5 15 L9.5 22 Z' transform='translate(2 2)' fill='%23111111'/%3E%3Cpath d='M4 3 L20 13 L12.5 15 L9.5 22 Z' fill='%23F4D03F' stroke='%23111111' stroke-width='2.2' stroke-linejoin='round'/%3E%3C/svg%3E") 4 3,auto}</style>
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <link rel="stylesheet" href="assets/css/vox.css?v=20261123b" />
+  <link rel="stylesheet" href="assets/css/vox.css?v=20261126h" />
 </head>
 <body class="flex flex-col justify-between selection:bg-yellow-300 selection:text-black">
-  <script src="assets/js/loader.js?v=20261123c"></script>
+  <script src="assets/js/loader.js?v=20261126h"></script>
 
   <!-- Confetti Canvas -->
   <canvas id="confetti-canvas"></canvas>
@@ -45,14 +44,17 @@
       <div class="min-w-0 flex-1 flex flex-col justify-center">
         <div class="flex flex-wrap items-center justify-between gap-2 mb-1.5">
           <div class="flex flex-wrap items-center gap-2 relative">
-          <a href="index.html" title="เมนูหลัก" aria-label="กลับเมนูหลัก" class="inline-flex items-center justify-center bg-white text-[#111111] border-2 border-[#111111] w-9 h-9 sm:w-8 sm:h-8 rounded-lg font-display font-black text-sm shadow-[2px_2px_0px_#111111] hover:bg-[#F4D03F] transition-colors">←</a>
-          <button type="button" data-start-tutorial title="คู่มือการใช้งาน" aria-label="เปิดคู่มือการใช้งาน" class="inline-flex items-center justify-center bg-white text-[#111111] border-2 border-[#111111] w-9 h-9 sm:w-8 sm:h-8 rounded-lg font-display font-black text-xs shadow-[2px_2px_0px_#111111] hover:bg-[#F4D03F] transition-colors cursor-pointer">?</button>
-          <button type="button" id="view-settings-btn" title="มุมมอง &amp; การจัดวาง" aria-label="ตั้งค่ามุมมอง" class="inline-flex items-center justify-center bg-white text-[#111111] border-2 border-[#111111] w-9 h-9 sm:w-8 sm:h-8 rounded-lg shadow-[2px_2px_0px_#111111] hover:bg-[#F4D03F] transition-colors cursor-pointer" aria-expanded="false" aria-controls="view-settings-popover">
+          <a href="index.html" title="กลับหน้าหลัก (suphakorn.rukkarn)" aria-label="กลับหน้าหลัก" class="vox-brand-mark btn-vox inline-flex items-center gap-1.5 bg-white hover:bg-[#F4D03F] text-[#111111] h-8 px-2.5 rounded-lg font-display font-extrabold text-xs no-underline">
+            <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+            <span class="hidden sm:inline">หน้าหลัก</span>
+          </a>
+          <button type="button" data-start-tutorial title="คู่มือการใช้งาน" aria-label="เปิดคู่มือการใช้งาน" class="btn-vox inline-flex items-center justify-center bg-white hover:bg-[#F4D03F] text-[#111111] w-8 h-8 rounded-lg font-display font-black text-xs cursor-pointer">?</button>
+          <button type="button" id="view-settings-btn" title="มุมมอง &amp; การจัดวาง" aria-label="ตั้งค่ามุมมอง" class="btn-vox inline-flex items-center justify-center bg-white hover:bg-[#F4D03F] text-[#111111] w-8 h-8 rounded-lg cursor-pointer" aria-expanded="false" aria-controls="view-settings-popover">
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
           </button>
 
-          <!-- View Level & Layout Popover (Vector Icons) -->
-          <div id="view-settings-popover" class="hidden absolute top-full left-0 mt-2 z-50 w-56 vox-card bg-[#F8F6F0] p-3 flex-col gap-2.5 vox-panel-enter">
+          <!-- View Level & Layout Popover (Smooth Animated Dropdown) -->
+          <div id="view-settings-popover" class="vox-popover hidden absolute top-full left-0 mt-2 z-50 w-56 vox-card bg-[#F8F6F0] p-3 flex-col gap-2.5">
             <div>
               <span class="block text-[10px] font-display font-extrabold text-[#111111]/65 uppercase tracking-wider mb-1">Detail</span>
               <div class="grid grid-cols-3 gap-1.5">
@@ -106,8 +108,8 @@
             </span>
           </button>
 
-          <!-- Organized Stage Menu Popover (File / Save / New / Presets / Account) -->
-          <div id="stage-menu-popover" class="hidden absolute top-full left-0 mt-2 z-50 w-64 vox-card bg-[#F8F6F0] p-2.5 flex-col gap-2 vox-panel-enter"></div>
+          <!-- Organized Stage Menu Popover (Smooth Animated Dropdown) -->
+          <div id="stage-menu-popover" class="vox-popover hidden absolute top-full left-0 mt-2 z-50 w-64 vox-card bg-[#F8F6F0] p-2.5 flex-col gap-2"></div>
           </div>
         </div>
 
@@ -389,19 +391,21 @@
        COMPLETE APPLICATION LOGIC (STATE, RENDERING, SYNC, VIDEO CONTROL, ZOOM)
        ======================================================================== -->
 
-  <script src="assets/js/config.js?v=20261122b" defer></script>
-  <script src="assets/js/security.js?v=20261122b" defer></script>
-  <script src="assets/js/mascots.js?v=20261122b" defer></script>
-  <script src="assets/js/scoreboard.js?v=20261123b" defer></script>
-  <script src="assets/js/auth.js?v=20261122b" defer></script>
-  <script src="assets/js/cloud-sync.js?v=20261123a" defer></script>
-  <script src="assets/js/tos.js?v=20261122b" defer></script>
-  <script src="assets/js/tutorial.js?v=20261122b" defer></script>
-  <script src="assets/js/context-menu.js?v=20261122e" defer></script>
-  <script src="assets/js/bgm-dock.js?v=20261126a" defer></script>
-  <script src="assets/js/toolbox.js?v=20261123a" defer></script>
+  <script src="assets/js/config.js?v=20261126h" defer></script>
+  <script src="assets/js/security.js?v=20261126h" defer></script>
+  <script src="assets/js/mascots.js?v=20261126h" defer></script>
+  <script src="assets/js/scoreboard.js?v=20261126h" defer></script>
+  <script src="assets/js/auth.js?v=20261126h" defer></script>
+  <script src="assets/js/cloud-sync.js?v=20261126h" defer></script>
+  <script src="assets/js/tos.js?v=20261126h" defer></script>
+  <script src="assets/js/tutorial.js?v=20261126h" defer></script>
+  <script src="assets/js/context-menu.js?v=20261126h" defer></script>
+  <script src="assets/js/bgm-dock.js?v=20261126h" defer></script>
+  <script src="assets/js/toolbox.js?v=20261126h" defer></script>
   <script>
     (() => {
+      const bannerAbort = new AbortController();
+      const { signal } = bannerAbort;
       const BANNER_KEY = 'helpdai_stage_custom_banner_v1';
       const trackEl = document.getElementById('stage-banner-track');
       const dotsEl = document.getElementById('stage-banner-dots');
@@ -534,11 +538,15 @@
           stageSizeBadge.textContent = `${Math.round(r.width)} × ${Math.round(r.height)} px`;
         }
       };
-      bannerEl?.addEventListener('pointerenter', syncStageBannerSize);
-      window.addEventListener('resize', syncStageBannerSize);
+      bannerEl?.addEventListener('pointerenter', syncStageBannerSize, { signal });
+      window.addEventListener('resize', syncStageBannerSize, { signal });
       syncStageBannerSize();
 
       renderSlides();
+      window.__voxRegisterCleanup?.(() => {
+        bannerAbort.abort();
+        clearInterval(timerId);
+      });
     })();
   </script>
 </body>

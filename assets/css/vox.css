@@ -1061,6 +1061,77 @@
       z-index: 80;
     }
 
+    /* ==========================================================================
+       UNIFIED SMOOTH MODAL, POPOVER & VIEW TRANSITION SYSTEM
+       ========================================================================== */
+    #helpdai-bgm-dock {
+      view-transition-name: bgm-dock;
+    }
+    ::view-transition-group(bgm-dock) {
+      animation: none !important;
+    }
+    ::view-transition-old(bgm-dock),
+    ::view-transition-new(bgm-dock) {
+      animation: none !important;
+      mix-blend-mode: normal;
+    }
+
+    .vox-brand-mark {
+      view-transition-name: vox-brand;
+    }
+
+    /* Smooth Modal Backdrop + Dialog Enter/Exit */
+    .vox-modal-backdrop {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+                  visibility 0.22s ease;
+    }
+    .vox-modal-backdrop.is-open {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+    .vox-modal-backdrop > .vox-modal-card {
+      transform: translateY(10px) scale(0.96);
+      opacity: 0;
+      transition: transform 0.26s cubic-bezier(0.22, 1, 0.36, 1),
+                  opacity 0.2s ease;
+      will-change: transform, opacity;
+    }
+    .vox-modal-backdrop.is-open > .vox-modal-card {
+      transform: translateY(0) scale(1);
+      opacity: 1;
+    }
+
+    /* Smooth Popover Enter/Exit (replaces instant .hidden snap) */
+    .vox-popover {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transform: translateY(-6px) scale(0.97);
+      transform-origin: top left;
+      transition: opacity 0.18s cubic-bezier(0.22, 1, 0.36, 1),
+                  transform 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+                  visibility 0.18s ease;
+      will-change: transform, opacity;
+    }
+    .vox-popover.is-open {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+      transform: translateY(0) scale(1);
+    }
+
+    /* Pause GPU-heavy infinite animations when their host overlay is closed */
+    #center-timer-overlay:not(.is-open) .timer-liquid-wave,
+    #center-timer-overlay:not(.is-open) .timer-liquid-wave-back,
+    #app-loader.is-done .loader-shape,
+    #app-loader.is-done .loader-bar-fill {
+      animation-play-state: paused !important;
+    }
+
     /* Custom Vox Auto-Sync Bent Arrows Animation (spins only while actively syncing) */
     @keyframes voxAutoSyncSpin {
       from { transform: rotate(0deg); }

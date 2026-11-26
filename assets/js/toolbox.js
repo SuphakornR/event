@@ -64,6 +64,10 @@
       return;
     }
 
+    const tbAbort = new AbortController();
+    const tbSignal = tbAbort.signal;
+    window.__voxRegisterCleanup?.(() => tbAbort.abort());
+
     const bar = document.createElement('div');
     bar.id = 'vox-toolbox';
     bar.className = 'fixed top-1/2 -translate-y-1/2 z-40 vox-card bg-[#F8F6F0] p-1.5 flex flex-col gap-1.5 transition-all duration-200';
@@ -157,7 +161,7 @@
       Object.values(subWindows).forEach((w) => {
         if (w.customPos && !w.el.classList.contains('hidden')) positionSubWindow(w);
       });
-    });
+    }, { signal: tbSignal });
 
     // Persistent YouTube Embed Overlay (delegates to shared HelpDaiBgm engine so music never restarts across pages!)
     const parkYtHost = () => {
@@ -180,7 +184,8 @@
       window.HelpDaiBgm?.mountOverlay?.(r);
     };
 
-    window.addEventListener('resize', syncYtOverlayPos);
+    window.addEventListener('resize', syncYtOverlayPos, { signal: tbSignal });
+    window.__voxRegisterCleanup?.(() => parkYtHost());
 
     const makeWindowDraggable = (winObj, handleEl) => {
       if (!handleEl) return;
@@ -573,7 +578,7 @@
       if (musicWin && !musicWin.classList.contains('hidden')) {
         requestAnimationFrame(syncYtOverlayPos);
       }
-    });
+    }, { signal: tbSignal });
     syncMusicBtnBadge();
 
     const searchYoutubeInApp = async (query) => {
