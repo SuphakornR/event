@@ -990,6 +990,8 @@
         }
 
         // Re-mount shared singletons onto newly swapped DOM slots in 0ms
+        const swDock = document.getElementById('stopwatch-side-dock');
+        if (swDock) swDock.style.display = doc.getElementById('stage-container') ? '' : 'none';
         window.HelpDaiAuth?.mountBadge?.();
         window.VoxTos?.check?.();
         window.scrollTo(0, 0);
