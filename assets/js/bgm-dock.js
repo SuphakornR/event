@@ -4,6 +4,31 @@
 
   const BGM_KEY = 'helpdai_bgm_player_v1';
   const DOCK_POS_KEY = 'helpdai_bgm_dock_pos_v2';
+  const PLAY_MODE_KEY = 'helpdai_bgm_playmode_v1';
+  const QUEUE_KEY = 'helpdai_bgm_queue_v1';
+
+  const getPlayMode = () => {
+    try {
+      const m = localStorage.getItem(PLAY_MODE_KEY);
+      if (m === 'loop' || m === 'next' || m === 'stop') return m;
+    } catch (_) {}
+    return 'loop';
+  };
+  const setPlayMode = (m) => {
+    try { localStorage.setItem(PLAY_MODE_KEY, m); } catch (_) {}
+  };
+  const readQueue = () => {
+    try {
+      const q = JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]');
+      return Array.isArray(q) ? q : [];
+    } catch (_) { return []; }
+  };
+  const pushQueue = (id, title) => {
+    if (!id) return;
+    const q = readQueue().filter((x) => x && x.id !== id);
+    q.push({ id, title: title || `YouTube (${id})` });
+    try { localStorage.setItem(QUEUE_KEY, JSON.stringify(q.slice(-15))); } catch (_) {}
+  };
 
   const extractYoutubeId = (raw) => {
     const s = String(raw || '').trim();
@@ -161,6 +186,30 @@
           }, false);
         }
       }
+      const pState = msg?.event === 'infoDelivery' ? msg.info?.playerState : (msg?.event === 'onStateChange' ? msg.info : undefined);
+      if (pState === 0) {
+        const cur = readBgm();
+        if (!cur.videoId) return;
+        const mode = getPlayMode();
+        if (mode === 'loop') {
+          sendYtCmd('seekTo', [0, true]);
+          sendYtCmd('playVideo');
+          writeBgm({ ...cur, playing: true, elapsedSec: 0, startedAt: Date.now() }, false);
+        } else if (mode === 'next') {
+          const q = readQueue();
+          if (q.length > 1) {
+            const idx = q.findIndex((x) => x.id === cur.videoId);
+            const nextTrack = q[(idx + 1) % q.length];
+            if (nextTrack?.id) window.HelpDaiBgm.setTrack(nextTrack.id, nextTrack.title, true);
+          } else {
+            sendYtCmd('seekTo', [0, true]);
+            sendYtCmd('playVideo');
+            writeBgm({ ...cur, playing: true, elapsedSec: 0, startedAt: Date.now() }, false);
+          }
+        } else {
+          window.HelpDaiBgm.setPlaying(false);
+        }
+      }
     } catch (_) {}
   });
 
@@ -178,9 +227,11 @@
       const elapsedSec = isSameTrack ? cur.elapsedSec : 0;
       const startedAt = playing ? (Date.now() - elapsedSec * 1000) : 0;
       writeBgm({ videoId: cleanId, title: resolvedTitle, playing: Boolean(playing), elapsedSec, startedAt });
+      pushQueue(cleanId, resolvedTitle);
       syncEngineIframe();
       if (!title) {
         const fetched = await fetchTrackTitle(cleanId);
+        pushQueue(cleanId, fetched);
         const latest = readBgm();
         if (latest.videoId === cleanId && latest.title !== fetched) {
           writeBgm({ ...latest, title: fetched });
@@ -253,7 +304,7 @@
     dock.innerHTML = `
       <div id="cassette-shell" class="relative w-[300px] group">
         <!-- Pure Cassette Silhouette (Chroma-Keyed MP4 -> Canvas) -->
-        <div id="cassette-visual-box" class="relative w-full aspect-[880/582] cursor-grab active:cursor-grabbing" title="ลากหรือโยนเพื่อย้าย • คลิกเพื่อเล่น/พัก • คลิกขวาเปิดเมนู">
+        <div id="cassette-visual-box" class="vox-grab relative w-full aspect-[880/582]" title="ลากหรือโยนเพื่อย้าย • คลิกเพื่อเล่น/พัก • คลิกขวาเปิดเมนู">
           <canvas id="cassette-canvas" width="440" height="291" class="w-full h-full block drop-shadow-[4px_6px_0px_rgba(17,17,17,0.7)]"></canvas>
 
           <!-- Dynamic Video Title on Cassette Side-A Label -->
@@ -286,6 +337,10 @@
           <button type="button" data-cas-act="toggle" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-[#F4D03F] font-display font-bold text-xs text-[#111111] flex items-center gap-2 cursor-pointer transition-colors">
             <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l15 8-15 8V4z"/></svg>
             <span>เล่น / พักเพลง</span>
+          </button>
+          <button type="button" data-cas-act="cycle-mode" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-[#F4D03F] font-display font-bold text-xs text-[#111111] flex items-center justify-between cursor-pointer transition-colors">
+            <span>เล่นจบแล้ว</span>
+            <span id="cas-menu-mode-badge" class="text-[10px] px-1.5 py-0.5 rounded bg-[#111111] text-[#F4D03F]">วนซ้ำ</span>
           </button>
           <button type="button" data-cas-act="toggle-hide" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-[#F4D03F] font-display font-bold text-xs text-[#111111] flex items-center justify-between cursor-pointer transition-colors">
             <span>ซ่อนเข้าขอบจออัตโนมัติ</span>
@@ -428,6 +483,7 @@
         cancelAnimationFrame(glideRaf);
         glideRaf = null;
       }
+      document.documentElement.classList.add('vox-grabbing');
       const curX = dockPos.hiddenMode ? (dockPos.side === 'left' ? 12 : Math.max(12, window.innerWidth - 312)) : dockPos.x;
       dragState = {
         startX: e.clientX,
@@ -470,6 +526,7 @@
     });
 
     window.addEventListener('pointerup', () => {
+      document.documentElement.classList.remove('vox-grabbing');
       if (!dragState) return;
       const ds = dragState;
       dragState = null;
@@ -703,6 +760,11 @@
           const cur = readBgm();
           if (!cur.videoId) openMusicModal();
           else window.HelpDaiBgm.setPlaying(!cur.playing);
+        } else if (act === 'cycle-mode') {
+          const order = ['loop', 'next', 'stop'];
+          const next = order[(order.indexOf(getPlayMode()) + 1) % order.length];
+          setPlayMode(next);
+          syncUi();
         } else if (act === 'toggle-hide') {
           dockPos.hiddenMode = !dockPos.hiddenMode;
           isHoveredOrOpen = !dockPos.hiddenMode;
@@ -733,6 +795,11 @@
       const isPlaying = Boolean(hasTrack && st.playing);
 
       if (hideBadge) hideBadge.textContent = dockPos.hiddenMode ? 'ON' : 'OFF';
+      const modeBadge = document.getElementById('cas-menu-mode-badge');
+      if (modeBadge) {
+        const m = getPlayMode();
+        modeBadge.textContent = m === 'loop' ? 'วนซ้ำ (Loop)' : (m === 'next' ? 'เพลงถัดไป' : 'หยุด');
+      }
 
       if (tapeTitleEl) {
         tapeTitleEl.textContent = hasTrack ? (st.title || `YouTube (${st.videoId})`) : 'ยังไม่ได้เลือกเพลง';
