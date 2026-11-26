@@ -249,18 +249,11 @@
       'user-select: none'
     ].join(';');
 
-    // Pure Cassette Shape (no outer rectangular box!) + floating pill controls on hover
+    // Pure Cassette Shape (no outer box, no boring tab — cassette edge itself peeks out when hidden!)
     dock.innerHTML = `
       <div id="cassette-shell" class="relative w-[300px] group">
-        <!-- Side Peek Tab (shown when hidden to left/right edge) -->
-        <button type="button" id="cassette-peek-tab" title="ชี้เมาส์หรือคลิกเพื่อเปิดคาสเซ็ต"
-          class="hidden absolute top-1/2 -translate-y-1/2 w-[30px] py-2.5 border-2 border-[#111111] bg-[#111111] text-[#F4D03F] flex-col items-center justify-center gap-1.5 cursor-pointer shadow-[2px_2px_0px_rgba(17,17,17,0.45)] z-20">
-          <span id="cassette-peek-dot" class="w-2.5 h-2.5 rounded-full bg-[#F4D03F]/40 border border-white/25"></span>
-          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-        </button>
-
         <!-- Pure Cassette Silhouette (Chroma-Keyed MP4 -> Canvas) -->
-        <div id="cassette-visual-box" class="relative w-full aspect-[880/582] cursor-grab active:cursor-grabbing" title="ลากเพื่อย้าย • คลิกเพื่อเล่น/พัก • คลิกขวาเปิดเมนู">
+        <div id="cassette-visual-box" class="relative w-full aspect-[880/582] cursor-grab active:cursor-grabbing" title="ลากหรือโยนเพื่อย้าย • คลิกเพื่อเล่น/พัก • คลิกขวาเปิดเมนู">
           <canvas id="cassette-canvas" width="440" height="291" class="w-full h-full block drop-shadow-[4px_6px_0px_rgba(17,17,17,0.7)]"></canvas>
 
           <!-- Dynamic Video Title on Cassette Side-A Label -->
@@ -270,8 +263,8 @@
           </div>
         </div>
 
-        <!-- Floating Minimal Controls Pill (appears cleanly below cassette on hover or when paused/active) -->
-        <div class="mt-1 flex items-center justify-center gap-1.5 opacity-90 group-hover:opacity-100 transition-opacity">
+        <!-- Floating Minimal Controls Pill (fades in cleanly on hover) -->
+        <div class="mt-1 flex items-center justify-center gap-1.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-200">
           <button type="button" id="cassette-play-btn" class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-black text-[11px] px-2.5 py-1 rounded-lg inline-flex items-center gap-1 cursor-pointer">
             <span id="cassette-play-icon" class="flex items-center"></span>
             <span id="cassette-play-label">เลือกเพลง</span>
@@ -331,8 +324,6 @@
 
     const customMenu = document.getElementById('cassette-custom-menu');
     const hideBadge = document.getElementById('cas-menu-hide-badge');
-    const peekTab = document.getElementById('cassette-peek-tab');
-    const peekDot = document.getElementById('cassette-peek-dot');
     const tapeTitleEl = document.getElementById('cassette-tape-title');
     const tapeSubEl = document.getElementById('cassette-tape-sub');
     const playBtn = document.getElementById('cassette-play-btn');
@@ -372,6 +363,9 @@
 
     videoEl.addEventListener('loadeddata', () => { drawCassetteFrame(); }, { once: true });
 
+    const PEEK_PX = 46;
+    let glideRaf = null;
+
     function applyDockPosition() {
       const W = window.innerWidth;
       const H = window.innerHeight;
@@ -383,28 +377,10 @@
       const menuOpen = customMenu && !customMenu.classList.contains('hidden');
       const shouldHide = dockPos.hiddenMode && !isHoveredOrOpen && !menuOpen;
 
-      if (peekTab) {
-        if (dockPos.hiddenMode) {
-          peekTab.classList.remove('hidden');
-          peekTab.classList.add('flex');
-          if (dockPos.side === 'left') {
-            peekTab.style.left = 'auto';
-            peekTab.style.right = '-30px';
-            peekTab.className = peekTab.className.replace(/rounded-[lr]-xl/g, '') + ' rounded-r-xl';
-          } else {
-            peekTab.style.right = 'auto';
-            peekTab.style.left = '-30px';
-            peekTab.className = peekTab.className.replace(/rounded-[lr]-xl/g, '') + ' rounded-l-xl';
-          }
-        } else {
-          peekTab.classList.add('hidden');
-          peekTab.classList.remove('flex');
-        }
-      }
-
       let tx = Math.max(8, Math.min(W - dockW - 8, dockPos.x));
       if (shouldHide) {
-        tx = dockPos.side === 'left' ? -dockW : W;
+        // Keep ~46px of the cassette itself peeking out from the side!
+        tx = dockPos.side === 'left' ? -(dockW - PEEK_PX) : (W - PEEK_PX);
       } else if (dockPos.hiddenMode) {
         tx = dockPos.side === 'left' ? 12 : Math.max(12, W - dockW - 12);
       }
@@ -428,13 +404,13 @@
       scheduleHide();
     });
 
-    // Proximity popup when mouse gets near the docked edge
+    // Proximity popup when mouse gets near the peeking cassette edge
     window.addEventListener('mousemove', (e) => {
-      if (!dockPos.hiddenMode) return;
+      if (!dockPos.hiddenMode || dragState) return;
       const nearEdge = dockPos.side === 'left'
-        ? e.clientX <= 64
-        : (window.innerWidth - e.clientX) <= 64;
-      const nearY = e.clientY >= (dockPos.y - 45) && e.clientY <= (dockPos.y + 260);
+        ? e.clientX <= 74
+        : (window.innerWidth - e.clientX) <= 74;
+      const nearY = e.clientY >= (dockPos.y - 40) && e.clientY <= (dockPos.y + 240);
       if (nearEdge && nearY) {
         if (hideTimer) clearTimeout(hideTimer);
         if (!isHoveredOrOpen) {
@@ -444,20 +420,25 @@
       }
     }, { passive: true });
 
-    peekTab?.addEventListener('click', () => {
-      isHoveredOrOpen = !isHoveredOrOpen;
-      applyDockPosition();
-    });
-
-    // Drag to move anywhere on screen
+    // Drag & Throw with inertia sliding; throwing near a side auto-docks & slides back in!
     let dragState = null;
     visualBox?.addEventListener('pointerdown', (e) => {
       if (e.button !== 0) return;
+      if (glideRaf) {
+        cancelAnimationFrame(glideRaf);
+        glideRaf = null;
+      }
+      const curX = dockPos.hiddenMode ? (dockPos.side === 'left' ? 12 : Math.max(12, window.innerWidth - 312)) : dockPos.x;
       dragState = {
         startX: e.clientX,
         startY: e.clientY,
-        origX: dockPos.hiddenMode ? (dockPos.side === 'left' ? 12 : Math.max(12, window.innerWidth - 312)) : dockPos.x,
+        origX: curX,
         origY: dockPos.y,
+        lastX: e.clientX,
+        lastY: e.clientY,
+        lastT: performance.now(),
+        vx: 0,
+        vy: 0,
         moved: false
       };
       dock.style.transition = 'none';
@@ -472,8 +453,16 @@
         dragState.moved = true;
         dockPos.hiddenMode = false;
       }
+      const now = performance.now();
+      const dt = Math.max(8, now - dragState.lastT);
+      dragState.vx = ((e.clientX - dragState.lastX) / dt) * 16;
+      dragState.vy = ((e.clientY - dragState.lastY) / dt) * 16;
+      dragState.lastX = e.clientX;
+      dragState.lastY = e.clientY;
+      dragState.lastT = now;
+
       if (dragState.moved) {
-        dockPos.x = Math.max(8, Math.min(window.innerWidth - 308, dragState.origX + dx));
+        dockPos.x = Math.max(-60, Math.min(window.innerWidth - 240, dragState.origX + dx));
         dockPos.y = Math.max(12, Math.min(window.innerHeight - 235, dragState.origY + dy));
         dockPos.side = (dockPos.x + 150) < (window.innerWidth / 2) ? 'left' : 'right';
         applyDockPosition();
@@ -482,25 +471,85 @@
 
     window.addEventListener('pointerup', () => {
       if (!dragState) return;
-      dock.style.transition = 'transform 0.34s cubic-bezier(0.22, 1, 0.36, 1)';
-      if (dragState.moved) {
-        // Auto-snap to side hide if dragged right up against left or right edge
-        if (dockPos.x <= 18) {
-          dockPos.side = 'left';
-          dockPos.hiddenMode = true;
-        } else if (dockPos.x >= window.innerWidth - 318) {
-          dockPos.side = 'right';
-          dockPos.hiddenMode = true;
-        }
-        savePos();
-        applyDockPosition();
-      } else {
-        // Simple click on cassette toggles play/modal
+      const ds = dragState;
+      dragState = null;
+
+      if (!ds.moved) {
+        dock.style.transition = 'transform 0.34s cubic-bezier(0.22, 1, 0.36, 1)';
         const cur = readBgm();
         if (!cur.videoId) openMusicModal();
         else window.HelpDaiBgm.setPlaying(!cur.playing);
+        return;
       }
-      dragState = null;
+
+      // Momentum slide after throwing!
+      let vx = ds.vx;
+      let vy = ds.vy;
+      const stepGlide = () => {
+        const W = window.innerWidth;
+        const H = window.innerHeight;
+        dockPos.x += vx;
+        dockPos.y += vy;
+        vx *= 0.89;
+        vy *= 0.89;
+
+        // Soft vertical bounce
+        if (dockPos.y < 12) { dockPos.y = 12; vy = Math.abs(vy) * 0.45; }
+        if (dockPos.y > H - 235) { dockPos.y = H - 235; vy = -Math.abs(vy) * 0.45; }
+
+        // Check if thrown into or near left/right edges -> auto-dock & slide in!
+        if (dockPos.x <= 42 || (vx < -5 && dockPos.x < 120)) {
+          glideRaf = null;
+          dock.style.transition = 'transform 0.36s cubic-bezier(0.22, 1, 0.36, 1)';
+          dockPos.side = 'left';
+          dockPos.hiddenMode = true;
+          isHoveredOrOpen = false;
+          savePos();
+          applyDockPosition();
+          return;
+        }
+        if (dockPos.x >= W - 342 || (vx > 5 && dockPos.x > W - 420)) {
+          glideRaf = null;
+          dock.style.transition = 'transform 0.36s cubic-bezier(0.22, 1, 0.36, 1)';
+          dockPos.side = 'right';
+          dockPos.hiddenMode = true;
+          isHoveredOrOpen = false;
+          savePos();
+          applyDockPosition();
+          return;
+        }
+
+        applyDockPosition();
+        if (Math.hypot(vx, vy) > 0.65) {
+          glideRaf = requestAnimationFrame(stepGlide);
+        } else {
+          glideRaf = null;
+          dock.style.transition = 'transform 0.34s cubic-bezier(0.22, 1, 0.36, 1)';
+          dockPos.x = Math.max(12, Math.min(W - 312, dockPos.x));
+          dockPos.side = (dockPos.x + 150) < (W / 2) ? 'left' : 'right';
+          savePos();
+          applyDockPosition();
+        }
+      };
+
+      if (Math.hypot(vx, vy) > 1.2) {
+        glideRaf = requestAnimationFrame(stepGlide);
+      } else {
+        dock.style.transition = 'transform 0.34s cubic-bezier(0.22, 1, 0.36, 1)';
+        if (dockPos.x <= 24) {
+          dockPos.side = 'left';
+          dockPos.hiddenMode = true;
+          isHoveredOrOpen = false;
+        } else if (dockPos.x >= window.innerWidth - 324) {
+          dockPos.side = 'right';
+          dockPos.hiddenMode = true;
+          isHoveredOrOpen = false;
+        } else {
+          dockPos.x = Math.max(12, Math.min(window.innerWidth - 312, dockPos.x));
+        }
+        savePos();
+        applyDockPosition();
+      }
     });
 
     window.addEventListener('resize', applyDockPosition);
@@ -690,12 +739,6 @@
       }
       if (tapeSubEl) {
         tapeSubEl.textContent = isPlaying ? '▶ กำลังเล่นเพลง...' : (hasTrack ? '⏸ พักเพลงอยู่' : 'คลิกเพื่อเลือกเพลง YouTube');
-      }
-
-      if (peekDot) {
-        peekDot.classList.toggle('bg-[#10B981]', isPlaying);
-        peekDot.classList.toggle('animate-pulse', isPlaying);
-        peekDot.classList.toggle('bg-[#F4D03F]/40', !isPlaying);
       }
 
       if (playIconEl && playLabelEl) {
