@@ -138,7 +138,7 @@
               <span class="w-6 h-6 rounded-md bg-[#F4D03F] border-2 border-[#111111] flex items-center justify-center text-[#111111]">
                 <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
               </span>
-              <h3 class="font-display font-black text-base text-[#111111]">บัญชีผู้ใช้ HelpDai</h3>
+              <h3 class="font-display font-black text-base text-[#111111]">บัญชีผู้ใช้ suphakorn.rukkarn</h3>
             </div>
             <button type="button" id="auth-close-btn" aria-label="ปิดหน้าต่างบัญชี" class="w-7 h-7 rounded-lg border-2 border-[#111111] bg-white hover:bg-[#E74C3C] hover:text-white font-black text-xs flex items-center justify-center transition-colors cursor-pointer">✕</button>
           </div>

@@ -13,15 +13,15 @@
   const TOS_CONTENT = {
     th: {
       title: 'ข้อตกลงการใช้งาน & นโยบายความเป็นส่วนตัว',
-      intro: 'กรุณาอ่านข้อตกลงการใช้งาน (Terms of Service) และนโยบายความเป็นส่วนตัวของ <strong>HelpDai</strong> (รองรับมาตรฐาน PDPA ไทย และ GDPR/CCPA สากล) ก่อนเริ่มใช้งาน',
+      intro: 'กรุณาอ่านข้อตกลงการใช้งาน (Terms of Service) และนโยบายความเป็นส่วนตัวของ <strong>suphakorn.rukkarn</strong> (รองรับมาตรฐาน PDPA ไทย และ GDPR/CCPA สากล) ก่อนเริ่มใช้งาน',
       hintLocked: '⬇ กรุณาเลื่อนอ่านลงด้านล่างสุดเพื่อกดยอมรับ',
       hintUnlocked: '✓ อ่านครบถ้วนแล้ว สามารถกดยอมรับได้',
       acceptBtn: '✓ ยอมรับและเข้าใช้งาน',
-      endNote: '— สิ้นสุดข้อตกลงการใช้งานและนโยบายความเป็นส่วนตัว (HelpDai v2.0) —',
+      endNote: '— สิ้นสุดข้อตกลงการใช้งานและนโยบายความเป็นส่วนตัว (suphakorn.rukkarn) —',
       sections: [
         {
           h: '1. ขอบเขตบริการและความปลอดภัยของข้อมูล (Data Safety)',
-          p: 'HelpDaiCha ให้บริการเครื่องมือจัดกิจกรรม (Stage Scoreboard, Live QR Poll) โดยเชื่อมต่อผ่าน HTTPS/TLS และระบบฐานข้อมูลที่มีการแยกสิทธิ์การเข้าถึงระดับแถว (Row-Level Security) หากใช้งานแบบไม่เข้าสู่ระบบ (Guest) ข้อมูลจะไม่ถูกซิงค์ขึ้นคลาวด์และจะรีเซ็ตเมื่อปิด/รีเฟรชหน้า เว้นแต่ผู้ใช้เลือกบันทึกในเครื่องหรือเข้าสู่ระบบ'
+          p: 'suphakorn.rukkarn ให้บริการเครื่องมือจัดกิจกรรมและวางแผน (Stage Scoreboard, Calendar) โดยเชื่อมต่อผ่าน HTTPS/TLS และระบบฐานข้อมูลที่มีการแยกสิทธิ์การเข้าถึงระดับแถว (Row-Level Security) หากใช้งานแบบไม่เข้าสู่ระบบ (Guest) ข้อมูลจะไม่ถูกซิงค์ขึ้นคลาวด์และจะรีเซ็ตเมื่อปิด/รีเฟรชหน้า เว้นแต่ผู้ใช้เลือกบันทึกในเครื่องหรือเข้าสู่ระบบ'
         },
         {
           h: '2. การคุ้มครองข้อมูลส่วนบุคคล (PDPA ไทย & GDPR/CCPA สากล)',
@@ -47,15 +47,15 @@
     },
     en: {
       title: 'Terms of Service & Privacy Policy',
-      intro: 'Please review the <strong>HelpDai</strong> Terms of Service & Privacy Policy (compliant with Thailand PDPA and international GDPR/CCPA principles) before continuing.',
+      intro: 'Please review the <strong>suphakorn.rukkarn</strong> Terms of Service & Privacy Policy (compliant with Thailand PDPA and international GDPR/CCPA principles) before continuing.',
       hintLocked: '⬇ Please scroll to the bottom to accept',
       hintUnlocked: '✓ Read completely — you may now accept',
       acceptBtn: '✓ Accept & Continue',
-      endNote: '— End of Terms of Service & Privacy Policy (HelpDai v2.0) —',
+      endNote: '— End of Terms of Service & Privacy Policy (suphakorn.rukkarn) —',
       sections: [
         {
           h: '1. Service Scope & Data Safety',
-          p: 'HelpDaiCha provides event tools (Stage Scoreboard, Live QR Poll) served over HTTPS/TLS with Row-Level Security (RLS) isolation. In Guest mode (not signed in), edits are ephemeral and reset on refresh/new tab unless explicitly saved locally or synced via an account.'
+          p: 'suphakorn.rukkarn provides event and planning tools (Stage Scoreboard, Calendar) served over HTTPS/TLS with Row-Level Security (RLS) isolation. In Guest mode (not signed in), edits are ephemeral and reset on refresh/new tab unless explicitly saved locally or synced via an account.'
         },
         {
           h: '2. Privacy & International Data Rights (PDPA / GDPR / CCPA)',

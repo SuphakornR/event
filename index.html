@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="referrer" content="strict-origin-when-cross-origin" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://storage.ko-fi.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://storage.ko-fi.com; font-src https://fonts.gstatic.com; img-src 'self' https: data:; frame-src https://www.youtube.com https://www.youtube-nocookie.com https://ko-fi.com;" />
-  <title>HelpDaiCha — Event Toolkit</title>
-  <meta name="description" content="HelpDaiCha — ชุดเครื่องมือจัดกิจกรรมและตารางคะแนนสดแบบเรียลไทม์" />
+  <title>suphakorn.rukkarn — Toolkit</title>
+  <meta name="description" content="suphakorn.rukkarn — ชุดเครื่องมือจัดกิจกรรมและวางแผนที่เรียบง่าย" />
   <meta name="theme-color" content="#F4D03F" />
-  <meta property="og:title" content="HelpDaiCha — Event Toolkit" />
-  <meta property="og:description" content="ชุดเครื่องมือจัดกิจกรรมและตารางคะแนนสดแบบเรียลไทม์" />
+  <meta property="og:title" content="suphakorn.rukkarn — Toolkit" />
+  <meta property="og:description" content="ชุดเครื่องมือจัดกิจกรรมและวางแผนที่เรียบง่าย" />
   <meta property="og:type" content="website" />
   <link rel="icon" type="image/svg+xml" href="assets/img/logo.svg" />
 
@@ -18,94 +18,43 @@
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Prompt:wght@600;700;800;900&display=swap" rel="stylesheet" />
   <style>html,body{cursor:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 26 26'%3E%3Cpath d='M4 3 L20 13 L12.5 15 L9.5 22 Z' transform='translate(2 2)' fill='%23111111'/%3E%3Cpath d='M4 3 L20 13 L12.5 15 L9.5 22 Z' fill='%23F4D03F' stroke='%23111111' stroke-width='2.2' stroke-linejoin='round'/%3E%3C/svg%3E") 4 3,auto}</style>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="assets/css/vox.css?v=20261122d" />
+  <link rel="stylesheet" href="assets/css/vox.css?v=20261123d" />
 </head>
 <body class="flex flex-col selection:bg-yellow-300 selection:text-black">
-  <script src="assets/js/loader.js?v=20261123c"></script>
+  <script src="assets/js/loader.js?v=20261126b"></script>
 
-  <main class="w-full max-w-6xl mx-auto px-4 sm:px-8 py-4 sm:py-5 lg:h-screen lg:overflow-hidden flex-1 flex flex-col gap-4">
+  <main class="w-full max-w-5xl mx-auto px-4 sm:px-8 py-5 sm:py-7 lg:min-h-screen flex-1 flex flex-col gap-6">
 
-    <!-- Masthead + Top-Right Pure Visual Auto-Sliding Banner -->
-    <header class="border-b-[3px] border-[#111111] pb-4 shrink-0 flex flex-col lg:flex-row lg:items-center justify-between gap-5">
-      <div class="min-w-0 flex-1">
-        <div class="flex flex-wrap items-center gap-2 mb-2.5">
-          <div class="inline-flex items-center gap-1.5 bg-[#111111] text-[#F8F6F0] px-2.5 py-0.5 rounded-md font-display font-extrabold text-[11px] tracking-wider shadow-[2px_2px_0px_#F4D03F]">
-            <span class="w-2 h-2 rounded-full bg-[#F4D03F]"></span>
-            <span>HELPDAICHA</span>
-          </div>
-          <button type="button" data-start-tutorial class="inline-flex items-center gap-1 bg-white text-[#111111] border-2 border-[#111111] px-2 py-0.5 rounded-md font-display font-extrabold text-[11px] shadow-[2px_2px_0px_#111111] hover:bg-[#F4D03F] transition-colors cursor-pointer">? คู่มือ</button>
-          <div id="helpdai-auth-slot" class="inline-flex items-center"></div>
-          <div id="hub-mascots" class="flex items-end gap-1.5 ml-0.5" aria-hidden="true"></div>
+    <!-- Clean Minimal Masthead -->
+    <header class="flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3 min-w-0">
+        <img src="assets/img/logo.svg" alt="suphakorn.rukkarn Logo" class="w-10 h-10 sm:w-11 sm:h-11 shrink-0" />
+        <div class="min-w-0">
+          <h1 class="thai-safe font-display font-black text-xl sm:text-2xl text-[#111111] tracking-tight leading-none">
+            suphakorn.<span class="text-[#111111] bg-[#F4D03F] px-1.5 py-0.5 rounded-md border-2 border-[#111111] ml-0.5">rukkarn</span>
+          </h1>
+          <p class="text-xs font-semibold text-[#111111]/60 mt-1">เครื่องมือจัดกิจกรรมและวางแผนที่เรียบง่าย</p>
         </div>
-        <h1 class="thai-safe font-display font-black text-4xl sm:text-5xl text-[#111111] tracking-tight flex flex-wrap items-center gap-2 leading-none select-none">
-          <img src="assets/img/logo.svg" alt="HelpDaiCha Logo" class="w-11 h-11 sm:w-12 sm:h-12 shrink-0" />
-          <span class="flex flex-wrap items-center gap-1.5">
-            <span>Help</span><span class="inline-block bg-[#F4D03F] text-[#111111] border-[3px] border-[#111111] px-2.5 py-0.5 rounded-xl shadow-[4px_4px_0px_#111111] -rotate-1">Dai</span><span class="inline-flex items-baseline bg-white text-[#111111] border-[3px] border-[#111111] px-2.5 py-0.5 rounded-xl shadow-[4px_4px_0px_#111111] rotate-1">Cha<span class="inline-block w-2 h-2 rounded-full bg-[#E74C3C] border-[1.5px] border-[#111111] ml-1"></span></span>
-          </span>
-        </h1>
-        <p class="thai-safe-tight font-semibold text-xs sm:text-sm text-[#111111]/75 mt-2">ชุดเครื่องมือจัดกิจกรรมแบบเรียลไทม์ — ครบ จบ สนุกในหน้าเดียว</p>
       </div>
-
-      <!-- Pure Visual Auto-Sliding Banner Alone (Shorter & Lighter, Multi-Image Support, Right-Click to Edit) -->
-      <aside id="promo-banner" title="คลิกขวาเพื่อเพิ่ม/แก้ไขภาพแบนเนอร์" class="group w-full lg:w-[27rem] xl:w-[30rem] h-28 sm:h-32 shrink-0 rounded-xl border-[2.5px] border-[#111111] shadow-[4px_4px_0px_#111111] bg-[#111111] relative overflow-hidden select-none" aria-label="แบนเนอร์ประชาสัมพันธ์">
-        <div id="promo-viewport" class="w-full h-full overflow-hidden relative touch-pan-y">
-          <div id="promo-track" class="flex h-full transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"></div>
-        </div>
-        <span id="hub-banner-size-badge" class="opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none absolute top-2 left-2 z-20 bg-[#111111]/85 text-[#F4D03F] border border-white/25 px-2 py-0.5 rounded-md font-display font-bold text-[10px] tabular-nums shadow-sm"></span>
-        <div id="promo-dots" class="absolute bottom-2 right-2 z-20 flex items-center gap-1 bg-[#111111]/75 backdrop-blur-sm px-1.5 py-1 rounded-md border border-white/20"></div>
-        <input type="file" id="hub-banner-file" accept="image/*" multiple class="hidden" />
-      </aside>
-    </header>
-
-    <!-- Folder-Style Navigation Binder -->
-    <section class="flex-1 min-h-0 flex flex-col justify-center" aria-label="หมวดหมู่เครื่องมือแบบแฟ้มเอกสาร">
-      <!-- Physical Folder Tabs -->
-      <div id="folder-tabs-row" role="tablist" aria-label="เลือกแฟ้มเครื่องมือ" class="flex items-end gap-1 sm:gap-1.5 pl-1 overflow-x-auto no-scrollbar shrink-0">
-        <button type="button" role="tab" aria-selected="true" data-folder-tab="all" class="folder-tab relative z-10 -mb-[3px] px-3.5 sm:px-4 py-2 rounded-t-xl border-[3px] border-b-0 border-[#111111] bg-white font-display font-black text-xs sm:text-sm text-[#111111] inline-flex items-center gap-1.5 shrink-0 cursor-pointer transition-all">
-          <span class="w-2.5 h-2.5 rounded-sm bg-[#F4D03F] border border-[#111111]"></span>
-          <span>01 • ทั้งหมด</span>
-          <span class="folder-count text-[10px] px-1.5 py-0.5 rounded bg-[#111111] text-[#F4D03F] tabular-nums">4</span>
-        </button>
-        <button type="button" role="tab" aria-selected="false" data-folder-tab="event" class="folder-tab px-3.5 sm:px-4 py-1.5 rounded-t-xl border-[2.5px] border-b-0 border-[#111111] bg-[#EAE6DA] hover:bg-[#FFF8DC] font-display font-bold text-xs sm:text-sm text-[#111111]/75 hover:text-[#111111] inline-flex items-center gap-1.5 shrink-0 cursor-pointer transition-all">
-          <span class="w-2.5 h-2.5 rounded-sm bg-[#E74C3C] border border-[#111111]"></span>
-          <span>02 • กิจกรรม &amp; เวที</span>
-        </button>
-        <button type="button" role="tab" aria-selected="false" data-folder-tab="money" class="folder-tab px-3.5 sm:px-4 py-1.5 rounded-t-xl border-[2.5px] border-b-0 border-[#111111] bg-[#EAE6DA] hover:bg-[#FFF8DC] font-display font-bold text-xs sm:text-sm text-[#111111]/75 hover:text-[#111111] inline-flex items-center gap-1.5 shrink-0 cursor-pointer transition-all">
-          <span class="w-2.5 h-2.5 rounded-sm bg-[#10B981] border border-[#111111]"></span>
-          <span>03 • วางแผนการเงิน</span>
-        </button>
-        <button type="button" role="tab" aria-selected="false" data-folder-tab="soon" class="folder-tab px-3.5 sm:px-4 py-1.5 rounded-t-xl border-[2.5px] border-b-0 border-[#111111] bg-[#EAE6DA] hover:bg-[#FFF8DC] font-display font-bold text-xs sm:text-sm text-[#111111]/75 hover:text-[#111111] inline-flex items-center gap-1.5 shrink-0 cursor-pointer transition-all">
-          <span class="w-2.5 h-2.5 rounded-sm bg-[#2980B9] border border-[#111111]"></span>
-          <span>04 • เร็วๆ นี้</span>
-        </button>
-      </div>
-
-      <!-- Open Folder Sheet -->
-      <div id="folder-sheet" class="vox-card bg-white rounded-tl-none rounded-tr-2xl rounded-b-2xl p-4 sm:p-5 flex flex-col gap-3.5 min-h-0">
-        <div class="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b-2 border-[#111111]/10 shrink-0">
-          <div class="flex items-center gap-2">
-            <span id="folder-active-dot" class="w-3 h-3 rounded-sm border-2 border-[#111111] bg-[#F4D03F]"></span>
-            <h2 id="folder-active-title" class="thai-safe-tight font-display font-black text-sm sm:text-base text-[#111111]">เครื่องมือทั้งหมด (All Tools)</h2>
-          </div>
-          <span id="folder-active-sub" class="text-[11px] font-display font-bold text-[#111111]/55">เลือกแฟ้มด้านบนเพื่อสลับหมวดหมู่</span>
-        </div>
-
-        <div id="tool-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4" aria-label="เครื่องมือในแฟ้ม"></div>
-      </div>
-    </section>
-
-    <footer class="mt-auto pt-3 border-t-2 border-[#111111]/15 shrink-0 flex flex-wrap items-center justify-between gap-2.5 text-xs font-semibold text-[#111111]/60">
-      <span class="shrink-0">HelpDaiCha • Event Toolkit</span>
 
       <div class="flex flex-wrap items-center gap-2 shrink-0">
-        <button type="button" id="open-sugg-btn" class="btn-vox bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] font-display font-bold text-xs px-3 py-1 rounded-lg inline-flex items-center gap-1.5 cursor-pointer">
-          <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></svg>
-          <span>เสนอแนะ</span>
+        <button type="button" data-start-tutorial class="bg-white hover:bg-[#F4D03F] text-[#111111] border-2 border-[#111111] px-2.5 py-1 rounded-lg font-display font-bold text-xs shadow-[2px_2px_0px_#111111] transition-colors cursor-pointer">? คู่มือ</button>
+        <div id="helpdai-auth-slot" class="inline-flex items-center"></div>
+        <button type="button" id="open-changelog-btn" title="บันทึกการอัปเดต" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border-2 border-[#111111] bg-white hover:bg-[#F4D03F] text-[#111111] font-display font-extrabold text-[11px] shadow-[2px_2px_0px_#111111] cursor-pointer transition-colors">
+          <span id="changelog-build-label" class="tabular-nums">v0.1.0</span>
         </button>
-        <button type="button" id="open-changelog-btn" title="ดูบันทึกการอัปเดต (Changelog)" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border-2 border-[#111111] bg-white hover:bg-[#F4D03F] text-[#111111] font-display font-extrabold text-[11px] shadow-[2px_2px_0px_#111111] cursor-pointer transition-colors">
-          <span>Build</span>
-          <span id="changelog-build-label" class="tabular-nums bg-[#111111] text-[#F4D03F] px-1.5 py-0.5 rounded text-[10px]">v0.1.0</span>
-        </button>
+      </div>
+    </header>
+
+    <!-- Pure Mascot Navigation -->
+    <section class="flex-1 flex flex-col items-center justify-center gap-6" aria-label="เลือกเครื่องมือ">
+      <div id="tool-grid" class="flex flex-wrap items-center justify-center gap-12 sm:gap-20" aria-label="รายการเครื่องมือ"></div>
+    </section>
+
+    <!-- Minimal Footer -->
+    <footer class="mt-auto pt-3 flex flex-wrap items-center justify-between gap-3 text-xs font-semibold text-[#111111]/55">
+      <span>suphakorn.rukkarn</span>
+      <div class="flex flex-wrap items-center gap-3">
         <button type="button" data-open-tos class="hover:text-[#111111] underline cursor-pointer">ข้อตกลงการใช้งาน (ToS)</button>
         <div class="inline-flex items-center">
           <script type='text/javascript' src='https://storage.ko-fi.com/cdn/widget/Widget_2.js'></script>
@@ -115,14 +64,11 @@
     </footer>
   </main>
 
-  <!-- Change Log Modal (ToS Editorial Style) -->
+  <!-- Change Log Modal -->
   <div id="changelog-modal" class="hidden fixed inset-0 z-50 items-center justify-center p-4 bg-[#111111]/60 backdrop-blur-sm" aria-hidden="true">
     <div class="vox-panel-enter w-full max-w-lg vox-card bg-[#F8F6F0] p-5 flex flex-col gap-3 max-h-[85vh]">
       <div class="flex items-center justify-between gap-2 pb-2.5 border-b-2 border-[#111111] shrink-0">
         <div class="flex items-center gap-2">
-          <span class="w-7 h-7 rounded-lg border-2 border-[#111111] bg-[#F4D03F] flex items-center justify-center shadow-[2px_2px_0px_#111111]">
-            <svg class="w-4 h-4 text-[#111111]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg>
-          </span>
           <h2 class="thai-safe-tight font-display font-extrabold text-base text-[#111111]">บันทึกการอัปเดต</h2>
           <span id="changelog-modal-version" class="font-display font-black text-[11px] bg-[#111111] text-[#F4D03F] px-2 py-0.5 rounded tabular-nums">v0.1.0</span>
         </div>
@@ -145,12 +91,7 @@
   <div id="sugg-modal" class="hidden fixed inset-0 z-50 items-center justify-center p-4 bg-[#111111]/60 backdrop-blur-sm" aria-hidden="true">
     <div class="vox-panel-enter w-full max-w-md vox-card bg-[#F8F6F0] p-5 flex flex-col gap-3">
       <div class="flex items-center justify-between gap-2 pb-2 border-b-2 border-[#111111]">
-        <div class="flex items-center gap-2">
-          <span class="w-7 h-7 rounded-lg border-2 border-[#111111] bg-[#F4D03F] flex items-center justify-center shadow-[2px_2px_0px_#111111]">
-            <svg class="w-4 h-4 text-[#111111]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></svg>
-          </span>
-          <h2 class="thai-safe-tight font-display font-extrabold text-base text-[#111111]">กล่องเสนอแนะ</h2>
-        </div>
+        <h2 class="thai-safe-tight font-display font-extrabold text-base text-[#111111]">กล่องเสนอแนะ</h2>
         <button type="button" id="close-sugg-btn" aria-label="ปิดกล่องเสนอแนะ" class="w-7 h-7 rounded-lg border-2 border-[#111111] bg-white hover:bg-[#E74C3C] hover:text-white font-display font-black text-xs flex items-center justify-center cursor-pointer transition-colors">✕</button>
       </div>
 
@@ -178,28 +119,27 @@
   <script src="assets/js/tutorial.js?v=20261122b" defer></script>
   <script>
     (() => {
-      // Single source of truth for the menu. status: 'live' | 'soon'
       let savedEventSummary = null;
       try {
         const rawSb = localStorage.getItem('vox_scoreboard_clean_v3');
         if (rawSb) {
           const parsedSb = JSON.parse(rawSb);
           if (parsedSb?.eventTitle && Array.isArray(parsedSb?.teams)) {
-            savedEventSummary = { title: parsedSb.eventTitle, teams: parsedSb.teams.length };
+            savedEventSummary = `${parsedSb.eventTitle} (${parsedSb.teams.length} ทีม)`;
           }
         }
       } catch (_) {}
 
-      let savedBudgetSummary = null;
+      let savedCalendarSummary = null;
       try {
-        const rawBg = localStorage.getItem('helpdai_budget_planner_v1');
-        if (rawBg) {
-          const parsedBg = JSON.parse(rawBg);
-          if (parsedBg && Array.isArray(parsedBg.items)) {
-            savedBudgetSummary = {
-              balance: Math.round(Number(parsedBg.startBalance) || 0).toLocaleString('th-TH'),
-              count: parsedBg.items.length
-            };
+        const rawCal = localStorage.getItem('helpdai_calendar_v1');
+        if (rawCal) {
+          const parsedCal = JSON.parse(rawCal);
+          if (Array.isArray(parsedCal) && parsedCal.length) {
+            const d = new Date();
+            const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            const todayCount = parsedCal.filter(ev => !ev.done && ev.date === today).length;
+            savedCalendarSummary = todayCount > 0 ? `วันนี้มี ${todayCount} กิจกรรม` : `บันทึกไว้ ${parsedCal.length} กิจกรรม`;
           }
         }
       } catch (_) {}
@@ -208,136 +148,70 @@
         {
           id: 'scoreboard',
           folder: 'event',
-          status: 'live',
           shape: 0,
+          href: 'scoreboard.html',
           title: 'Stage Scoreboard',
-          desc: 'กระดานคะแนนสดบนเวที ปรับเพิ่ม-ลดทีมและกิจกรรม จับเวลา โหวตสด เพลงพื้นหลัง และฉลองผู้ชนะ',
-          savedNote: savedEventSummary ? `งานล่าสุด: ${savedEventSummary.title} (${savedEventSummary.teams} ทีม)` : '',
-          actions: [
-            { label: savedEventSummary ? 'เปิดใช้งานต่อ' : 'เปิดใช้งาน', href: 'scoreboard.html', primary: true }
-          ]
+          desc: 'กระดานคะแนนสดบนเวที จับเวลา และฉลองผู้ชนะ',
+          note: savedEventSummary
         },
         {
-          id: 'poll',
-          folder: 'event',
-          status: 'live',
-          shape: 0,
-          title: 'Live QR Poll',
-          desc: 'สร้างโพลโหวตสดในห้องประชุมหรืออีเวนต์ สแกน QR จากมือถือ โชว์ผลเรียลไทม์บนจอใหญ่',
-          actions: [
-            { label: 'เปิดโพล', href: 'poll.html', primary: true }
-          ]
-        },
-        {
-          id: 'budget',
-          folder: 'money',
-          status: 'live',
+          id: 'calendar',
+          folder: 'plan',
           shape: 1,
-          title: 'วางแผนเงินล่วงหน้า',
-          desc: 'ดูเงินเข้า–ออกล่วงหน้า 3–12 เดือน ลองเปิด-ปิดรายจ่ายเพื่อเช็กอนาคต พร้อมกราฟเข้าใจง่าย',
-          savedNote: savedBudgetSummary ? `ตั้งต้น ${savedBudgetSummary.balance} ฿ (${savedBudgetSummary.count} รายการ)` : '',
-          actions: [
-            { label: savedBudgetSummary ? 'ดูแผนเงินต่อ' : 'เริ่มวางแผน', href: 'budget.html', primary: true }
-          ]
-        },
-        {
-          id: 'coming-soon',
-          folder: 'soon',
-          status: 'soon',
-          shape: 2,
-          title: 'Live Quiz & Buzzer',
-          desc: 'เกมตอบคำถามชิงไหวพริบ กดปุ่ม Buzzer แย่งตอบสดจากมือถือ พร้อมคิดคะแนนอัตโนมัติบนเวที',
-          actions: []
+          href: 'calendar.html',
+          title: 'ปฏิทิน (Calendar)',
+          desc: 'จัดตารางนัดหมาย กิจกรรมรายวัน และส่งออกไฟล์ .ics',
+          note: savedCalendarSummary
         }
       ];
 
-      const FOLDER_META = {
-        all:   { title: 'เครื่องมือทั้งหมด (All Tools)', sub: 'เลือกเปิดใช้งานเครื่องมือได้ทันที', color: '#F4D03F', cols: 'lg:grid-cols-4' },
-        event: { title: 'แฟ้ม: กิจกรรม & เวที (Event & Stage)', sub: 'กระดานคะแนนสดบนเวทีและระบบโหวต QR', color: '#E74C3C', cols: 'lg:grid-cols-2' },
-        money: { title: 'แฟ้ม: วางแผนการเงิน (Money Timeline)', sub: 'ทดสอบงบและดูเงินคงเหลือล่วงหน้า', color: '#10B981', cols: 'lg:grid-cols-2' },
-        soon:  { title: 'แฟ้ม: กำลังพัฒนา (Upcoming)', sub: 'เครื่องมือใหม่ที่กำลังจะเปิดให้ใช้งาน', color: '#2980B9', cols: 'lg:grid-cols-2' }
-      };
-
-      const esc = (v) => String(v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+      const esc = (v) => String(v || '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
       function toolCard(t) {
-        const live = t.status === 'live';
-        const mascot = VoxMascots.svg(t.shape, live ? undefined : '#E5E1D4', 'w-14 h-14');
-        const badge = live
-          ? '<span class="text-[10px] font-display font-black px-2 py-0.5 rounded-md border-2 border-[#111111] bg-[#F4D03F] shadow-[2px_2px_0px_#111111]">พร้อมใช้งาน</span>'
-          : '<span class="text-[10px] font-display font-bold px-2 py-0.5 rounded-md border border-[#111111]/35 bg-white text-[#111111]/60">กำลังพัฒนา</span>';
-        const actions = live
-          ? `<div class="flex flex-wrap items-center justify-between gap-2 mt-auto pt-2.5 border-t-2 border-dashed border-[#111111]/10">${t.actions.map(a => `
-              <a href="${esc(a.href)}" class="btn-vox ${a.primary ? 'bg-[#F4D03F] hover:bg-[#f2c61d]' : 'bg-white hover:bg-yellow-50'} text-[#111111] font-display font-black text-xs sm:text-sm px-4 py-2 rounded-xl inline-flex items-center gap-1.5">${esc(a.label)} <span aria-hidden="true">→</span></a>`).join('')}</div>`
-          : '<div class="mt-auto pt-2.5 border-t-2 border-dashed border-[#111111]/10 text-xs font-semibold text-[#111111]/55">จะเปิดให้ใช้งานเร็วๆ นี้</div>';
+        const mascot = VoxMascots.svg(t.shape, undefined, 'js-mascot-svg w-28 h-28 sm:w-32 sm:h-32 transition-transform duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.45] group-active:scale-95');
         return `
-          <article class="vox-panel-enter vox-card p-4 sm:p-5 flex flex-col gap-2.5 ${live ? 'vox-card-hover bg-[#F8F6F0]' : 'opacity-65 border-dashed bg-[#F8F6F0] !shadow-none'}">
-            <div class="flex items-start justify-between gap-2">
-              ${mascot}
-              ${badge}
-            </div>
-            <h3 class="thai-safe-tight font-display font-extrabold text-lg sm:text-xl text-[#111111]">${esc(t.title)}</h3>
-            <p class="text-xs sm:text-sm text-[#111111]/75 leading-relaxed">${esc(t.desc)}</p>
-            ${t.savedNote ? `<div class="inline-flex items-center gap-1.5 self-start bg-white border border-[#111111]/35 rounded-lg px-2 py-0.5 text-[11px] font-semibold text-[#111111]/85"><span class="w-2 h-2 rounded-full bg-[#2ECC71] shrink-0"></span><span class="truncate max-w-[200px]">${esc(t.savedNote)}</span></div>` : ''}
-            ${actions}
-          </article>`;
+          <a href="${esc(t.href)}" aria-label="${esc(t.title)}" title="${esc(t.title)}" class="js-mascot-card vox-panel-enter group flex flex-col items-center justify-center gap-3 p-4 no-underline">
+            ${mascot}
+            <span class="thai-safe-tight font-display font-extrabold text-sm sm:text-base text-[#111111]/75 group-hover:text-[#111111] transition-colors">${esc(t.title)}</span>
+          </a>`;
       }
-
-      let activeFolder = 'all';
-      try {
-        const savedTab = sessionStorage.getItem('helpdai_active_folder');
-        if (savedTab && FOLDER_META[savedTab]) activeFolder = savedTab;
-      } catch (_) {}
 
       const gridEl = document.getElementById('tool-grid');
-      const folderSheetEl = document.getElementById('folder-sheet');
-      const folderTitleEl = document.getElementById('folder-active-title');
-      const folderSubEl = document.getElementById('folder-active-sub');
-      const folderDotEl = document.getElementById('folder-active-dot');
+      if (gridEl) {
+        gridEl.innerHTML = TOOLS.map(toolCard).join('');
 
-      function renderFolder(folderKey) {
-        activeFolder = FOLDER_META[folderKey] ? folderKey : 'all';
-        try { sessionStorage.setItem('helpdai_active_folder', activeFolder); } catch (_) {}
-        const meta = FOLDER_META[activeFolder];
-        const items = activeFolder === 'all' ? TOOLS : TOOLS.filter(t => t.folder === activeFolder);
-
-        if (folderTitleEl) folderTitleEl.textContent = meta.title;
-        if (folderSubEl) folderSubEl.textContent = meta.sub;
-        if (folderDotEl) folderDotEl.style.backgroundColor = meta.color;
-        if (folderSheetEl) {
-          folderSheetEl.classList.toggle('rounded-tl-none', activeFolder === 'all');
-          folderSheetEl.classList.toggle('rounded-tl-2xl', activeFolder !== 'all');
-        }
-
-        document.querySelectorAll('[data-folder-tab]').forEach((tab) => {
-          const on = tab.dataset.folderTab === activeFolder;
-          tab.setAttribute('aria-selected', String(on));
-          tab.classList.toggle('z-10', on);
-          tab.classList.toggle('-mb-[3px]', on);
-          tab.classList.toggle('border-[3px]', on);
-          tab.classList.toggle('border-[2.5px]', !on);
-          tab.classList.toggle('py-2', on);
-          tab.classList.toggle('py-1.5', !on);
-          tab.classList.toggle('bg-white', on);
-          tab.classList.toggle('bg-[#EAE6DA]', !on);
-          tab.classList.toggle('font-black', on);
-          tab.classList.toggle('font-bold', !on);
-          tab.classList.toggle('text-[#111111]', on);
-          tab.classList.toggle('text-[#111111]/75', !on);
-        });
-
-        if (gridEl) {
-          gridEl.className = `grid grid-cols-1 sm:grid-cols-2 ${meta.cols} gap-3.5 sm:gap-4`;
-          gridEl.innerHTML = items.map(toolCard).join('');
-        }
+        // Proximity + hover enlargement when mouse moves near or over each mascot
+        const cards = Array.from(gridEl.querySelectorAll('.js-mascot-card'));
+        const PROXIMITY_PX = 240;
+        const resetScales = () => {
+          cards.forEach((card) => {
+            const svg = card.querySelector('.js-mascot-svg');
+            if (svg) svg.style.transform = '';
+          });
+        };
+        document.addEventListener('pointermove', (e) => {
+          if (e.pointerType && e.pointerType !== 'mouse') return;
+          cards.forEach((card) => {
+            const svg = card.querySelector('.js-mascot-svg');
+            if (!svg) return;
+            const rect = svg.getBoundingClientRect();
+            const cx = rect.left + rect.width / 2;
+            const cy = rect.top + rect.height / 2;
+            const dist = Math.hypot(e.clientX - cx, e.clientY - cy);
+            if (card.matches(':hover')) {
+              svg.style.transform = 'scale(1.48)';
+            } else if (dist < PROXIMITY_PX) {
+              const t = 1 - dist / PROXIMITY_PX;
+              const scale = 1 + t * t * 0.42;
+              svg.style.transform = `scale(${scale.toFixed(3)})`;
+            } else {
+              svg.style.transform = '';
+            }
+          });
+        }, { passive: true });
+        document.addEventListener('pointerleave', resetScales);
+        window.addEventListener('blur', resetScales);
       }
-
-      document.querySelectorAll('[data-folder-tab]').forEach((tab) => {
-        tab.addEventListener('click', () => renderFolder(tab.dataset.folderTab));
-      });
-
-      renderFolder(activeFolder);
-      document.getElementById('hub-mascots').innerHTML = [0, 1, 2].map(i => VoxMascots.svg(i, undefined, 'w-8 h-8')).join('');
 
       // Suggestion Box
       (() => {
@@ -369,9 +243,7 @@
         };
         document.getElementById('open-sugg-btn')?.addEventListener('click', openModal);
         document.getElementById('close-sugg-btn')?.addEventListener('click', closeModal);
-        modalEl?.addEventListener('click', (e) => {
-          if (e.target === modalEl) closeModal();
-        });
+        modalEl?.addEventListener('click', (e) => { if (e.target === modalEl) closeModal(); });
         window.addEventListener('keydown', (e) => {
           if (e.key === 'Escape' && modalEl && !modalEl.classList.contains('hidden')) closeModal();
         });
@@ -448,258 +320,6 @@
 
         renderSuggestions();
       })();
-
-      // Pure Visual Auto-Sliding Banner (Default Arts + Multiple Custom Images)
-      const DEFAULT_ARTS = [
-        `<svg class="w-full h-full object-cover" viewBox="0 0 420 140" xmlns="http://www.w3.org/2000/svg">
-          <rect width="420" height="140" fill="#181818"/>
-          <g opacity="0.14" stroke="#FFFFFF" stroke-width="1"><path d="M0 35h420M0 70h420M0 105h420M70 0v140M140 0v140M210 0v140M280 0v140M350 0v140"/></g>
-          <rect x="20" y="18" width="120" height="104" rx="12" fill="#F8F6F0" stroke="#111111" stroke-width="4"/>
-          <rect x="32" y="30" width="96" height="20" rx="6" fill="#F4D03F" stroke="#111111" stroke-width="2.5"/>
-          <rect x="32" y="58" width="96" height="20" rx="6" fill="#FFFFFF" stroke="#111111" stroke-width="2.5"/>
-          <rect x="32" y="86" width="96" height="20" rx="6" fill="#FFFFFF" stroke="#111111" stroke-width="2.5"/>
-          <rect x="156" y="18" width="244" height="104" rx="12" fill="#FFFFFF" stroke="#111111" stroke-width="4"/>
-          <rect x="172" y="32" width="176" height="20" rx="6" fill="#F4D03F" stroke="#111111" stroke-width="2.5"/>
-          <rect x="172" y="60" width="136" height="20" rx="6" fill="#2980B9" stroke="#111111" stroke-width="2.5"/>
-          <rect x="172" y="88" width="156" height="20" rx="6" fill="#E74C3C" stroke="#111111" stroke-width="2.5"/>
-          <circle cx="372" cy="42" r="14" fill="#F4D03F" stroke="#111111" stroke-width="3"/>
-          <path d="M365 45l3-8 4 4 4-4 3 8z" fill="#111111"/>
-        </svg>`,
-        `<svg class="w-full h-full object-cover" viewBox="0 0 420 140" xmlns="http://www.w3.org/2000/svg">
-          <rect width="420" height="140" fill="#122334"/>
-          <g opacity="0.14" stroke="#FFFFFF" stroke-width="1"><path d="M0 35h420M0 70h420M0 105h420M70 0v140M140 0v140M210 0v140M280 0v140M350 0v140"/></g>
-          <circle cx="92" cy="70" r="46" fill="#F8F6F0" stroke="#111111" stroke-width="4"/>
-          <path d="M50 72 Q 71 58 92 72 T 134 72 L 134 114 L 50 114 Z" fill="#2980B9"/>
-          <rect x="64" y="56" width="56" height="26" rx="7" fill="#FFFFFF" stroke="#111111" stroke-width="3"/>
-          <text x="92" y="74" text-anchor="middle" font-family="Prompt, sans-serif" font-weight="900" font-size="13" fill="#111111">03:00</text>
-          <rect x="164" y="20" width="236" height="100" rx="12" fill="#FFFFFF" stroke="#111111" stroke-width="4"/>
-          <rect x="180" y="34" width="52" height="52" rx="8" fill="#F8F6F0" stroke="#111111" stroke-width="2.5"/>
-          <rect x="188" y="42" width="14" height="14" fill="#111111"/><rect x="210" y="42" width="14" height="14" fill="#111111"/><rect x="188" y="64" width="14" height="14" fill="#111111"/><rect x="210" y="64" width="14" height="14" fill="#F4D03F"/>
-          <rect x="244" y="36" width="136" height="14" rx="5" fill="#F4D03F" stroke="#111111" stroke-width="2"/>
-          <rect x="244" y="58" width="106" height="14" rx="5" fill="#10B981" stroke="#111111" stroke-width="2"/>
-          <rect x="244" y="80" width="120" height="14" rx="5" fill="#E74C3C" stroke="#111111" stroke-width="2"/>
-        </svg>`,
-        `<svg class="w-full h-full object-cover" viewBox="0 0 420 140" xmlns="http://www.w3.org/2000/svg">
-          <rect width="420" height="140" fill="#231720"/>
-          <g opacity="0.14" stroke="#FFFFFF" stroke-width="1"><path d="M0 35h420M0 70h420M0 105h420M70 0v140M140 0v140M210 0v140M280 0v140M350 0v140"/></g>
-          <rect x="28" y="22" width="364" height="96" rx="16" fill="#FFFFFF" stroke="#111111" stroke-width="4"/>
-          <rect x="46" y="38" width="84" height="64" rx="10" fill="#E74C3C" stroke="#111111" stroke-width="3"/>
-          <polygon points="80,56 80,84 104,70" fill="#FFFFFF"/>
-          <rect x="148" y="42" width="154" height="16" rx="6" fill="#111111"/>
-          <rect x="148" y="66" width="114" height="12" rx="5" fill="#F4D03F" stroke="#111111" stroke-width="2"/>
-          <g fill="#10B981" stroke="#111111" stroke-width="2">
-            <rect x="322" y="64" width="10" height="28" rx="3"/>
-            <rect x="338" y="44" width="10" height="48" rx="3" fill="#F4D03F"/>
-            <rect x="354" y="54" width="10" height="38" rx="3" fill="#2980B9"/>
-          </g>
-        </svg>`
-      ];
-
-      const HUB_BANNERS_KEY = 'helpdai_hub_custom_banners_v1';
-      const HUB_BANNER_OLD_KEY = 'helpdai_hub_custom_banner_v1';
-      const trackEl = document.getElementById('promo-track');
-      const dotsEl = document.getElementById('promo-dots');
-      const viewportEl = document.getElementById('promo-viewport');
-      const hubBannerFile = document.getElementById('hub-banner-file');
-      const hubSizeBadge = document.getElementById('hub-banner-size-badge');
-      let promoIdx = 0;
-      let autoTimer = null;
-
-      const getHubCustomImages = () => {
-        try {
-          const arr = JSON.parse(localStorage.getItem(HUB_BANNERS_KEY) || 'null');
-          if (Array.isArray(arr) && arr.length) return arr.filter(Boolean);
-          const legacy = localStorage.getItem(HUB_BANNER_OLD_KEY);
-          if (legacy) {
-            localStorage.setItem(HUB_BANNERS_KEY, JSON.stringify([legacy]));
-            localStorage.removeItem(HUB_BANNER_OLD_KEY);
-            return [legacy];
-          }
-        } catch (_) {}
-        return [];
-      };
-      const saveHubCustomImages = (arr) => {
-        try {
-          if (arr.length) localStorage.setItem(HUB_BANNERS_KEY, JSON.stringify(arr));
-          else localStorage.removeItem(HUB_BANNERS_KEY);
-        } catch (_) {}
-      };
-
-      const syncHubBannerSize = () => {
-        if (!viewportEl || !hubSizeBadge) return;
-        const r = viewportEl.getBoundingClientRect();
-        if (r.width > 0 && r.height > 0) {
-          hubSizeBadge.textContent = `${Math.round(r.width)} × ${Math.round(r.height)} px`;
-        }
-      };
-      viewportEl?.addEventListener('pointerenter', syncHubBannerSize);
-      window.addEventListener('resize', syncHubBannerSize);
-
-      const getSlideCount = () => {
-        const custom = getHubCustomImages();
-        return custom.length ? custom.length : DEFAULT_ARTS.length;
-      };
-
-      const renderPromoDots = () => {
-        if (!dotsEl) return;
-        const total = getSlideCount();
-        dotsEl.classList.toggle('hidden', total <= 1);
-        dotsEl.innerHTML = Array.from({ length: total }, (_, i) => `
-          <button type="button" data-promo-dot="${i}" aria-label="สไลด์ ${i + 1}" class="h-1.5 rounded-full transition-all cursor-pointer ${i === promoIdx ? 'w-4 bg-[#F4D03F]' : 'w-1.5 bg-white/60'}"></button>
-        `).join('');
-        dotsEl.querySelectorAll('[data-promo-dot]').forEach(btn => {
-          btn.addEventListener('click', () => goToPromo(Number(btn.dataset.promoDot)));
-        });
-      };
-
-      const goToPromo = (next) => {
-        const total = getSlideCount();
-        promoIdx = ((next % total) + total) % total;
-        if (trackEl) trackEl.style.transform = `translateX(-${promoIdx * 100}%)`;
-        renderPromoDots();
-        resetAuto();
-      };
-
-      const resetAuto = () => {
-        clearInterval(autoTimer);
-        if (getSlideCount() > 1) {
-          autoTimer = setInterval(() => goToPromo(promoIdx + 1), 4500);
-        }
-      };
-
-      const renderHubBanner = () => {
-        if (!trackEl) return;
-        const custom = getHubCustomImages();
-        promoIdx = 0;
-        if (custom.length) {
-          trackEl.innerHTML = custom.map(src => `<div class="w-full h-full shrink-0"><img src="${src}" alt="Banner" class="w-full h-full object-cover" /></div>`).join('');
-        } else {
-          trackEl.innerHTML = DEFAULT_ARTS.map(art => `<div class="w-full h-full shrink-0">${art}</div>`).join('');
-        }
-        trackEl.style.transform = 'translateX(0%)';
-        renderPromoDots();
-        resetAuto();
-        syncHubBannerSize();
-      };
-
-      if (viewportEl) {
-        let swipeStartX = null;
-        viewportEl.addEventListener('pointerdown', (e) => {
-          swipeStartX = e.clientX;
-          clearInterval(autoTimer);
-        });
-        viewportEl.addEventListener('pointerup', (e) => {
-          if (swipeStartX === null) return;
-          const diff = e.clientX - swipeStartX;
-          swipeStartX = null;
-          if (Math.abs(diff) > 35) goToPromo(diff < 0 ? promoIdx + 1 : promoIdx - 1);
-          else resetAuto();
-        });
-        viewportEl.addEventListener('pointercancel', () => {
-          swipeStartX = null;
-          resetAuto();
-        });
-      }
-
-      hubBannerFile?.addEventListener('change', async () => {
-        const files = Array.from(hubBannerFile.files || []);
-        if (!files.length) return;
-        const readAsData = (f) => new Promise((res) => {
-          const r = new FileReader();
-          r.onload = () => res(String(r.result || ''));
-          r.readAsDataURL(f);
-        });
-        const newUrls = (await Promise.all(files.map(readAsData))).filter(Boolean);
-        const cur = getHubCustomImages();
-        saveHubCustomImages([...cur, ...newUrls]);
-        hubBannerFile.value = '';
-        renderHubBanner();
-      });
-
-      renderHubBanner();
-
-      // Lightweight Vox Context Menu for Welcome Page (Banner & Music Box)
-      let hubCtxEl = null;
-      const closeHubCtx = () => {
-        if (hubCtxEl) { hubCtxEl.classList.add('hidden'); hubCtxEl.classList.remove('flex'); }
-      };
-      const HUB_ICONS = {
-        imgBlack: '<svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2.5" y="3.5" width="19" height="17" rx="3" fill="#111111"/><circle cx="8" cy="9" r="2" fill="#F4D03F"/><path d="M5 17.5l4.5-4.5 3 3 3.5-4 3 5.5H5z" fill="#F8F6F0"/></svg>',
-        trash: '<svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>',
-        reset: '<svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>',
-        music: '<svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>',
-        play: '<svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l15 8-15 8V4z"/></svg>',
-        pause: '<svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>',
-        stop: '<svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>'
-      };
-
-      const showHubCtx = (x, y, items) => {
-        if (!hubCtxEl) {
-          hubCtxEl = document.createElement('div');
-          hubCtxEl.className = 'fixed z-[180] hidden flex-col gap-1 w-56 vox-card bg-[#F8F6F0] p-1.5 vox-panel-enter';
-          document.body.appendChild(hubCtxEl);
-          document.addEventListener('click', (e) => { if (!hubCtxEl.contains(e.target)) closeHubCtx(); });
-          window.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeHubCtx(); });
-        }
-        hubCtxEl.innerHTML = items.map((it, idx) => `
-          <button type="button" data-hctx="${idx}" class="w-full text-left px-2.5 py-1.5 rounded-lg font-display font-bold text-xs ${it.danger ? 'text-[#E74C3C] hover:bg-red-50' : 'text-[#111111] hover:bg-[#F4D03F]'} transition-colors cursor-pointer flex items-center gap-2">${it.icon || ''}<span>${esc(it.label)}</span></button>
-        `).join('');
-        hubCtxEl.querySelectorAll('[data-hctx]').forEach(btn => {
-          btn.addEventListener('click', () => {
-            const act = items[Number(btn.dataset.hctx)]?.onClick;
-            closeHubCtx();
-            if (act) act();
-          });
-        });
-        hubCtxEl.classList.remove('hidden');
-        hubCtxEl.classList.add('flex');
-        const left = Math.min(x, window.innerWidth - 235);
-        const top = Math.min(y, window.innerHeight - 160);
-        hubCtxEl.style.left = `${Math.max(8, left)}px`;
-        hubCtxEl.style.top = `${Math.max(8, top)}px`;
-      };
-
-      document.getElementById('promo-banner')?.addEventListener('contextmenu', (e) => {
-        e.preventDefault();
-        const custom = getHubCustomImages();
-        const items = [
-          { icon: HUB_ICONS.imgBlack, label: 'เพิ่ม / เปลี่ยนภาพแบนเนอร์', onClick: () => hubBannerFile?.click() }
-        ];
-        if (custom.length > 1) {
-          items.push({
-            icon: HUB_ICONS.trash,
-            label: 'ลบภาพสไลด์นี้',
-            danger: true,
-            onClick: () => {
-              const next = custom.filter((_, i) => i !== promoIdx);
-              saveHubCustomImages(next);
-              renderHubBanner();
-            }
-          });
-        }
-        if (custom.length) {
-          items.push({
-            icon: HUB_ICONS.reset,
-            label: 'คืนค่าแบนเนอร์เริ่มต้น',
-            danger: true,
-            onClick: () => { saveHubCustomImages([]); renderHubBanner(); }
-          });
-        }
-        showHubCtx(e.clientX, e.clientY, items);
-      });
-
-      document.getElementById('hub-bgm-slot')?.addEventListener('contextmenu', (e) => {
-        e.preventDefault();
-        const st = window.HelpDaiBgm?.getState?.();
-        const items = [
-          { icon: HUB_ICONS.music, label: 'เลือก / เปลี่ยนเพลง YouTube', onClick: () => window.HelpDaiBgmModal?.() }
-        ];
-        if (st?.videoId) {
-          items.push({ icon: st.playing ? HUB_ICONS.pause : HUB_ICONS.play, label: st.playing ? 'พักเพลง' : 'เล่นต่อ', onClick: () => window.HelpDaiBgm?.setPlaying(!st.playing) });
-          items.push({ icon: HUB_ICONS.stop, label: 'ปิดเพลง', danger: true, onClick: () => window.HelpDaiBgm?.stop() });
-        }
-        showHubCtx(e.clientX, e.clientY, items);
-      });
     })();
   </script>
   <script src="assets/js/changelog.js"></script>

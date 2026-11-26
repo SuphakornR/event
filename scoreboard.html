@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="referrer" content="strict-origin-when-cross-origin" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; connect-src 'self' https: wss:; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https: data: blob:; media-src 'self' https: data: blob:; frame-src https://www.youtube.com https://www.youtube-nocookie.com;" />
-  <title>HelpDai — Stage Scoreboard</title>
+  <title>suphakorn.rukkarn — Stage Scoreboard</title>
   <meta name="description" content="กระดานคะแนนสดบนเวที ปรับแต่งทีมและกิจกรรมแบบเรียลไทม์ พร้อมตัวจับเวลาและสื่อประกอบ" />
   <meta name="theme-color" content="#F4D03F" />
-  <meta property="og:title" content="HelpDai — Stage Scoreboard" />
+  <meta property="og:title" content="suphakorn.rukkarn — Stage Scoreboard" />
   <meta property="og:description" content="กระดานคะแนนสดบนเวที ปรับแต่งทีมและกิจกรรมแบบเรียลไทม์" />
   <meta property="og:type" content="website" />
   <link rel="icon" type="image/svg+xml" href="assets/img/logo.svg" />
@@ -124,7 +124,7 @@
       </div>
 
       <!-- Top-Right Big Image Banner (Right-Click to Edit Banner Image) -->
-      <aside id="stage-top-banner" title="คลิกขวาเพื่อเปลี่ยนภาพแบนเนอร์" class="group w-full lg:w-[31rem] xl:w-[37rem] h-24 sm:h-[6.25rem] shrink-0 rounded-xl border-[2.5px] border-[#111111] shadow-[4px_4px_0px_#111111] bg-[#111111] relative overflow-hidden select-none" aria-label="แบนเนอร์เวที">
+      <aside id="stage-top-banner" title="คลิกขวาเพื่อเปลี่ยนภาพแบนเนอร์" class="group w-full lg:w-[31rem] xl:w-[37rem] h-24 sm:h-[6.25rem] shrink-0 rounded-xl border-[2.5px] border-[#111111] shadow-[4px_4px_0px_#111111] bg-[#F8F6F0] relative overflow-hidden select-none" aria-label="แบนเนอร์เวที">
         <div id="stage-banner-track" class="flex w-full h-full transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"></div>
         <span id="stage-banner-size-badge" class="opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none absolute top-2 left-2 z-20 bg-[#111111]/85 text-[#F4D03F] border border-white/25 px-2 py-0.5 rounded-md font-display font-bold text-[10px] tabular-nums shadow-sm"></span>
 
@@ -409,64 +409,6 @@
       const fileInp = document.getElementById('stage-banner-file');
       if (!trackEl || !dotsEl || !bannerEl) return;
 
-      const SLIDES = [
-        {
-          tag: 'LIVE ARENA',
-          accent: '#F4D03F',
-          title: 'คลิกทีมเพื่อบวกคะแนน • คลิกขวากิจกรรมเพื่อแก้ไขกติกาและสื่อ',
-          art: `<svg class="w-full h-full object-cover" viewBox="0 0 600 110" xmlns="http://www.w3.org/2000/svg">
-            <rect width="600" height="110" fill="#171717"/>
-            <g opacity="0.14" stroke="#FFFFFF" stroke-width="1"><path d="M0 28h600M0 56h600M0 84h600M100 0v110M200 0v110M300 0v110M400 0v110M500 0v110"/></g>
-            <rect x="18" y="14" width="160" height="54" rx="10" fill="#F8F6F0" stroke="#111111" stroke-width="3"/>
-            <rect x="28" y="24" width="96" height="14" rx="4" fill="#F4D03F" stroke="#111111" stroke-width="2"/>
-            <rect x="28" y="44" width="134" height="14" rx="4" fill="#2980B9" stroke="#111111" stroke-width="2"/>
-            <rect x="194" y="14" width="236" height="54" rx="10" fill="#FFFFFF" stroke="#111111" stroke-width="3"/>
-            <rect x="206" y="24" width="180" height="14" rx="4" fill="#F4D03F" stroke="#111111" stroke-width="2"/>
-            <rect x="206" y="44" width="142" height="14" rx="4" fill="#E74C3C" stroke="#111111" stroke-width="2"/>
-            <circle cx="484" cy="40" r="24" fill="#F4D03F" stroke="#111111" stroke-width="3"/>
-            <path d="M473 46l5-14 6 7 6-7 5 14z" fill="#111111"/>
-            <circle cx="546" cy="40" r="24" fill="#2980B9" stroke="#111111" stroke-width="3"/>
-            <path d="M538 35h16v12h-16z" fill="#FFFFFF"/>
-          </svg>`
-        },
-        {
-          tag: 'STAGE TOOLS',
-          accent: '#2980B9',
-          title: 'แถบเครื่องมือเวที: สุ่มทีม • นาฬิกาคลื่นน้ำ • เพลง YouTube • โหวตสด QR • แชร์จอห้องใหญ่',
-          art: `<svg class="w-full h-full object-cover" viewBox="0 0 600 110" xmlns="http://www.w3.org/2000/svg">
-            <rect width="600" height="110" fill="#112233"/>
-            <g opacity="0.14" stroke="#FFFFFF" stroke-width="1"><path d="M0 28h600M0 56h600M0 84h600M100 0v110M200 0v110M300 0v110M400 0v110M500 0v110"/></g>
-            <circle cx="62" cy="42" r="26" fill="#F8F6F0" stroke="#111111" stroke-width="3"/>
-            <path d="M38 42 Q 50 32 62 42 T 86 42 L 86 68 L 38 68 Z" fill="#2980B9"/>
-            <rect x="108" y="16" width="164" height="52" rx="10" fill="#FFFFFF" stroke="#111111" stroke-width="3"/>
-            <rect x="120" y="25" width="34" height="34" rx="6" fill="#F8F6F0" stroke="#111111" stroke-width="2"/>
-            <rect x="126" y="31" width="9" height="9" fill="#111111"/><rect x="139" y="31" width="9" height="9" fill="#111111"/><rect x="126" y="44" width="9" height="9" fill="#111111"/><rect x="139" y="44" width="9" height="9" fill="#F4D03F"/>
-            <rect x="164" y="27" width="94" height="12" rx="4" fill="#10B981" stroke="#111111" stroke-width="2"/>
-            <rect x="164" y="45" width="72" height="12" rx="4" fill="#F4D03F" stroke="#111111" stroke-width="2"/>
-            <rect x="290" y="16" width="286" height="52" rx="10" fill="#FFFFFF" stroke="#111111" stroke-width="3"/>
-            <rect x="304" y="26" width="52" height="32" rx="6" fill="#E74C3C" stroke="#111111" stroke-width="2"/>
-            <polygon points="325,35 325,49 338,42" fill="#FFFFFF"/>
-            <rect x="368" y="28" width="144" height="12" rx="4" fill="#111111"/>
-            <rect x="368" y="46" width="102" height="10" rx="4" fill="#F4D03F" stroke="#111111" stroke-width="1.5"/>
-          </svg>`
-        },
-        {
-          tag: 'MENU & SYNC',
-          accent: '#E74C3C',
-          title: 'กดปุ่ม เมนู ด้านบนเพื่อบันทึกงาน สร้างงานใหม่ หรือเลือกเทมเพลตเริ่มไว 1 คลิก',
-          art: `<svg class="w-full h-full object-cover" viewBox="0 0 600 110" xmlns="http://www.w3.org/2000/svg">
-            <rect width="600" height="110" fill="#24161E"/>
-            <g opacity="0.14" stroke="#FFFFFF" stroke-width="1"><path d="M0 28h600M0 56h600M0 84h600M100 0v110M200 0v110M300 0v110M400 0v110M500 0v110"/></g>
-            <rect x="24" y="16" width="170" height="52" rx="10" fill="#F4D03F" stroke="#111111" stroke-width="3"/>
-            <text x="109" y="47" text-anchor="middle" font-family="Prompt, sans-serif" font-weight="900" font-size="15" fill="#111111">QUIZ &amp; TRIVIA</text>
-            <rect x="214" y="16" width="170" height="52" rx="10" fill="#2980B9" stroke="#111111" stroke-width="3"/>
-            <text x="299" y="47" text-anchor="middle" font-family="Prompt, sans-serif" font-weight="900" font-size="15" fill="#FFFFFF">SPORT DAY</text>
-            <rect x="404" y="16" width="170" height="52" rx="10" fill="#E74C3C" stroke="#111111" stroke-width="3"/>
-            <text x="489" y="47" text-anchor="middle" font-family="Prompt, sans-serif" font-weight="900" font-size="15" fill="#FFFFFF">WORKSHOP</text>
-          </svg>`
-        }
-      ];
-
       const BANNERS_KEY = 'helpdai_stage_custom_banners_v1';
       let idx = 0;
       let timerId = null;
@@ -490,10 +432,7 @@
           else localStorage.removeItem(BANNERS_KEY);
         } catch (_) {}
       };
-      const getCount = () => {
-        const c = getCustomImgs();
-        return c.length ? c.length : SLIDES.length;
-      };
+      const getCount = () => getCustomImgs().length;
 
       const renderSlides = () => {
         const customImgs = getCustomImgs();
@@ -501,15 +440,7 @@
         if (customImgs.length) {
           trackEl.innerHTML = customImgs.map(src => `<div class="w-full h-full shrink-0 relative"><img src="${src}" alt="Event Banner" class="w-full h-full object-cover" /></div>`).join('');
         } else {
-          trackEl.innerHTML = SLIDES.map(s => `
-            <div class="w-full h-full shrink-0 relative flex flex-col justify-end overflow-hidden">
-              <div class="absolute inset-0">${s.art}</div>
-              <div class="relative z-10 bg-gradient-to-t from-[#111111] via-[#111111]/85 to-transparent px-3 pt-4 pb-1.5 flex items-center gap-2">
-                <span class="text-[9px] font-display font-black px-1.5 py-0.5 rounded border border-[#111111] shrink-0" style="background:${s.accent}; color:${s.accent === '#F4D03F' ? '#111111' : '#FFFFFF'}">${s.tag}</span>
-                <span class="thai-safe-tight font-display font-bold text-[11px] sm:text-xs text-white truncate">${s.title}</span>
-              </div>
-            </div>
-          `).join('');
+          trackEl.innerHTML = '';
         }
         syncState();
         resetAuto();

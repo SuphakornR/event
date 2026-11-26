@@ -1,147 +1,64 @@
-/* Real-progress loading screen: tracks real DOMContentLoaded, fonts.ready, stage readiness, and window.load (no fake speedups). */
+/* Smooth Page-to-Page Transitions (Cross-Document View Transitions + Smooth Fade/Slide Fallback) */
 (() => {
-  const VOX_CURSOR_CSS = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 26 26'%3E%3Cpath d='M4 3 L20 13 L12.5 15 L9.5 22 Z' transform='translate(2 2)' fill='%23111111'/%3E%3Cpath d='M4 3 L20 13 L12.5 15 L9.5 22 Z' fill='%23F4D03F' stroke='%23111111' stroke-width='2.2' stroke-linejoin='round'/%3E%3C/svg%3E") 4 3, auto`;
-  document.body.insertAdjacentHTML('afterbegin', `
-    <style>#app-loader, #app-loader * { cursor: ${VOX_CURSOR_CSS} !important; }</style>
-    <div id="app-loader" role="status" aria-live="polite">
-      <div class="inline-flex items-center gap-2 bg-[#111111] text-[#F8F6F0] px-3 py-1 rounded-md font-display font-extrabold text-xs tracking-widest shadow-[3px_3px_0px_#F4D03F]">
-        <span class="w-2 h-2 rounded-full bg-[#F4D03F]"></span>
-        <span>HELPDAI • EVENT TOOLKIT</span>
-      </div>
-      <div class="loader-stage">
-        <svg viewBox="0 0 48 48" class="loader-shape loader-square" aria-hidden="true">
-          <path d="M9 9 H35 V35 H9 Z" transform="translate(3.5 3.5)" fill="#111111"/>
-          <path d="M9 9 H35 V35 H9 Z" fill="#F4D03F" stroke="#111111" stroke-width="2.6" stroke-linejoin="round"/>
-        </svg>
-        <svg viewBox="0 0 48 48" class="loader-shape loader-triangle" aria-hidden="true">
-          <path d="M22 7 L40 38 H4 Z" transform="translate(3.5 3.5)" fill="#111111"/>
-          <path d="M22 7 L40 38 H4 Z" fill="#E74C3C" stroke="#111111" stroke-width="2.6" stroke-linejoin="round"/>
-        </svg>
-        <svg viewBox="0 0 48 48" class="loader-shape loader-circle" aria-hidden="true">
-          <circle cx="22" cy="22" r="16" transform="translate(3.5 3.5)" fill="#111111"/>
-          <circle cx="22" cy="22" r="16" fill="#2980B9" stroke="#111111" stroke-width="2.6"/>
-        </svg>
-      </div>
-      <div class="flex flex-col items-center gap-2">
-        <div class="loader-bar"><div id="loader-bar-fill" class="loader-bar-fill"></div></div>
-        <span id="loader-pct" class="font-display font-extrabold text-xs tracking-[0.2em] text-[#111111]">LOADING • 0%</span>
-      </div>
-    </div>`);
+  'use strict';
 
-  const loaderEl = document.getElementById('app-loader');
-  const fillEl = document.getElementById('loader-bar-fill');
-  const pctEl = document.getElementById('loader-pct');
-  let progress = 0;
-  let finished = false;
-
-  const setProgress = (next) => {
-    if (finished) return;
-    const clamped = Math.max(0, Math.min(100, Math.round(next)));
-    if (clamped <= progress) return;
-    progress = clamped;
-    if (fillEl) fillEl.style.width = `${progress}%`;
-    if (pctEl) pctEl.textContent = progress >= 100 ? 'READY • 100%' : `LOADING • ${progress}%`;
-  };
-
-  let domDone = document.readyState === 'interactive' || document.readyState === 'complete';
-  let winLoadDone = document.readyState === 'complete';
-  let fontsDone = false;
-  const needsStageReady = () => Boolean(document.getElementById('stage-container'));
-  let stageDone = !needsStageReady() || Boolean(window.__voxStageReady);
-  let loadedResourcesCount = 0;
-
-  const computeRealProgress = () => {
-    // Real weighted progress from actual browser loading milestones + network resource entries
-    let p = 5;
-    if (domDone) p += 28;
-    if (fontsDone) p += 20;
-    if (stageDone) p += 22;
-    if (winLoadDone) p += 25;
-    if (!winLoadDone) {
-      p += Math.min(16, loadedResourcesCount * 2);
+  const style = document.createElement('style');
+  style.textContent = `
+    @view-transition { navigation: auto; }
+    ::view-transition-old(root) {
+      animation: voxPageOut 0.18s cubic-bezier(0.4, 0, 1, 1) both;
     }
-    return Math.min(winLoadDone && domDone && fontsDone && stageDone ? 100 : 96, p);
-  };
-
-  const finish = () => {
-    if (finished) return;
-    setProgress(100);
-    finished = true;
-    loaderEl.classList.add('is-done');
-    setTimeout(() => loaderEl.remove(), 320);
-  };
-
-  const checkDone = () => {
-    setProgress(computeRealProgress());
-    if (fontsDone && domDone && stageDone && winLoadDone) {
-      requestAnimationFrame(() => requestAnimationFrame(finish));
+    ::view-transition-new(root) {
+      animation: voxPageIn 0.26s cubic-bezier(0.22, 1, 0.36, 1) both;
     }
-  };
-
-  // Track real loaded scripts, stylesheets, and images via PerformanceObserver
-  try {
-    loadedResourcesCount = performance.getEntriesByType('resource').length;
-    if (typeof PerformanceObserver !== 'undefined') {
-      const po = new PerformanceObserver((list) => {
-        loadedResourcesCount += list.getEntries().length;
-        if (!finished) setProgress(computeRealProgress());
-      });
-      po.observe({ type: 'resource', buffered: true });
+    @keyframes voxPageOut {
+      from { opacity: 1; transform: translateY(0); }
+      to   { opacity: 0; transform: translateY(-6px); }
     }
-  } catch (_) {}
+    @keyframes voxPageIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    body > main {
+      animation: voxPageIn 0.26s cubic-bezier(0.22, 1, 0.36, 1) both;
+      transition: opacity 0.16s cubic-bezier(0.4, 0, 0.2, 1), transform 0.16s cubic-bezier(0.4, 0, 0.2, 1);
+      will-change: opacity, transform;
+    }
+    html.vox-page-leaving body > main {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      ::view-transition-old(root), ::view-transition-new(root), body > main {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+  `;
+  document.head.appendChild(style);
 
-  if (!stageDone) {
-    window.addEventListener('vox-stage-ready', () => {
-      stageDone = true;
-      checkDone();
-    }, { once: true });
-  }
-
-  if (!domDone) {
-    document.addEventListener('DOMContentLoaded', () => {
-      domDone = true;
-      if (!needsStageReady() || window.__voxStageReady) stageDone = true;
-      checkDone();
-    }, { once: true });
-  }
-
-  if (!winLoadDone) {
-    window.addEventListener('load', () => {
-      winLoadDone = true;
-      if (!needsStageReady() || window.__voxStageReady) stageDone = true;
-      checkDone();
-    }, { once: true });
-  }
-
-  if (document.fonts?.ready) {
-    document.fonts.ready.then(() => {
-      fontsDone = true;
-      checkDone();
-    }).catch(() => {
-      fontsDone = true;
-      checkDone();
-    });
-  } else {
-    fontsDone = true;
-  }
-
-  checkDone();
-
-  // Emergency fallback only if an external CDN hangs completely (> 12s)
-  setTimeout(finish, 12000);
-
-  // Auto-hide custom Vox cursor after 2.8s of mouse inactivity
-  let idleCursorTimer = null;
-  const IDLE_MS = 2800;
-  const resetIdleCursor = () => {
-    document.documentElement.classList.remove('vox-cursor-idle');
-    if (idleCursorTimer) clearTimeout(idleCursorTimer);
-    idleCursorTimer = setTimeout(() => {
-      document.documentElement.classList.add('vox-cursor-idle');
-    }, IDLE_MS);
-  };
-  ['pointermove', 'mousedown', 'wheel', 'touchstart', 'focus'].forEach((evt) => {
-    window.addEventListener(evt, resetIdleCursor, { passive: true });
+  window.addEventListener('pageshow', () => {
+    document.documentElement.classList.remove('vox-page-leaving');
   });
-  resetIdleCursor();
+
+  // Smooth exit fade for browsers without cross-document View Transitions
+  const supportsCrossDocVT = 'CSSViewTransitionRule' in window || CSS.supports('view-transition-name', 'none');
+  document.addEventListener('click', (e) => {
+    if (supportsCrossDocVT) return;
+    const link = e.target.closest('a[href]');
+    if (!link) return;
+    if (link.target === '_blank' || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    const href = link.getAttribute('href') || '';
+    if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:')) return;
+    try {
+      const url = new URL(link.href, window.location.href);
+      if (url.origin !== window.location.origin || url.href === window.location.href) return;
+      e.preventDefault();
+      document.documentElement.classList.add('vox-page-leaving');
+      setTimeout(() => { window.location.href = url.href; }, 150);
+    } catch (_) {}
+  });
+
+  window.__voxStageReady = true;
+  window.__voxLoaderMarkReady = () => {};
 })();

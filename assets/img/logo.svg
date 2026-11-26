@@ -1,12 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none" role="img" aria-label="HelpDaiCha Logo">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none" role="img" aria-label="suphakorn.rukkarn Logo">
   <!-- Hard Neo-Brutalist Offset Shadow -->
   <rect x="18" y="18" width="96" height="96" rx="24" fill="#111111" />
   <!-- Main Bold Badge -->
   <rect x="10" y="10" width="96" height="96" rx="24" fill="#F4D03F" stroke="#111111" stroke-width="6" />
-  <!-- Bold Minimal 'H' Monogram -->
-  <rect x="31" y="32" width="14" height="52" rx="5" fill="#111111" />
-  <rect x="71" y="32" width="14" height="52" rx="5" fill="#111111" />
-  <rect x="31" y="51" width="54" height="14" rx="5" fill="#111111" />
+  <!-- Bold Minimal 'S' Monogram -->
+  <path d="M77 41H45C38.5 41 34 45.2 34 51C34 56.8 38.5 60 45 60H71C77.5 60 82 63.5 82 69.5C82 75.5 77.5 80 71 80H37" stroke="#111111" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" />
   <!-- Signature Coral Accent Dot -->
   <circle cx="88" cy="28" r="7" fill="#E74C3C" stroke="#111111" stroke-width="3.5" />
 </svg>

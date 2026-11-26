@@ -236,6 +236,7 @@
             st.timer.remainingSec = st.timer.durationSec || 180;
             st.timer.endAt = null;
           }
+          st.winnerAnnounced = false;
           return st;
         } catch (err) {
           console.warn('Recovering default state due to storage read error:', err);
@@ -617,11 +618,13 @@
         };
       }
 
+      const pageLoadedAt = Date.now();
       window.addEventListener('storage', (e) => {
         if (e.key === STORAGE_KEY && e.newValue) {
           try {
             const parsed = JSON.parse(e.newValue);
-            applyIncomingState(parsed, true);
+            const isInitialCloudHydrate = !e.isTrusted && (Date.now() - pageLoadedAt < 3500);
+            applyIncomingState(parsed, !isInitialCloudHydrate);
           } catch (_) {}
         }
       });
@@ -2933,7 +2936,7 @@
             return;
           }
           if (document.getElementById('victory-celebration-overlay') || document.getElementById('victory-drumroll-overlay')) {
-            hideVictorySpotlight();
+            dismissVictorySpotlight();
             return;
           }
           if (state.timer?.visible && state.timer?.mode === 'center') {
@@ -3657,6 +3660,15 @@
         document.getElementById('victory-flash-burst')?.remove();
       }
 
+      function dismissVictorySpotlight() {
+        hideVictorySpotlight();
+        if (state.winnerAnnounced) {
+          state.winnerAnnounced = false;
+          saveAndBroadcast();
+          renderLeaderboard(true);
+        }
+      }
+
       function triggerVictorySequence() {
         hideVictorySpotlight();
         const STEP1_MS = 1150;
@@ -3789,7 +3801,7 @@
         document.body.appendChild(overlay);
         overlay.addEventListener('click', (e) => {
           if (e.target === overlay || e.target.closest('#victory-overlay-close')) {
-            hideVictorySpotlight();
+            dismissVictorySpotlight();
           }
         });
       }

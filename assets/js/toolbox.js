@@ -98,7 +98,6 @@
       <button type="button" id="tb-random-btn" title="สุ่มทีม / สุ่มเลข" aria-label="สุ่มทีมหรือตัวเลข" class="btn-vox w-9 h-9 bg-white hover:bg-[#F4D03F] text-[#111111] rounded-lg flex items-center justify-center cursor-pointer transition-colors">${TB_ICONS.dice}</button>
       <button type="button" id="tb-timer-btn" title="ตัวจับเวลา" aria-label="ตัวจับเวลา" class="btn-vox w-9 h-9 bg-white hover:bg-[#F4D03F] text-[#111111] rounded-lg flex items-center justify-center cursor-pointer transition-colors">${TB_ICONS.timer}</button>
       <button type="button" id="tb-music-btn" title="เพลง YouTube" aria-label="เครื่องเล่นเพลง YouTube" class="relative btn-vox w-9 h-9 bg-white hover:bg-[#F4D03F] text-[#111111] rounded-lg flex items-center justify-center cursor-pointer transition-colors">${TB_ICONS.music}<span id="tb-music-dot" class="hidden absolute -top-1.5 -right-1.5 w-3.5 h-3.5 rounded-full bg-[#10B981] border-2 border-[#111111] shadow-[1px_1px_0px_#111111] flex items-center justify-center"><span class="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span></span></button>
-      <button type="button" id="tb-poll-btn" title="โหวตสด QR Poll" aria-label="โหวตสด QR Poll" class="btn-vox w-9 h-9 bg-white hover:bg-[#F4D03F] text-[#111111] rounded-lg flex items-center justify-center cursor-pointer transition-colors">${TB_ICONS.poll}</button>
       <button type="button" id="tb-share-btn" title="แชร์หน้าจอไปคอมพิวเตอร์ / จอโปรเจกเตอร์ในห้องใหญ่" aria-label="แชร์หน้าจอไปจอมอนิเตอร์อื่น" class="btn-vox w-9 h-9 bg-white hover:bg-[#F4D03F] text-[#111111] rounded-lg flex items-center justify-center cursor-pointer transition-colors">${TB_ICONS.share}</button>
       <button type="button" id="tb-victory-btn" title="ประกาศผู้ชนะ" aria-label="ประกาศผู้ชนะ" class="btn-vox w-9 h-9 bg-[#F4D03F] hover:bg-[#f2c61d] text-[#111111] rounded-lg flex items-center justify-center cursor-pointer transition-colors">${TB_ICONS.crown}</button>
       <div class="h-px bg-[#111111]/20 my-0.5"></div>
@@ -115,7 +114,6 @@
       random: 'tb-random-btn',
       timer: 'tb-timer-btn',
       music: 'tb-music-btn',
-      poll: 'tb-poll-btn',
       share: 'tb-share-btn'
     };
 
@@ -1272,7 +1270,7 @@
             }
             const w = window.open('', 'HelpDaiLiveMirror', 'width=1280,height=720,menubar=no,toolbar=no');
             if (w) {
-              w.document.write('<!DOCTYPE html><html><head><title>HelpDaiCha — Live Screen Mirror</title><style>html,body{margin:0;background:#000;height:100%;overflow:hidden;display:flex;align-items:center;justify-content:center}video{width:100%;height:100%;object-fit:contain}</style></head><body><video id="v" autoplay playsinline muted></video></body></html>');
+              w.document.write('<!DOCTYPE html><html><head><title>suphakorn.rukkarn — Live Screen Mirror</title><style>html,body{margin:0;background:#000;height:100%;overflow:hidden;display:flex;align-items:center;justify-content:center}video{width:100%;height:100%;object-fit:contain}</style></head><body><video id="v" autoplay playsinline muted></video></body></html>');
               w.document.close();
               const v = w.document.getElementById('v');
               if (v) {
